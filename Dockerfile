@@ -48,10 +48,15 @@ RUN echo 'server {
         add_header Cache-Control "public, immutable";
     }
 
-    # Serve main index and other static files
+    # Main location - serves index.html for all non-API routes
     location / {
         root /usr/share/nginx/html;
-        try_files $uri $uri/ /index.html;
+        try_files $uri $uri/ @fallback;
+    }
+
+    # Fallback to index.html for client-side routing
+    location @fallback {
+        rewrite ^.*$ /index.html last;
     }
 
     # Health check endpoint
@@ -63,7 +68,7 @@ RUN echo 'server {
 
     # Proxy API requests to backend
     location /api/ {
-        proxy_pass http://127.0.0.1:8001/api/;
+        proxy_pass http://127.0.0.1:8001;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
@@ -73,9 +78,9 @@ RUN echo 'server {
         proxy_set_header X-Forwarded-Proto $scheme;
     }
     
-    # Proxy other backend routes
+    # Proxy other backend routes if needed
     location /docs {
-        proxy_pass http://127.0.0.1:8001/docs;
+        proxy_pass http://127.0.0.1:8001;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -83,7 +88,7 @@ RUN echo 'server {
     }
     
     location /redoc {
-        proxy_pass http://127.0.0.1:8001/redoc;
+        proxy_pass http://127.0.0.1:8001;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -91,7 +96,7 @@ RUN echo 'server {
     }
     
     location /openapi.json {
-        proxy_pass http://127.0.0.1:8001/openapi.json;
+        proxy_pass http://127.0.0.1:8001;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
