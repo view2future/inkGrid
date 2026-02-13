@@ -15,8 +15,10 @@ from app.services.alignment_service import AlignmentService
 from app.services.grid_service import GridService
 from app.services.ocr_engine import OCREngine
 from app.services.sam_service import SAMService
+from app.health import router as health_router
 
 app = FastAPI()
+app.include_router(health_router)
 
 # CORS 配置
 app.add_middleware(

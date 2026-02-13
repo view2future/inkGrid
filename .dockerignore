@@ -1,0 +1,66 @@
+# Docker ignore file - similar to .gitignore but for Docker builds
+
+# Git and version control
+.git
+.gitignore
+.github/
+
+# Python virtual environments
+backend/venv/
+processor/venv/
+venv/
+.env/
+.pyenv/
+.virtualenv/
+
+# Node.js dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Python cache and compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Build artifacts
+dist/
+build/
+out/
+public/build/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*.backup
+*.tmp
+*.temp
+
+# Log and temporary files
+*.log
+*.tmp
+*.temp
+debug_*.txt
+*.json.lock
+
+# Large data directories (keep small extracted chars, exclude large originals)
+steles/
+frontend/public/steles/extracted_by_grid/
+public/steles/extracted_by_grid/
+
+# Test data (can be mounted separately in production)
+test_data/
+images/
+
+# Docker files themselves
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Backup directories
+inkGrid_backup/
+inkGrid_clean/
+inkGrid_clean_backup/
