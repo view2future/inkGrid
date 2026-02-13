@@ -1,11 +1,18 @@
 #!/bin/bash
 
-# 启动 inkGrid 应用
-# 使用环境变量 PORT，如果没有则默认为 8000
-PORT=${PORT:-8000}
+# Start inkGrid application for Zeabur deployment
+# Frontend is served by Nginx on port 8080
+# Backend API runs on port 8000 and is proxied by Nginx
 
-echo "Starting inkGrid on port $PORT..."
+echo "Starting inkGrid..."
 
-# 启动后端服务器
-cd /app/backend
-exec uvicorn app.main:app --host 0.0.0.0 --port $PORT --forwarded-allow-ips '*'
+# Start backend API in background
+cd /app
+export PYTHONPATH=/app/backend:$PYTHONPATH
+python3 -m uvicorn app.main:app --host 127.0.0.1 --port 8000 &
+
+# Wait for backend to start
+sleep 2
+
+# Start Nginx in foreground
+nginx -g 'daemon off;'
