@@ -1,4 +1,4 @@
-# Multi-stage Dockerfile for inkGrid - Full Stack with Nginx
+# Multi-stage Dockerfile for inkGrid - Full version with frontend
 
 # Stage 1: Build frontend
 FROM node:20-alpine AS frontend-builder
@@ -16,10 +16,8 @@ RUN cd frontend && npm install --legacy-peer-deps
 COPY frontend ./frontend/
 RUN cd frontend && npm run build
 
-# Stage 2: Final image with Nginx to serve both frontend and backend
+# Stage 2: Install Nginx and setup full application
 FROM python:3.12-slim
-
-WORKDIR /app
 
 # Install system dependencies including Nginx
 RUN apt-get update && apt-get install -y \
@@ -50,7 +48,7 @@ RUN echo 'server {
     # Health check endpoint
     location = /health {
         access_log off;
-        return 200 "{\"status\":\"healthy\",\"service\":\"inkGrid-fullstack\"}\n";
+        return 200 "{\"status\":\"healthy\",\"service\":\"inkGrid-frontend\"}\n";
         add_header Content-Type application/json;
     }
 
@@ -65,31 +63,6 @@ RUN echo 'server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
     }
-    
-    # Proxy other backend routes if needed
-    location /docs {
-        proxy_pass http://127.0.0.1:8001;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-    
-    location /redoc {
-        proxy_pass http://127.0.0.1:8001;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-    
-    location /openapi.json {
-        proxy_pass http://127.0.0.1:8001;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
 }' > /etc/nginx/sites-available/default && \
 ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
 
@@ -99,11 +72,8 @@ COPY public ./public/
 
 # Create startup script
 RUN echo '#!/bin/bash
-echo "======================================="
-echo "   墨阵 InkGrid | 全栈版启动"
-echo "======================================="
-echo ">>> 启动后端服务 (FastAPI) on port 8001..."
-echo ">>> 启动前端服务 (Nginx) on port 8000..."
+echo "Starting inkGrid - Full Stack Version"
+echo "====================================="
 
 # Start backend service in background
 cd /app/backend
@@ -112,20 +82,12 @@ python3 -m uvicorn app.main:app --host 127.0.0.1 --port 8001 --workers 1 &
 # Wait for backend to start
 sleep 5
 
-# Check if backend started successfully
-if ! nc -z 127.0.0.1 8001; then
-    echo "ERROR: Backend failed to start"
-    exit 1
-fi
-
-echo ">>> 后端服务启动成功"
-
 # Start Nginx to serve frontend and proxy API
-echo ">>> 启动 Nginx 服务器..."
+echo "Starting Nginx server..."
 nginx -g "daemon off;"
-' > /start-fullstack.sh
+' > /start-full.sh
 
-RUN chmod +x /start-fullstack.sh
+RUN chmod +x /start-full.sh
 
 # Expose port
 EXPOSE 8000
@@ -135,4 +97,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
   CMD curl -f http://localhost:8000/health || exit 1
 
 # Start command
-CMD ["/start-fullstack.sh"]
+CMD ["/start-full.sh"]

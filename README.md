@@ -27,6 +27,14 @@ The application will be accessible on the port assigned by Zeabur, with automati
 
 **Note**: The Docker image includes all necessary system dependencies for the frontend display functionality.
 
+### Full-Stack Architecture
+
+The deployed application includes:
+- **Frontend**: React SPA with homepage featuring rotating seal script characters, gallery entrance, and Yishan Stele appreciation entrance
+- **Backend**: FastAPI service for API endpoints
+- **Web Server**: Nginx to serve frontend assets and proxy API requests to backend
+- **Port Configuration**: All traffic flows through port 8000 with internal routing
+
 ## Key Components
 
 - `frontend/`: Modern web interface with React and TypeScript
