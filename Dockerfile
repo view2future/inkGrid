@@ -132,7 +132,7 @@ echo ">>> 后端服务启动成功"
 echo ">>> 启动 Nginx 服务器，提供前端界面..."
 # Configure nginx to listen on $PORT
 sed -i "s/listen 8000/listen $PORT/" /etc/nginx/sites-available/default
-exec nginx -g "daemon off;"
+exec /usr/sbin/nginx -g "daemon off;"
 ' > /start-fullstack.sh
 
 RUN chmod +x /start-fullstack.sh

@@ -26,5 +26,6 @@ fi
 echo ">>> 后端服务启动成功"
 echo ">>> 启动 Nginx 服务器，提供前端界面..."
 
-# Start Nginx to serve frontend and proxy API requests
-exec nginx -g "daemon off;"
+# Configure nginx to listen on $PORT and start it
+sed -i "s/listen 8000/listen $PORT/" /etc/nginx/sites-available/default
+exec /usr/sbin/nginx -g "daemon off;"
