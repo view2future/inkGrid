@@ -7,7 +7,7 @@ WORKDIR /app
 
 # Copy package files first for better caching
 COPY frontend/package*.json ./frontend/
-COPY frontend/yarn.lock ./frontend/
+COPY frontend/package-lock.json ./frontend/
 
 # Install frontend dependencies
 RUN cd frontend && npm install --legacy-peer-deps
