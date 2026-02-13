@@ -26,3 +26,9 @@
 
 - [~] **Track: 借鉴 view2future/inkGrid 方案，使用多模态大模型彻底重构碑帖识别与切分引擎。**
 *Link: [./tracks/vlm_processor_refactor/](./tracks/vlm_processor_refactor/)*
+
+---
+
+- [ ] **Track: 简化项目，移除OCR、Paddle、CV等冗余模型及逻辑**
+*Link: [./tracks/simplify_project_20260213/](./tracks/simplify_project_20260213/)*
+

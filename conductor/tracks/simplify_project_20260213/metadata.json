@@ -1,0 +1,8 @@
+{
+  "track_id": "simplify_project_20260213",
+  "type": "chore",
+  "status": "new",
+  "created_at": "2026-02-13T14:30:00Z",
+  "updated_at": "2026-02-13T14:30:00Z",
+  "description": "简化项目，移除OCR、Paddle、CV等冗余模型、依赖及功能逻辑，仅保留核心的前端展示功能。"
+}
