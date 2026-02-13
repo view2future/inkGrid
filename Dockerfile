@@ -33,6 +33,7 @@ COPY public /app/public
 EXPOSE 8080
 
 ENV PORT=8080
+ENV PYTHONPATH=/app/backend:$PYTHONPATH
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
   CMD curl -f http://localhost:${PORT}/ || exit 1
