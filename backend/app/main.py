@@ -54,5 +54,13 @@ async def read_root():
     return HTMLResponse("<h1>墨阵 InkGrid</h1><p>Frontend not built</p>")
 
 
+# Mount steles static files before frontend static files
+if os.path.exists(os.path.join(PUBLIC_DIR, "steles")):
+    app.mount(
+        "/steles",
+        StaticFiles(directory=os.path.join(PUBLIC_DIR, "steles")),
+        name="steles",
+    )
+
 if os.path.exists(FRONTEND_DIR):
     app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="static")
