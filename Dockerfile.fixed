@@ -21,14 +21,9 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# Install minimal system dependencies needed for the application
+# Install minimal system dependencies
 RUN apt-get update && apt-get install -y \
     curl \
-    libglib2.0-0 \
-    libsm6 \
-    libxext6 \
-    libxrender-dev \
-    libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
