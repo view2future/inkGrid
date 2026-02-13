@@ -106,7 +106,7 @@ const PixiRenderer: React.FC<PixiRendererProps> = ({
           const imagePath = pathParts.length > 1 ? pathParts[1] : '';
           const worldPos = viewport.toWorld(e.screen);
           
-          const res = await axios.post('http://localhost:8000/api/segment', {
+          const res = await axios.post('/api/segment', {
             image_path: imagePath,
             x: worldPos.x,
             y: worldPos.y
