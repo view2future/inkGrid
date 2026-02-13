@@ -1,0 +1,20 @@
+{
+  "services": {
+    "inkgrid": {
+      "build": {
+        "context": ".",
+        "dockerfile": "Dockerfile"
+      },
+      "ports": [
+        {
+          "port": 8000,
+          "protocol": "http"
+        }
+      ],
+      "healthCheck": {
+        "path": "/health",
+        "port": 8000
+      }
+    }
+  }
+}
