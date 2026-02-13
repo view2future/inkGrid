@@ -1,18 +1,15 @@
-# Full-Stack Dockerfile for inkGrid - Zeabur Optimized
+# Full-Stack Dockerfile for inkGrid - Zeabur Optimized (Simplified)
 
 # Stage 1: Build frontend
 FROM node:20-alpine AS frontend-builder
 
 WORKDIR /app
 
-# Copy package files
 COPY frontend/package*.json ./frontend/
 COPY frontend/package-lock.json ./frontend/
 
-# Install frontend dependencies
 RUN cd frontend && npm install --legacy-peer-deps
 
-# Copy frontend source and build
 COPY frontend ./frontend/
 RUN cd frontend && npm run build
 
@@ -21,128 +18,23 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# Install system dependencies
 RUN apt-get update && apt-get install -y \
     curl \
-    nginx \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
 RUN pip install --upgrade pip
 COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy frontend build to nginx html directory
-COPY --from=frontend-builder /app/frontend/dist /usr/share/nginx/html
+COPY --from=frontend-builder /app/frontend/dist /app/frontend/dist
+COPY backend /app/backend
+COPY public /app/public
 
-# Configure Nginx
-RUN rm /etc/nginx/sites-enabled/default
-RUN echo 'server {
-    listen 8000;
-    server_name _;
+EXPOSE 8080
 
-    # Static asset caching
-    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
-        root /usr/share/nginx/html;
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-    }
+ENV PORT=8080
 
-    # Main route - serves index.html for all non-API routes (SPA fallback)
-    location / {
-        root /usr/share/nginx/html;
-        try_files $uri $uri/ /index.html;
-    }
+HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
+  CMD curl -f http://localhost:${PORT}/ || exit 1
 
-    # Health check endpoint
-    location = /health {
-        access_log off;
-        return 200 "{\"status\":\"healthy\",\"service\":\"inkGrid-frontend\"}\n";
-        add_header Content-Type application/json;
-    }
-
-    # Proxy API requests to backend
-    location /api/ {
-        proxy_pass http://127.0.0.1:8001/api/;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-    
-    # Proxy other backend routes
-    location /docs {
-        proxy_pass http://127.0.0.1:8001/docs;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-    
-    location /redoc {
-        proxy_pass http://127.0.0.1:8001/redoc;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-    
-    location /openapi.json {
-        proxy_pass http://127.0.0.1:8001/openapi.json;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}' > /etc/nginx/sites-available/default && \
-ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
-
-# Copy backend code
-COPY backend ./backend/
-COPY public ./public/
-
-# Create a startup script that ensures only the full-stack service runs
-RUN echo '#!/bin/bash
-PORT=${PORT:-8000}
-echo "==========================================="
-echo "   墨阵 InkGrid | 全abur 优化版)"
-echo "栈启动 (Ze==========================================="
-echo ">>> 使用端口: $PORT"
-
-# Start backend service in background
-echo ">>> 启动后端服务 (FastAPI) on internal port 8001..."
-cd /app/backend
-python3 -m uvicorn app.main:app --host 127.0.0.1 --port 8001 --workers 1 &
-
-# Wait for backend to start
-sleep 5
-
-# Verify backend is running
-if ! curl -sf http://127.0.0.1:8001/health >/dev/null 2>&1; then
-    echo "ERROR: Backend service failed to start"
-    exit 1
-fi
-
-echo ">>> 后端服务启动成功"
-
-# Start Nginx to serve frontend and proxy API requests
-echo ">>> 启动 Nginx 服务器，提供前端界面..."
-# Configure nginx to listen on $PORT
-sed -i "s/listen 8000/listen $PORT/" /etc/nginx/sites-available/default
-exec /usr/sbin/nginx -g "daemon off;"
-' > /start-fullstack.sh
-
-RUN chmod +x /start-fullstack.sh
-
-# Expose port
-EXPOSE 8000
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-  CMD curl -f http://localhost:8000/health || exit 1
-
-# Use the full-stack startup script
-CMD ["/start-fullstack.sh"]
+CMD ["sh", "-c", "python3 -m uvicorn app.main:app --host 0.0.0.0 --port $PORT"]
