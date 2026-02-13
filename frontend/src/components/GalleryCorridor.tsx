@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, forwardRef, useImperativeHandle } from 'react';
-import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
-import { X, Calendar, User, MapPin, Search, Type, ChevronRight, Scroll, BookOpen, Quote } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { X, MapPin, Search, Type, ChevronRight, Scroll, Quote } from 'lucide-react';
 
 interface Stele {
   id: string;

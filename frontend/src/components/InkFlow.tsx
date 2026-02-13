@@ -1,17 +1,8 @@
-import { useState, useEffect, useCallback, useRef, forwardRef, useImperativeHandle } from 'react';
+import { useState, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { motion, AnimatePresence, type PanInfo, useDragControls } from 'framer-motion';
-import { X, ChevronLeft, ChevronRight, BookOpen, Info, Share2, Scroll, Sparkles, MapPin, User, Download, Smartphone } from 'lucide-react';
+import { X, BookOpen, Info, Share2, Scroll, Sparkles, MapPin, Download } from 'lucide-react';
 import Logo from './Logo';
 
-// 峄山刻石222字数据
-const YISHAN_CHARS = Array.from({ length: 222 }, (_, i) => ({
-  id: `yishan_${i + 1}`,
-  index: i,
-  char: '',
-  image: `/steles/extracted_by_grid/char_${String(i + 1).padStart(4, '0')}.png`,
-  pinyin: '',
-  meaning: '',
-}));
 
 interface SteleKnowledge {
   id: string;

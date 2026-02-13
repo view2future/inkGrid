@@ -4,10 +4,10 @@ A comprehensive system for recognizing and analyzing characters in ancient Chine
 
 ## Features
 
-- 🏛️ **Ancient Stele OCR**: Specialized OCR for seal script (篆书) and other ancient scripts
-- 📊 **Character Extraction**: Precise extraction of individual characters with proper naming
+- 🏛️ **Ancient Stele Display**: Beautiful visualization of seal script (篆书) and other ancient scripts
+- 📊 **Character Gallery**: Precise display of individual characters with proper naming
 - 🎯 **Layout Analysis**: Traditional Chinese reading order (right-to-left, top-to-bottom)
-- 🧠 **Hybrid Approach**: Combines computer vision with domain knowledge
+- 🧠 **Cultural Heritage**: Preserving and showcasing traditional Chinese calligraphy
 
 ## Deployment
 
@@ -25,29 +25,28 @@ This project is ready for deployment on [Zeabur](https://zeabur.com) with Docker
 
 The application will be accessible on the port assigned by Zeabur, with automatic support for the `$PORT` environment variable.
 
-**Note**: The Docker image includes all necessary system dependencies for OpenCV and OCR functionality.
+**Note**: The Docker image includes all necessary system dependencies for the frontend display functionality.
 
 ## Key Components
 
-- `final_yishan_ocr.py`: Final OCR system for Yishan Stele with proper naming
-- `accurate_stele_detector.py`: Accurate position detection without false identification
-- `seal_script_analyzer.py`: Advanced analysis for seal script characters
-- `processor/`: Core processing modules
+- `frontend/`: Modern web interface with React and TypeScript
+- `backend/`: API services for the frontend
 - `steles/`: Collection of stele images including Yishan, Yan Qinli, Cao Quan, etc.
+- `Dockerfile`: Docker configuration for Zeabur deployment
+- `docker-start.sh`: Container startup script
 
-## Usage
+## Features Available
 
-```bash
-python3 final_yishan_ocr.py --image_path steles/1-zhuanshu/1-yishankeshi/yishan.jpg --output_dir output/
-```
+- **墨廊 (Gallery)**: Browse through various ancient steles
+- **峄山刻石 (Yishan Stele)**: Detailed view of the famous Yishan stone inscription
+- **墨流 (Ink Flow)**: Interactive character learning experience
+- **首页 (Home)**: Main dashboard with featured content
 
 ## Project Structure
 
 ```
 ├── steles/           # Stele image collections
-├── processor/        # Core processing modules
-├── library_guided_export/  # Export templates
-├── frontend/         # Web interface
+├── frontend/         # Web interface (React + TypeScript)
 ├── backend/          # API services
 ├── Dockerfile        # Docker configuration for Zeabur deployment
 ├── docker-start.sh   # Container startup script

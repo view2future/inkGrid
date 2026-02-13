@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import HanziWriter from 'hanzi-writer';
 
 interface StrokeWriterProps {
@@ -8,15 +8,14 @@ interface StrokeWriterProps {
   strokeColor?: string;
 }
 
-const StrokeWriter: React.FC<StrokeWriterProps> = ({ 
-  character, 
-  size = 200, 
-  speed = 1.0, 
+const StrokeWriter: React.FC<StrokeWriterProps> = ({
+  character,
+  size = 200,
+  speed = 1.0,
   strokeColor = '#f59e0b'
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const writerRef = useRef<HanziWriter | null>(null);
-  const [isAnimating, setIsAnimating] = useState(false);
 
   const initAndPlay = () => {
     if (!containerRef.current || !character) return;

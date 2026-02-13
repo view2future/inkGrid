@@ -8,19 +8,16 @@ interface PixiRendererProps {
   imageUrl: string;
   activeTool: string;
   gridLines?: { vLines: number[], hLines: number[] } | null;
-  onSelectChar?: (charData: any) => void;
   onTransform?: (transform: { x: number; y: number; scale: number }) => void;
 }
 
-const PixiRenderer: React.FC<PixiRendererProps> = ({ 
-  imageUrl, 
-  activeTool, 
+const PixiRenderer: React.FC<PixiRendererProps> = ({
+  imageUrl,
+  activeTool,
   gridLines,
-  onSelectChar,
   onTransform
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const appRef = useRef<PIXI.Application | null>(null);
   const viewportRef = useRef<Viewport | null>(null);
   const gridContainerRef = useRef<PIXI.Container | null>(null);
@@ -56,7 +53,6 @@ const PixiRenderer: React.FC<PixiRendererProps> = ({
       const width = containerRef.current.clientWidth;
       const height = containerRef.current.clientHeight;
       if (width === 0 || height === 0) return;
-      setDimensions({ width, height });
 
       const app = new PIXI.Application();
       await app.init({
