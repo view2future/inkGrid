@@ -27,10 +27,9 @@ COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY --from=frontend-builder /app/frontend/dist /app/frontend/dist
-COPY --from=frontend-builder /app/frontend/dist /app/frontend/dist
-RUN cp -r /app/public/steles /app/frontend/dist/ 2>/dev/null || true
-COPY backend /app/backend
 COPY public /app/public
+COPY backend /app/backend
+RUN cp -r /app/public/steles /app/frontend/dist/ 2>/dev/null || true
 
 EXPOSE 8080
 
