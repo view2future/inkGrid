@@ -1,0 +1,96 @@
+# === Git Ignore Rules for inkGrid Project ===
+# Prevent committing files larger than 30MB
+
+# --- Virtual Environments ---
+processor/venv/
+backend/venv/
+venv/
+.env/
+.pyenv/
+.virtualenv/
+
+# --- Model Files and Weights ---
+backend/models/
+frontend/public/models/
+.PaddleOCR/models/
+.PaddleOCR/inference/
+.paddlex/official_models/
+.paddlex/cache/
+*.pth
+*.bin
+*.ckpt
+*.onnx
+*.pb
+*.tflite
+*.safetensors
+*.gguf
+*.bin
+
+# --- Large Binary Files ---
+*.so
+*.dylib
+*.dll
+*.pyd
+*.a
+*.lib
+
+# --- Large Data Files ---
+*.zip
+*.tar
+*.gz
+*.bz2
+*.xz
+*.7z
+*.rar
+*.dmg
+*.exe
+*.iso
+*.img
+
+# --- Dependency Directories ---
+node_modules/
+bower_components/
+dist/
+build/
+out/
+public/build/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# --- IDE and Editor Files ---
+.vscode/
+idea/
+*.swp
+*.swo
+*.backup
+*.tmp
+*.temp
+
+# --- Log and Temporary Files ---
+*.log
+*.tmp
+*.temp
+debug_*.txt
+*.json.lock
+
+# --- Build Artifacts ---
+*.o
+*.a
+*.so
+*.dylib
+*.dll
+*.pyd
+
+# --- Large Test Data ---
+test_data/images/
+test_data/*.jpg
+test_data/*.png
+test_data/*.jpeg
+
+# --- Specific large files we encountered ---
+backend/venv/lib/python3.14/site-packages/*
+processor/venv/lib/python3.14/site-packages/*
+
+# --- Safety net: exclude any file > 30MB (Git will ignore these automatically if they match patterns above)
+# Note: Git doesn't support size-based ignores directly, so we rely on pattern matching

@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Noto Serif SC", "Source Han Serif SC", serif;
+  --font-mono: "Fira Code", "JetBrains Mono", monospace;
+  
+  --color-stone-950: #0c0a09;
+  --color-amber-500: #f59e0b;
+  --color-amber-600: #d97706;
+  
+  --radius-4xl: 2rem;
+  --radius-5xl: 3rem;
+}
+
+@layer base {
+  body {
+    @apply bg-stone-950 text-stone-200 antialiased selection:bg-amber-500/30;
+    font-feature-settings: "ss01", "ss02", "cv01", "cv02";
+    cursor: url('/brush-cursor.svg') 8 8, auto;
+  }
+  
+  /* 悬停在可交互元素上时显示默认指针，避免毛笔遮挡 */
+  a, button, [role="button"], label, input, select, textarea {
+    cursor: url('/brush-cursor.svg') 8 8, pointer;
+  }
+}
+
+/* 自定义滚动条：极致简约 */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-stone-800 rounded-full hover:bg-amber-500/50 transition-colors;
+}
+
+/* 文字渲染优化 */
+.font-serif {
+  font-display: swap;
+  letter-spacing: 0.05em;
+}
+
+.text-justify-zh {
+  text-align: justify;
+  text-justify: inter-character;
+}

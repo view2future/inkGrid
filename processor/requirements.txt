@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+celery
+redis
+opencv-python-headless
+numpy
+python-multipart
+requests
+paddlepaddle>=2.6.0
+paddleocr>=2.7.0.3
+google-generativeai
+pydantic
+openai

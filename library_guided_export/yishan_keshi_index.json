@@ -1,0 +1,42 @@
+{
+  "stele_name": "峄山刻石",
+  "stele_id": "zhuan_003",
+  "script_type": "篆书",
+  "dynasty": "秦",
+  "author": "李斯（传）",
+  "total_chars_in_text": 222,
+  "extracted_chars": 142,
+  "unique_chars": 118,
+  "resources": {
+    "original_image": {
+      "path": "steles/1-zhuanshu/1-yishankeshi/yishan.jpg",
+      "size": "488x929 pixels",
+      "format": "JPEG",
+      "description": "峄山刻石原碑拓片完整图"
+    },
+    "processed_images": {
+      "segmented": "steles/1-zhuanshu/1-yishankeshi/yishan_segmented.jpg",
+      "paddle_detection": "steles/1-zhuanshu/1-yishankeshi/yishan_paddle.jpg",
+      "visualization": "test_output/峄山刻石/visualization.jpg"
+    },
+    "character_images_dir": "test_output/峄山刻石/",
+    "metadata_file": "test_output/峄山刻石/result.json"
+  },
+  "character_naming_format": "峄山刻石_char_{序号:03d}_r{行号:02d}_c{列号:02d}_{汉字}.jpg",
+  "example_files": [
+    "峄山刻石_char_001_r01_c01_皇.jpg",
+    "峄山刻石_char_002_r01_c02_帝.jpg",
+    "峄山刻石_char_003_r01_c03_立.jpg",
+    "峄山刻石_char_012_r03_c02_王.jpg"
+  ],
+  "high_frequency_chars": {
+    "帝": 3,
+    "皇": 2,
+    "金": 2,
+    "石": 2,
+    "不": 2,
+    "称": 2,
+    "臣": 2,
+    "请": 2
+  }
+}

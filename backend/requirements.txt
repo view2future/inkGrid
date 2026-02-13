@@ -1,0 +1,18 @@
+fastapi
+uvicorn
+pydantic
+python-multipart
+pytest
+httpx
+numpy
+opencv-python
+pillow
+pypinyin
+scipy
+cnocr
+onnxruntime
+shapely
+# 启用 SAM 相关依赖
+segment-anything
+torch
+torchvision

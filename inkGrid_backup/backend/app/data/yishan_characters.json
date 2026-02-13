@@ -1,0 +1,106 @@
+{
+  "metadata": {
+    "title": "峄山刻石 - 完整字形数据",
+    "totalCharacters": 222,
+    "firstEdict": "始皇詔辭 (144字)",
+    "secondEdict": "二世詔書 (78字)"
+  },
+  "characters": [
+    {
+      "char": "皇",
+      "simplified": "皇",
+      "pinyin": "huáng",
+      "meaning": "皇帝，君主，至高无上的统治者",
+      "en_word": "emperor",
+      "en_meaning": "the supreme ruler of an empire"
+    },
+    {
+      "char": "帝",
+      "simplified": "帝",
+      "pinyin": "dì",
+      "meaning": "帝王，天帝，宇宙最高主宰",
+      "en_word": "sovereign",
+      "en_meaning": "a supreme ruler, especially a monarch"
+    },
+    {
+      "char": "立",
+      "simplified": "立",
+      "pinyin": "lì",
+      "meaning": "建立，树立，开始",
+      "en_word": "establish",
+      "en_meaning": "to set up or found"
+    },
+    {
+      "char": "國",
+      "simplified": "国",
+      "pinyin": "guó",
+      "meaning": "国家，疆域，政权",
+      "en_word": "nation",
+      "en_meaning": "a sovereign state or country"
+    },
+    {
+      "char": "維",
+      "simplified": "维",
+      "pinyin": "wéi",
+      "meaning": "维系，维持，思考",
+      "en_word": "maintain",
+      "en_meaning": "to keep in existence or continuance"
+    },
+    {
+      "char": "初",
+      "simplified": "初",
+      "pinyin": "chū",
+      "meaning": "开始，最初，本来",
+      "en_word": "beginning",
+      "en_meaning": "the starting point or origin"
+    },
+    {
+      "char": "在",
+      "simplified": "在",
+      "pinyin": "zài",
+      "meaning": "存在，处于，位于",
+      "en_word": "exist",
+      "en_meaning": "to have being or reality"
+    },
+    {
+      "char": "昔",
+      "simplified": "昔",
+      "pinyin": "xī",
+      "meaning": "从前，过去，昔日",
+      "en_word": "past",
+      "en_meaning": "time gone by"
+    },
+    {
+      "char": "嗣",
+      "simplified": "嗣",
+      "pinyin": "sì",
+      "meaning": "继承，后代，接续",
+      "en_word": "inherit",
+      "en_meaning": "to receive from a predecessor"
+    },
+    {
+      "char": "世",
+      "simplified": "世",
+      "pinyin": "shì",
+      "meaning": "世代，世界，时代",
+      "en_word": "generation",
+      "en_meaning": "a period of time in family lineage"
+    },
+    {
+      "char": "稱",
+      "simplified": "称",
+      "pinyin": "chēng",
+      "meaning": "称呼，称为，称作",
+      "en_word": "call",
+      "en_meaning": "to give a name or title"
+    },
+    {
+      "char": "王",
+      "simplified": "王",
+      "pinyin": "wáng",
+      "meaning": "君王，统治者，诸侯",
+      "en_word": "king",
+      "en_meaning": "a male monarch of a kingdom"
+    }
+  ]
+}

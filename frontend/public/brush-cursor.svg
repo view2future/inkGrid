@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <defs>
+    <!-- 木质笔杆渐变 -->
+    <linearGradient id="bambooGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#a67c52;stop-opacity:1" />
+      <stop offset="40%" style="stop-color:#c4956a;stop-opacity:1" />
+      <stop offset="60%" style="stop-color:#c4956a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8b6f47;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- 整个毛笔旋转，毛笔头朝向左上方（11点方向） -->
+  <!-- 笔杆从右下到左上，笔头在左上 -->
+  <g transform="rotate(-135, 24, 24)">
+    <!-- 细长圆润的白色毛笔头 - 在左上角 -->
+    <ellipse cx="24" cy="40" rx="5" ry="10" fill="#fafafa" />
+    <ellipse cx="24" cy="41" rx="4" ry="9" fill="#f5f5f0" />
+    <ellipse cx="24" cy="42" rx="3" ry="7" fill="#f0f0ea" />
+    <ellipse cx="24" cy="43" rx="2.5" ry="5" fill="#e8e8e0" />
+    
+    <!-- 毛笔头边缘阴影 -->
+    <ellipse cx="24" cy="40" rx="5" ry="10" fill="none" stroke="#e0e0d8" stroke-width="0.5" opacity="0.6"/>
+    
+    <!-- 笔尖一点点墨汁（黑色）- 在左上方 -->
+    <ellipse cx="24" cy="46" rx="1.8" ry="3" fill="#1a1a1a" opacity="0.7" />
+    <ellipse cx="24" cy="47" rx="1.2" ry="2" fill="#0d0d0d" opacity="0.5" />
+    
+    <!-- 笔斗（连接处）- 深色部分 -->
+    <path d="M19 28 Q24 30 29 28 L28 32 Q24 33 20 32 Z" fill="#4a3728" stroke="#2d1f14" stroke-width="0.5"/>
+    <path d="M20 29 Q24 31 28 29" stroke="#2d1f14" stroke-width="1" fill="none"/>
+    
+    <!-- 细长的笔杆 -->
+    <rect x="21.5" y="4" width="5" height="26" rx="0.5" fill="url(#bambooGradient)" stroke="#8b6f47" stroke-width="0.3"/>
+    
+    <!-- 笔杆高光 -->
+    <rect x="22.5" y="5" width="1.5" height="24" rx="0.3" fill="#d4b896" opacity="0.4"/>
+    
+    <!-- 笔杆装饰环（深色绑带） -->
+    <rect x="21" y="8" width="6" height="1.5" rx="0.3" fill="#2d1f14"/>
+    <rect x="21" y="20" width="6" height="1.5" rx="0.3" fill="#2d1f14"/>
+    
+    <!-- 笔尾绳结 -->
+    <ellipse cx="24" cy="3" rx="2.5" ry="1.5" fill="#4a3728"/>
+    
+    <!-- 绳带 -->
+    <path d="M24 2 Q28 0 30 2 Q32 4 30 6" stroke="#1a1a1a" stroke-width="0.8" fill="none" stroke-linecap="round"/>
+    <path d="M24 2 Q20 0 18 2 Q16 4 18 6" stroke="#1a1a1a" stroke-width="0.8" fill="none" stroke-linecap="round"/>
+  </g>
+</svg>
