@@ -1,8 +1,0 @@
-{
-  "track_id": "vlm_processor_refactor",
-  "type": "feature",
-  "status": "new",
-  "created_at": "2026-02-10T15:00:00Z",
-  "updated_at": "2026-02-10T15:00:00Z",
-  "description": "借鉴 view2future/inkGrid 方案，使用多模态大模型彻底重构碑帖识别与切分引擎。"
-}

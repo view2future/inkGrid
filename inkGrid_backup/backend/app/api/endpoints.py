@@ -1,1 +1,0 @@
-# API endpoints are now directly in app.main.py

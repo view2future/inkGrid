@@ -1,8 +1,0 @@
-{
-  "track_id": "inkgrid_processor_v1",
-  "type": "feature",
-  "status": "new",
-  "created_at": "2026-02-10T00:00:00Z",
-  "updated_at": "2026-02-10T00:00:00Z",
-  "description": "Establish the inkGrid-Processor microservice for automated stele segmentation and text alignment."
-}

@@ -29,6 +29,6 @@
 
 ---
 
-- [ ] **Track: 简化项目，移除OCR、Paddle、CV等冗余模型及逻辑**
+- [x] **Track: 简化项目，移除OCR、Paddle、CV等冗余模型及逻辑**
 *Link: [./tracks/simplify_project_20260213/](./tracks/simplify_project_20260213/)*
 

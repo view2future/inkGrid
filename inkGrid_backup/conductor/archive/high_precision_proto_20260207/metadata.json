@@ -1,8 +1,0 @@
-{
-  "track_id": "high_precision_proto_20260207",
-  "type": "feature",
-  "status": "new",
-  "created_at": "2026-02-07T22:30:00Z",
-  "updated_at": "2026-02-07T22:30:00Z",
-  "description": "构建基于 PaddleOCR 与 SAM 的高精度切分原型与标注界面"
-}
