@@ -7,13 +7,13 @@
       },
       "ports": [
         {
-          "port": 8000,
+          "port": 8080,
           "protocol": "http"
         }
       ],
       "healthCheck": {
-        "path": "/health",
-        "port": 8000
+        "path": "/",
+        "port": 8080
       }
     }
   }
