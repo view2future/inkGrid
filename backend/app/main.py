@@ -23,14 +23,17 @@ app.add_middleware(
 # 服务初始化
 alignment_service = AlignmentService()
 
+
 @app.get("/", response_class=HTMLResponse)
 async def read_root():
     return "<h1>墨阵 InkGrid Backend is Running (Lean Version)</h1>"
+
 
 @app.get("/api/steles")
 async def list_steles():
     """获取碑帖列表"""
     return alignment_service.list_steles()
+
 
 @app.get("/api/steles/{name:path}")
 async def get_stele_content(name: str):
@@ -40,17 +43,15 @@ async def get_stele_content(name: str):
         return {"error": "Stele not found"}, 404
     return content
 
+
 # 静态资源处理
 @app.get("/api/static/steles/{path:path}")
 async def get_static_stele_file(path: str):
     """分发碑帖静态图片"""
     # 假设图片存储在公共目录或特定路径
     # 这里可以根据实际情况调整
-    base_path = "public/steles" 
+    base_path = "public/steles"
     file_location = os.path.join(base_path, path)
     if os.path.exists(file_location):
         return FileResponse(file_location)
     return {"error": "File not found"}, 404
-
-if __name__ == "__main__":
-    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
