@@ -109,18 +109,17 @@ function SharePoster({ data, type, onClose }: { data: any; type: CardType; onClo
             </div>
 
             {type === 'char' ? (
-              /* --- 篆字版：保持您满意的竖屏大图设计 --- */
+              /* --- 篆字版：放大字体，去英文 --- */
               <div className="flex-1 flex flex-col">
                  <div className="flex-1 flex flex-col items-center justify-center relative py-10">
                     <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none"><span className="text-[18rem] font-serif font-black">篆</span></div>
-                    <div className="w-72 h-72 flex items-center justify-center relative z-10 scale-110">
+                    <div className="w-72 h-72 flex items-center justify-center relative z-10 scale-[1.6]">
                       <img src={data.image} className="max-w-full max-h-full object-contain filter contrast-150 brightness-105 mix-blend-multiply" />
                     </div>
-                    <div className="absolute top-4 right-0 flex flex-col items-center gap-2">
-                       <div className="w-14 h-14 border border-stone-800 flex items-center justify-center bg-white/40 backdrop-blur-sm shadow-sm">
-                          <span className="text-3xl font-serif font-bold text-stone-900">{data.simplified || '篆'}</span>
+                    <div className="absolute top-0 -right-4 flex flex-col items-center gap-2">
+                       <div className="w-20 h-20 border border-stone-800 rounded-full flex items-center justify-center bg-white/40 backdrop-blur-sm shadow-sm">
+                          <span className="text-4xl font-serif font-bold text-stone-900">{data.simplified || '篆'}</span>
                        </div>
-                       <span className="text-[10px] font-mono text-stone-500 tracking-widest font-black uppercase">{data.pinyin}</span>
                     </div>
                  </div>
                  <div className="mt-auto space-y-6 pt-6 border-t border-stone-300/60">
@@ -137,10 +136,10 @@ function SharePoster({ data, type, onClose }: { data: any; type: CardType; onClo
             ) : (
               /* --- 碑帖版：还原横屏、去英文、去红印、上提内容 --- */
               <div className="flex-1 flex flex-col">
-                 {/* 顶部标签 */}
+                 {/* 顶部标签 - 纯净中文 */}
                  <div className="flex items-center gap-3 mb-6">
                     <div className="bg-stone-900 text-[#F2E6CE] px-3 py-1 text-[9px] font-black tracking-widest">【{data.dynasty}】</div>
-                    <span className="text-[9px] font-serif text-stone-500 tracking-[0.4em] uppercase">名帖賞析 · {data.script_type}</span>
+                    <span className="text-[9px] font-serif text-stone-500 tracking-[0.4em]">名帖賞析 · {data.script_type}</span>
                     <div className="h-px flex-1 bg-stone-300" />
                  </div>
 
@@ -183,18 +182,11 @@ function SharePoster({ data, type, onClose }: { data: any; type: CardType; onClo
               </div>
             )}
 
-            {/* 页脚整体上提，确保落款在安全区域内 */}
-            <div className="mt-auto pt-4 border-t border-stone-300 flex justify-between items-end pb-12">
-              <div className="flex items-center gap-4">
-                 <div className="w-8 h-8 border border-stone-300 rounded-sm flex items-center justify-center shadow-sm"><Smartphone size={14} className="text-stone-300" /></div>
-                 <div className="flex flex-col items-start">
-                    <span className="text-[10px] font-serif font-black text-[#8B0000] tracking-widest">金石華彩</span>
-                    <span className="text-[7px] font-serif text-stone-400 tracking-widest opacity-60">掃碼研習</span>
-                 </div>
-              </div>
-              <div className="flex flex-col items-end gap-1 text-right">
-                <span className="text-[9px] font-serif font-black text-stone-800 tracking-[0.2em]">墨陣 · 數字化典藏</span>
-                <span className="text-[7px] font-mono text-stone-400 tracking-widest uppercase">RECORDED IN 2026</span>
+            {/* 页脚：移除落款内容，保留底边线和呼吸空间 */}
+            <div className="mt-auto pt-4 border-t border-stone-300 pb-12">
+              <div className="flex justify-between items-center opacity-20 grayscale">
+                 <Logo size={20} />
+                 <span className="text-[8px] font-serif tracking-[0.5em]">数字化典藏</span>
               </div>
             </div>
           </div>
