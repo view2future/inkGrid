@@ -1,29 +1,13 @@
 // 嶧山刻石 - 追光背景与长卷详情精准恢复版
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useMutation } from '@tanstack/react-query';
-import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Globe, Info, X, ChevronRight, ChevronLeft, Type, Library, BookOpen } from 'lucide-react';
-import PixiRenderer from './components/PixiRenderer';
-import GridEditor from './components/GridEditor';
-import TracingBoard from './components/TracingBoard';
-import ARQuest from './components/ARQuest';
+import { Search, Globe, Info, X, ChevronRight, ChevronLeft, Library } from 'lucide-react';
 import StrokeWriter from './components/StrokeWriter';
 import Logo from './components/Logo';
 import GalleryCorridor from './components/GalleryCorridor';
 import InkFlow from './components/InkFlow';
 import CharCarousel from './components/CharCarousel';
-
-interface AlignedCharacter {
-  text: string;
-  aligned_text: string;
-  simplified: string;
-  pinyin: string;
-  meaning: string;
-  bbox: [number, number, number, number];
-  confidence: number;
-}
 
 const YISHAN_IMAGE = "/steles/1-zhuanshu/1-yishankeshi/yishan.jpg";
 const YISHAN2_IMAGE = "/steles/1-zhuanshu/1-yishankeshi/yishan2.jpg";
