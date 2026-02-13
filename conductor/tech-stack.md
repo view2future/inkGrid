@@ -6,16 +6,10 @@
 - **矢量计算引擎**: **Paper.js** (核心标注逻辑：Bézier 拟合、节点管理)
 - **多语言与样式**: i18next + Tailwind CSS (v4)
 
-## 2. 后端算力层 (The Intelligence Core)
-- **Web 服务**: FastAPI (Python)
-- **微服务架构**: 
-  - **InkGrid Processor**: 独立图像处理微服务 (FastAPI + Celery + Redis)
-  - **核心算法**: OpenCV (投影分析/去噪), NumPy
-- **AI 引擎**: 
-  - **PaddleOCR**: 用于碑文全图定位与语义对齐初识。
-  - **SAM (Segment Anything)**: 用于像素级笔画边缘细化。
-- **数据库**: PostgreSQL (空间坐标存储) + MongoDB (灵活元数据)
+## 2. 后端服务层
+- **Web 服务**: FastAPI (Python) - 极简 API 用于分发 JSON 数据与静态资源
+- **图像处理**: Pillow (基础图像操作)
 
 ## 3. 部署架构
-- **桌面端**: Electron (支持本地超大图像处理)
-- **移动端**: 响应式 Web + WebXR (AR 互动原型)
+- **Web 部署**: 静态前端托管 + 极简后端服务
+- **移动端**: 响应式 Web 适配 (Mobile First 交互设计)
