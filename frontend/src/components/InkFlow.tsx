@@ -1,7 +1,9 @@
-import { useState, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react';
+import { useRef, useState, useEffect, useCallback, useMemo, forwardRef, useImperativeHandle } from 'react';
 import { motion, AnimatePresence, type PanInfo, useDragControls } from 'framer-motion';
-import { X, BookOpen, Info, Share2, Scroll, Sparkles, MapPin, Download } from 'lucide-react';
+import { X, BookOpen, Info, Share2, Scroll, Sparkles, MapPin, Download, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import Logo from './Logo';
+import { useMediaQuery } from '../utils/useMediaQuery';
+import MobilePosterModal from './MobilePosterModal';
 
 
 interface SteleKnowledge {
@@ -40,6 +42,7 @@ interface InkFlowProps {
 
 type FlowMode = 'characters' | 'steles';
 type CardType = 'char' | 'stele';
+type MobilePage = 'hub' | FlowMode;
 
 interface FlowCard {
   id: string;
@@ -300,35 +303,98 @@ function SteleCard({ stele }: { stele: Stele }) {
 }
 
 const InkFlow = forwardRef(({ isOpen, onClose }: InkFlowProps, ref) => {
+  const isMobile = useMediaQuery('(max-width: 768px)');
   const [mode, setMode] = useState<FlowMode>('characters');
   const [steleCards, setSteleCards] = useState<FlowCard[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState(0);
   const [sealPosition, setSealPosition] = useState({ x: 0, y: 0, visible: false });
   const [showPoster, setShowPoster] = useState(false);
+  const [mobilePage, setMobilePage] = useState<MobilePage>('hub');
+  const [mobileSteleIndex, setMobileSteleIndex] = useState(0);
+  const [mobileSteleSection, setMobileSteleSection] = useState(0);
+  const [showStelePicker, setShowStelePicker] = useState(false);
+  const [mobileSteleQuery, setMobileSteleQuery] = useState('');
+  const [showSteleFullText, setShowSteleFullText] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+  const edgeSwipeRef = useRef<{
+    pointerId: number | null;
+    startX: number;
+    startY: number;
+    edge: 'left' | 'right' | null;
+    active: boolean;
+  }>({ pointerId: null, startX: 0, startY: 0, edge: null, active: false });
   const dragControls = useDragControls();
 
   useImperativeHandle(ref, () => ({
-    isInternalOpen: () => showPoster,
-    closeInternal: () => setShowPoster(false)
+    isInternalOpen: () => showPoster || showStelePicker || showSteleFullText,
+    closeInternal: () => {
+      if (showPoster) setShowPoster(false);
+      else if (showStelePicker) setShowStelePicker(false);
+      else if (showSteleFullText) setShowSteleFullText(false);
+    }
   }));
 
   const [charDataFull, setCharDataFull] = useState<any[]>([]);
 
+  const toastTimerRef = useRef<number | null>(null);
+  const showToast = useCallback((message: string) => {
+    setToast(message);
+    if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current);
+    toastTimerRef.current = window.setTimeout(() => setToast(null), 2200);
+  }, []);
+
+  const loadChars = useCallback(async () => {
+    const res = await fetch('/data/yishan_characters.json');
+    const data = await res.json();
+    setCharDataFull(
+      (data.characters || []).map((c: any, i: number) => ({
+        ...c,
+        id: `y_${i}`,
+        image: `/steles/extracted_by_grid/char_${String(i + 1).padStart(4, '0')}.png`,
+        sourceTitle: '嶧山刻石',
+        author: '李斯',
+        dynasty: '秦',
+      }))
+    );
+  }, []);
+
+  const loadSteles = useCallback(async () => {
+    const res = await fetch('/data/steles.json');
+    const data = await res.json();
+    setSteleCards((data.steles || []).map((s: any) => ({ id: `s_${s.id}`, type: 'stele' as CardType, data: s })));
+  }, []);
+
   useEffect(() => {
-    if (isOpen) {
-      fetch('/data/yishan_characters.json').then(res => res.json()).then(data => {
-        setCharDataFull(data.characters.map((c: any, i: number) => ({ ...c, id: `y_${i}`, image: `/steles/extracted_by_grid/char_${String(i + 1).padStart(4, '0')}.png` })));
-      });
-      fetch('/data/steles.json').then(res => res.json()).then(data => {
-        setSteleCards(data.steles.map((s: any) => ({ id: `s_${s.id}`, type: 'stele' as CardType, data: s })));
-      });
-    }
-  }, [isOpen]);
+    if (!isOpen) return;
+    void loadChars();
+    void loadSteles();
+  }, [isOpen, loadChars, loadSteles]);
+
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current);
+    };
+  }, []);
 
   const charCards = charDataFull.map(c => ({ id: c.id, type: 'char' as CardType, data: c }));
   const currentCards = mode === 'characters' ? charCards : steleCards;
   const currentCard = currentCards[currentIndex];
+
+  const mobileSteles = useMemo(() => steleCards.map((c) => c.data as Stele), [steleCards]);
+  const mobileFilteredSteles = useMemo(() => {
+    if (!mobileSteleQuery.trim()) return mobileSteles;
+    const q = mobileSteleQuery.trim().toLowerCase();
+    return mobileSteles.filter((s) => {
+      return (
+        s.name.toLowerCase().includes(q) ||
+        s.author.toLowerCase().includes(q) ||
+        s.dynasty.toLowerCase().includes(q) ||
+        s.script_type.toLowerCase().includes(q) ||
+        s.location.toLowerCase().includes(q)
+      );
+    });
+  }, [mobileSteles, mobileSteleQuery]);
 
   const navigate = useCallback((dir: number) => {
     const nextIdx = currentIndex + dir;
@@ -341,23 +407,347 @@ const InkFlow = forwardRef(({ isOpen, onClose }: InkFlowProps, ref) => {
   const handleDragEnd = (_: any, info: PanInfo) => { if (Math.abs(info.offset.y) > 80) navigate(info.offset.y < 0 ? 1 : -1); };
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || isMobile) return;
     const handleWheel = (e: WheelEvent) => { if (Math.abs(e.deltaY) < 30) return; navigate(e.deltaY > 0 ? 1 : -1); };
     window.addEventListener('wheel', handleWheel);
     return () => window.removeEventListener('wheel', handleWheel);
-  }, [isOpen, navigate]);
+  }, [isOpen, isMobile, navigate]);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || isMobile) return;
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'ArrowDown' || e.key === 'ArrowRight') navigate(1);
       if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') navigate(-1);
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [isOpen, navigate]);
+  }, [isOpen, isMobile, navigate]);
 
   if (!isOpen) return null;
+
+  if (isMobile) {
+    const currentChar = mobilePage === 'characters' ? (charDataFull[currentIndex] ?? null) : null;
+    const currentStele = mobilePage === 'steles' ? (mobileSteles[mobileSteleIndex] ?? null) : null;
+
+    const posterTarget = currentChar
+      ? {
+          kind: 'char' as const,
+          title: `墨流 · ${String(currentChar.simplified || currentChar.char || '').trim() || '篆字研习'}`,
+          data: currentChar,
+        }
+      : currentStele
+        ? {
+            kind: 'stele' as const,
+            title: `墨流 · ${currentStele.name}`,
+            data: currentStele,
+          }
+        : null;
+
+    const title = mobilePage === 'characters' ? '篆字研习' : mobilePage === 'steles' ? '58名帖赏析' : '墨流';
+
+    const refreshAll = async () => {
+      try {
+        await Promise.all([loadChars(), loadSteles()]);
+        showToast('已刷新');
+      } catch {
+        showToast('刷新失败');
+      }
+    };
+
+    const navigateChar = (dir: number) => {
+      const nextIdx = currentIndex + dir;
+      if (nextIdx >= 0 && nextIdx < charDataFull.length) {
+        setDirection(dir);
+        setCurrentIndex(nextIdx);
+      }
+    };
+
+    const navigateStele = (dir: number) => {
+      const maxSection = 2;
+
+      // pull to refresh (only at the very top)
+      if (dir < 0 && mobileSteleIndex === 0 && mobileSteleSection === 0) {
+        void refreshAll();
+        return;
+      }
+
+      if (dir > 0) {
+        if (mobileSteleSection < maxSection) {
+          setDirection(1);
+          setMobileSteleSection((s) => Math.min(maxSection, s + 1));
+          return;
+        }
+        if (mobileSteleIndex < mobileSteles.length - 1) {
+          setDirection(1);
+          setMobileSteleIndex((i) => Math.min(mobileSteles.length - 1, i + 1));
+          setMobileSteleSection(0);
+          return;
+        }
+        showToast('已到最后一帖');
+        return;
+      }
+
+      if (mobileSteleSection > 0) {
+        setDirection(-1);
+        setMobileSteleSection((s) => Math.max(0, s - 1));
+        return;
+      }
+      if (mobileSteleIndex > 0) {
+        setDirection(-1);
+        setMobileSteleIndex((i) => Math.max(0, i - 1));
+        setMobileSteleSection(maxSection);
+        return;
+      }
+    };
+
+    const handleBack = () => {
+      if (showPoster) {
+        setShowPoster(false);
+        return;
+      }
+      if (showSteleFullText) {
+        setShowSteleFullText(false);
+        return;
+      }
+      if (showStelePicker) {
+        setShowStelePicker(false);
+        return;
+      }
+      if (mobilePage !== 'hub') {
+        setMobilePage('hub');
+        return;
+      }
+      onClose();
+    };
+
+    const openCharacters = () => {
+      setMode('characters');
+      setCurrentIndex(0);
+      setDirection(0);
+      setShowStelePicker(false);
+      setShowSteleFullText(false);
+      setMobilePage('characters');
+    };
+
+    const openSteles = () => {
+      setMode('steles');
+      setDirection(0);
+      setMobileSteleIndex(0);
+      setMobileSteleSection(0);
+      setMobileSteleQuery('');
+      setShowStelePicker(false);
+      setShowSteleFullText(false);
+      setMobilePage('steles');
+    };
+
+    const onPointerDown = (e: React.PointerEvent) => {
+      if (e.pointerType !== 'touch') return;
+      const edgeMargin = 24;
+      const w = window.innerWidth || 0;
+      const edge = e.clientX <= edgeMargin ? 'left' : e.clientX >= w - edgeMargin ? 'right' : null;
+      edgeSwipeRef.current = {
+        pointerId: e.pointerId,
+        startX: e.clientX,
+        startY: e.clientY,
+        edge,
+        active: true,
+      };
+    };
+
+    const onPointerMove = (e: React.PointerEvent) => {
+      const s = edgeSwipeRef.current;
+      if (!s.active) return;
+      if (s.pointerId !== e.pointerId) return;
+
+      const dx = e.clientX - s.startX;
+      const dy = e.clientY - s.startY;
+
+      // If it's clearly a vertical gesture, don't hijack it.
+      if (Math.abs(dy) > 70 && Math.abs(dx) < 60) {
+        s.active = false;
+        return;
+      }
+
+      const isHorizontal = Math.abs(dx) > Math.abs(dy) * 1.4 && Math.abs(dy) < 70;
+      if (!isHorizontal) return;
+
+      if (s.edge === 'left' && dx > 78) {
+        s.active = false;
+        handleBack();
+        return;
+      }
+
+      if (s.edge === 'right' && dx < -78) {
+        s.active = false;
+        handleBack();
+        return;
+      }
+
+      if (!s.edge && Math.abs(dx) > 160) {
+        s.active = false;
+        handleBack();
+      }
+    };
+
+    const onPointerUp = (e: React.PointerEvent) => {
+      const s = edgeSwipeRef.current;
+      if (s.pointerId === e.pointerId) {
+        edgeSwipeRef.current = { pointerId: null, startX: 0, startY: 0, edge: null, active: false };
+      }
+    };
+
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[100] bg-[#F6F1E7] text-stone-950 overflow-hidden"
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
+      >
+        {/* 纸墨底色 */}
+        <div className="absolute inset-0 opacity-[0.10] bg-[url('/noise.png')]" />
+        <div className="absolute inset-0 opacity-[0.12] bg-[url('https://www.transparenttextures.com/patterns/handmade-paper.png')]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-white/70 via-transparent to-[#F1E8DA]" />
+        <motion.div
+          aria-hidden
+          className="absolute -top-40 -left-48 w-[620px] h-[620px] rounded-full bg-stone-900/10 blur-3xl"
+          animate={{ x: [0, 22, 0], y: [0, 16, 0] }}
+          transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
+        />
+        <motion.div
+          aria-hidden
+          className="absolute -bottom-48 -right-56 w-[680px] h-[680px] rounded-full bg-[#8B0000]/10 blur-3xl"
+          animate={{ x: [0, -18, 0], y: [0, -20, 0] }}
+          transition={{ duration: 20, repeat: Infinity, ease: 'easeInOut' }}
+        />
+
+        <div className="relative z-10 h-full flex flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+          {/* 顶栏 */}
+          <div className="px-5 pt-3 pb-2 flex items-center justify-between">
+            <button
+              onClick={handleBack}
+              className="w-10 h-10 rounded-full bg-white/60 backdrop-blur-md border border-stone-200/70 flex items-center justify-center text-stone-700 shadow-sm active:scale-95 transition"
+              aria-label="Back"
+            >
+              {showPoster || showStelePicker || showSteleFullText || mobilePage !== 'hub' ? <ChevronLeft size={18} /> : <X size={18} />}
+            </button>
+
+            <div className="flex items-center gap-3">
+              <Logo size={24} />
+              <div className="flex flex-col items-center leading-none">
+                <span className="text-[11px] font-black tracking-[0.45em] pl-[0.45em] text-stone-900">{title}</span>
+                <span className="text-[10px] font-serif tracking-[0.2em] text-stone-500 mt-1">墨陣</span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {mobilePage === 'steles' ? (
+                <button
+                  onClick={() => setShowStelePicker(true)}
+                  className="w-10 h-10 rounded-full bg-white/60 backdrop-blur-md border border-stone-200/70 flex items-center justify-center text-stone-700 shadow-sm active:scale-95 transition"
+                  aria-label="Pick stele"
+                >
+                  <Search size={18} />
+                </button>
+              ) : null}
+
+              {posterTarget ? (
+                <button
+                  onClick={() => setShowPoster(true)}
+                  className="w-10 h-10 rounded-full bg-white/60 backdrop-blur-md border border-stone-200/70 flex items-center justify-center text-stone-700 shadow-sm active:scale-95 transition"
+                  aria-label="Share"
+                >
+                  <Share2 size={18} />
+                </button>
+              ) : (
+                <div className="w-10" />
+              )}
+            </div>
+          </div>
+
+          {/* 内容 */}
+          <div className="flex-1 overflow-hidden">
+            {mobilePage === 'hub' ? (
+              <MobileInkFlowHub
+                charTotal={charDataFull.length}
+                steleTotal={mobileSteles.length}
+                onOpenCharacters={openCharacters}
+                onOpenSteles={openSteles}
+                onRefresh={refreshAll}
+              />
+            ) : mobilePage === 'characters' ? (
+              <MobileInkFlowCharacter
+                char={currentChar || undefined}
+                index={currentIndex}
+                total={charDataFull.length}
+                direction={direction}
+                onNavigate={navigateChar}
+                onOpenPoster={() => posterTarget && setShowPoster(true)}
+                onRefresh={refreshAll}
+              />
+            ) : (
+              <MobileInkFlowSteleFeed
+                stele={currentStele || undefined}
+                index={mobileSteleIndex}
+                total={mobileSteles.length}
+                section={mobileSteleSection}
+                direction={direction}
+                onNavigate={navigateStele}
+                onOpenFullText={() => setShowSteleFullText(true)}
+                onRefresh={refreshAll}
+              />
+            )}
+          </div>
+
+          {posterTarget ? (
+            <MobilePosterModal isOpen={showPoster} target={posterTarget} onClose={() => setShowPoster(false)} />
+          ) : null}
+
+          <AnimatePresence>
+            {showStelePicker && (
+              <MobileStelePicker
+                query={mobileSteleQuery}
+                onQueryChange={setMobileSteleQuery}
+                total={mobileSteles.length}
+                filtered={mobileFilteredSteles}
+                onClose={() => setShowStelePicker(false)}
+                onSelect={(s) => {
+                  const idx = mobileSteles.findIndex((x) => x.id === s.id);
+                  if (idx >= 0) {
+                    setMobileSteleIndex(idx);
+                    setMobileSteleSection(0);
+                  }
+                  setShowStelePicker(false);
+                }}
+              />
+            )}
+          </AnimatePresence>
+
+          <AnimatePresence>
+            {showSteleFullText && currentStele && (
+              <MobileSteleFullText stele={currentStele} onClose={() => setShowSteleFullText(false)} />
+            )}
+          </AnimatePresence>
+
+          <AnimatePresence>
+            {toast ? (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 10 }}
+                className="absolute left-1/2 bottom-[calc(1.25rem+env(safe-area-inset-bottom))] -translate-x-1/2 px-4 py-2 rounded-full bg-black/70 text-white text-[12px] font-serif tracking-wide shadow-lg"
+              >
+                {toast}
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
+        </div>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-black overflow-hidden">
@@ -418,4 +808,611 @@ function CharCard({ char, onDoubleClick }: { char: any; onDoubleClick: (e: React
       </div>
     </div>
   );
+}
+
+function MobileInkFlowHub({
+  charTotal,
+  steleTotal,
+  onOpenCharacters,
+  onOpenSteles,
+  onRefresh,
+}: {
+  charTotal: number;
+  steleTotal: number;
+  onOpenCharacters: () => void;
+  onOpenSteles: () => void;
+  onRefresh: () => void;
+}) {
+  return (
+    <motion.div
+      drag="y"
+      dragConstraints={{ top: 0, bottom: 120 }}
+      dragElastic={0.22}
+      onDragEnd={(_, info) => {
+        if (info.offset.y > 90) onRefresh();
+      }}
+      className="h-full"
+    >
+      <div className="h-full overflow-y-auto px-5 pt-6 pb-[calc(2.5rem+env(safe-area-inset-bottom))]">
+        <div className="max-w-md mx-auto">
+          <div className="mb-6 text-center text-[10px] font-serif text-stone-500 tracking-[0.35em] opacity-70">下拉刷新</div>
+        <div className="mb-10 space-y-4">
+          <div className="inline-flex items-center gap-3">
+            <div className="w-1.5 h-1.5 bg-[#8B0000] rotate-45" />
+            <span className="text-[10px] font-black tracking-[0.6em] pl-[0.6em] text-stone-600">今日入墨</span>
+          </div>
+          <h2 className="text-3xl font-serif font-black tracking-[0.35em] pl-[0.35em] text-stone-900">选一页，慢慢看</h2>
+          <p className="text-sm font-serif text-stone-600 leading-relaxed tracking-wide">把屏幕当作一张小册页：先研习一字，再游目一帖。</p>
+        </div>
+
+        <div className="space-y-4">
+          <motion.button
+            onClick={onOpenCharacters}
+            whileTap={{ scale: 0.98 }}
+            className="w-full text-left rounded-[2rem] bg-white/60 backdrop-blur-md border border-stone-200/70 shadow-[0_25px_70px_rgba(0,0,0,0.10)] overflow-hidden"
+          >
+            <div className="relative p-6">
+              <div className="absolute inset-0 opacity-[0.12] bg-[url('https://www.transparenttextures.com/patterns/handmade-paper.png')]" />
+              <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#8B0000]/60" />
+              <div className="relative flex items-start justify-between gap-6">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3">
+                    <span className="text-[10px] font-black tracking-[0.6em] pl-[0.6em] text-stone-600">篆字研习</span>
+                    <span className="text-[10px] font-mono text-stone-500 tracking-widest">{charTotal || 0} 字</span>
+                  </div>
+                  <div className="text-xl font-serif font-black text-stone-900 tracking-wide">一字一页</div>
+                  <p className="text-[12px] font-serif text-stone-600 leading-relaxed tracking-wide">上滑翻临，下滑回看；让笔意在指尖停一会儿。</p>
+                </div>
+                <div className="shrink-0 w-10 h-10 rounded-full bg-[#8B0000] text-[#F2E6CE] flex items-center justify-center shadow-[0_18px_40px_rgba(139,0,0,0.22)]">
+                  <ChevronRight size={18} />
+                </div>
+              </div>
+            </div>
+          </motion.button>
+
+          <motion.button
+            onClick={onOpenSteles}
+            whileTap={{ scale: 0.98 }}
+            className="w-full text-left rounded-[2rem] bg-white/60 backdrop-blur-md border border-stone-200/70 shadow-[0_25px_70px_rgba(0,0,0,0.10)] overflow-hidden"
+          >
+            <div className="relative p-6">
+              <div className="absolute inset-0 opacity-[0.12] bg-[url('https://www.transparenttextures.com/patterns/handmade-paper.png')]" />
+              <div className="absolute left-0 top-0 bottom-0 w-1 bg-stone-900/30" />
+              <div className="relative flex items-start justify-between gap-6">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3">
+                    <span className="text-[10px] font-black tracking-[0.6em] pl-[0.6em] text-stone-600">名帖赏析</span>
+                    <span className="text-[10px] font-mono text-stone-500 tracking-widest">{steleTotal || 0} 帖</span>
+                  </div>
+                  <div className="text-xl font-serif font-black text-stone-900 tracking-wide">58 名帖</div>
+                  <p className="text-[12px] font-serif text-stone-600 leading-relaxed tracking-wide">把名迹当作风景看：先看气韵，再读原文与背景。</p>
+                </div>
+                <div className="shrink-0 w-10 h-10 rounded-full bg-white/70 border border-stone-200/80 text-stone-700 flex items-center justify-center shadow-sm">
+                  <ChevronRight size={18} />
+                </div>
+              </div>
+            </div>
+          </motion.button>
+        </div>
+
+        <div className="mt-10 text-center text-[10px] font-serif text-stone-500 tracking-[0.35em] opacity-70">
+          一屏只做一件事，才能更好看字
+        </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+function MobileInkFlowCharacter({
+  char,
+  index,
+  total,
+  direction,
+  onNavigate,
+  onOpenPoster,
+  onRefresh,
+}: {
+  char: any | undefined;
+  index: number;
+  total: number;
+  direction: number;
+  onNavigate: (dir: number) => void;
+  onOpenPoster: () => void;
+  onRefresh: () => void;
+}) {
+  const handleDragEnd = (_: any, info: PanInfo) => {
+    if (info.offset.y > 95 && index === 0) {
+      onRefresh();
+      return;
+    }
+    if (Math.abs(info.offset.y) < 70) return;
+    onNavigate(info.offset.y < 0 ? 1 : -1);
+  };
+
+  if (!char || total === 0) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center px-8">
+        <div className="w-20 h-20 rounded-full bg-white/60 border border-stone-200/70 shadow-sm" />
+        <p className="mt-6 text-sm font-serif text-stone-600 tracking-wide">正在铺开墨页…</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-full flex flex-col px-5 pt-4 pb-[calc(2.5rem+env(safe-area-inset-bottom))]">
+      <div className="flex items-center justify-between">
+        <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-white/55 backdrop-blur-md border border-stone-200/70 shadow-sm">
+          <span className="text-[10px] font-black tracking-[0.6em] pl-[0.6em] text-stone-600">篆字研习</span>
+          <span className="text-[10px] font-serif tracking-[0.2em] text-stone-500">上滑下一字</span>
+        </div>
+        <span className="text-[10px] font-mono text-stone-500 tracking-widest">{String(index + 1).padStart(3, '0')} / {String(total).padStart(3, '0')}</span>
+      </div>
+
+      <div className="flex-1 flex items-center justify-center py-6">
+        <AnimatePresence mode="wait" custom={direction}>
+          <motion.div
+            key={char.id || index}
+            custom={direction}
+            initial={{ opacity: 0, y: direction >= 0 ? 40 : -40, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: direction >= 0 ? -40 : 40, scale: 0.98 }}
+            transition={{ type: 'spring', stiffness: 240, damping: 28 }}
+            drag="y"
+            dragConstraints={{ top: 0, bottom: 0 }}
+            dragElastic={0.22}
+            onDragEnd={handleDragEnd}
+            className="w-full max-w-[420px]"
+          >
+            <div className="relative aspect-square rounded-[2.75rem] bg-white/60 backdrop-blur-md border border-stone-200/70 shadow-[0_30px_90px_rgba(0,0,0,0.12)] overflow-hidden">
+              <div className="absolute inset-0 opacity-[0.14] bg-[url('https://www.transparenttextures.com/patterns/handmade-paper.png')]" />
+              <div className="absolute inset-0 bg-gradient-to-b from-white/40 via-transparent to-transparent" />
+              <img
+                src={char.image}
+                alt={`篆字 ${char.simplified || ''}`}
+                className="absolute inset-10 w-[calc(100%-5rem)] h-[calc(100%-5rem)] object-contain mix-blend-multiply opacity-95"
+                draggable={false}
+              />
+
+              <div className="absolute top-5 right-5">
+                <div className="w-14 h-14 rounded-2xl bg-[#8B0000] text-[#F2E6CE] flex items-center justify-center shadow-[0_18px_40px_rgba(139,0,0,0.22)] border border-[#8B0000]/60">
+                  <span className="text-2xl font-serif font-black">{char.simplified || '字'}</span>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      <div className="mt-auto space-y-5">
+        <div className="flex items-baseline justify-between">
+          <div className="flex items-baseline gap-3">
+            <span className="text-3xl font-serif font-black tracking-[0.35em] pl-[0.35em] text-stone-900">{char.simplified}</span>
+            <span className="text-[11px] font-mono text-[#8B0000] tracking-widest">{char.pinyin}</span>
+          </div>
+          <button
+            onClick={onOpenPoster}
+            className="px-4 py-2 rounded-full bg-white/60 border border-stone-200/70 text-stone-700 text-[10px] font-black tracking-[0.4em] pl-[0.4em] shadow-sm active:scale-95 transition"
+          >
+            海报
+          </button>
+        </div>
+
+        <p className="text-sm font-serif text-stone-700 leading-relaxed tracking-wide text-justify-zh">
+          {char.meaning || '以形观势，以势入心。'}
+        </p>
+
+        <div className="rounded-[1.75rem] bg-white/60 backdrop-blur-md border border-stone-200/70 shadow-sm p-5">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <div className="text-[10px] font-black tracking-[0.5em] pl-[0.5em] text-stone-500">出处</div>
+              <div className="mt-2 text-sm font-serif text-stone-800 tracking-wide">《{char.sourceTitle || '嶧山刻石'}》</div>
+            </div>
+            <div>
+              <div className="text-[10px] font-black tracking-[0.5em] pl-[0.5em] text-stone-500">作者</div>
+              <div className="mt-2 text-sm font-serif text-stone-800 tracking-wide">{char.dynasty || '秦'} · {char.author || '李斯'}</div>
+            </div>
+          </div>
+
+          <div className="my-4 h-px bg-stone-200/70" />
+
+          <div>
+            <div className="text-[10px] font-black tracking-[0.5em] pl-[0.5em] text-stone-500">English</div>
+            <div className="mt-2 text-[11px] font-mono text-[#8B0000] tracking-widest uppercase">{char.en_word || '-'}</div>
+            <div className="mt-2 text-[12px] font-serif text-stone-700 leading-relaxed tracking-wide">
+              {char.en_meaning || '—'}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between pt-1">
+          <button
+            onClick={() => onNavigate(-1)}
+            className="px-5 py-3 rounded-[1.25rem] bg-white/60 border border-stone-200/70 text-stone-700 text-[11px] font-black tracking-[0.35em] pl-[0.35em] shadow-sm active:scale-95 transition disabled:opacity-40"
+            disabled={index <= 0}
+          >
+            上一字
+          </button>
+          <div className="text-[10px] font-serif text-stone-500 tracking-[0.3em] opacity-70">滑动翻页</div>
+          <button
+            onClick={() => onNavigate(1)}
+            className="px-5 py-3 rounded-[1.25rem] bg-white/60 border border-stone-200/70 text-stone-700 text-[11px] font-black tracking-[0.35em] pl-[0.35em] shadow-sm active:scale-95 transition disabled:opacity-40"
+            disabled={index >= total - 1}
+          >
+            下一字
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MobileInkFlowSteleFeed({
+  stele,
+  index,
+  total,
+  section,
+  direction,
+  onNavigate,
+  onOpenFullText,
+  onRefresh,
+}: {
+  stele: Stele | undefined;
+  index: number;
+  total: number;
+  section: number;
+  direction: number;
+  onNavigate: (dir: number) => void;
+  onOpenFullText: () => void;
+  onRefresh: () => void;
+}) {
+  const handleDragEnd = (_: any, info: PanInfo) => {
+    if (Math.abs(info.offset.y) < 70) return;
+    onNavigate(info.offset.y < 0 ? 1 : -1);
+  };
+
+  if (!stele || total === 0) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center px-8">
+        <div className="w-20 h-20 rounded-full bg-white/60 border border-stone-200/70 shadow-sm" />
+        <p className="mt-6 text-sm font-serif text-stone-600 tracking-wide">正在展开名帖…</p>
+      </div>
+    );
+  }
+
+  const sectionLabels = ['题签', '赏析', '原文'];
+  const excerpt = getExcerpt(stele.content, 260);
+
+  return (
+    <div className="h-full flex flex-col px-5 pt-4 pb-[calc(2.5rem+env(safe-area-inset-bottom))]">
+      <div className="flex items-center justify-between">
+        <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-white/55 backdrop-blur-md border border-stone-200/70 shadow-sm">
+          <span className="text-[10px] font-black tracking-[0.6em] pl-[0.6em] text-stone-600">名帖赏析</span>
+          <span className="text-[10px] font-serif tracking-[0.2em] text-stone-500">{sectionLabels[section] || '阅读'}</span>
+        </div>
+        <span className="text-[10px] font-mono text-stone-500 tracking-widest">{String(index + 1).padStart(2, '0')} / {String(total).padStart(2, '0')}</span>
+      </div>
+
+      <div className="flex-1 flex items-center justify-center py-6">
+        <AnimatePresence mode="wait" custom={direction}>
+          <motion.div
+            key={`${stele.id}-${section}`}
+            custom={direction}
+            initial={{ opacity: 0, y: direction >= 0 ? 40 : -40, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: direction >= 0 ? -40 : 40, scale: 0.98 }}
+            transition={{ type: 'spring', stiffness: 240, damping: 28 }}
+            drag="y"
+            dragConstraints={{ top: 0, bottom: 0 }}
+            dragElastic={0.22}
+            onDragEnd={handleDragEnd}
+            className="w-full max-w-[440px]"
+          >
+            <div className="relative rounded-[2.25rem] bg-white/60 backdrop-blur-md border border-stone-200/70 shadow-[0_30px_90px_rgba(0,0,0,0.10)] overflow-hidden p-6">
+              <div className="absolute inset-0 opacity-[0.12] bg-[url('https://www.transparenttextures.com/patterns/handmade-paper.png')]" />
+              <div className="absolute inset-0 bg-gradient-to-b from-white/50 via-transparent to-transparent" />
+
+              <div className="relative min-h-[62vh] flex flex-col">
+                {section === 0 ? (
+                  <>
+                    <div className="inline-flex items-center gap-2 self-start">
+                      <div className="w-1.5 h-1.5 bg-[#8B0000] rotate-45" />
+                      <span className="text-[10px] font-black tracking-[0.6em] pl-[0.6em] text-stone-600">第 {index + 1} 帖</span>
+                    </div>
+
+                    <h2 className="mt-6 text-4xl font-serif font-black text-stone-900 tracking-wide leading-tight">
+                      {stele.name}
+                    </h2>
+
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {[
+                        `${stele.dynasty} · ${stele.author}`,
+                        stele.script_type,
+                        `${stele.total_chars} 字`,
+                      ].map((item) => (
+                        <span
+                          key={item}
+                          className="px-3 py-1 rounded-full bg-white/65 border border-stone-200/70 text-[10px] font-serif text-stone-600 tracking-wide"
+                        >
+                          {item}
+                        </span>
+                      ))}
+                    </div>
+
+                    <div className="mt-6 h-px bg-stone-200/70" />
+
+                    <p className="mt-6 text-sm font-serif text-stone-700 leading-relaxed tracking-wide text-justify-zh">
+                      {stele.description || '以气韵读帖，以笔法入心。'}
+                    </p>
+
+                    <div className="mt-auto pt-8 text-center text-[10px] font-serif text-stone-500 tracking-[0.35em] opacity-70">
+                      {index === 0 ? '下拉刷新 · 上滑继续' : '上滑继续 · 下滑返回'}
+                    </div>
+                  </>
+                ) : section === 1 ? (
+                  <>
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <div className="inline-flex items-center gap-3">
+                          <div className="w-1.5 h-1.5 bg-[#8B0000] rotate-45" />
+                          <span className="text-[10px] font-black tracking-[0.6em] pl-[0.6em] text-stone-600">赏析</span>
+                        </div>
+                        <div className="mt-4 text-2xl font-serif font-black text-stone-900 tracking-wide">看气韵，也看来处</div>
+                      </div>
+                      <div className="text-right text-[10px] font-mono text-stone-500 tracking-widest">
+                        {stele.year || ''}
+                      </div>
+                    </div>
+
+                    <div className="mt-6 rounded-[1.5rem] bg-white/65 border border-stone-200/70 p-5 shadow-sm">
+                      <p className="text-sm font-serif text-stone-700 leading-relaxed tracking-wide text-justify-zh">
+                        {stele.description || '从起笔看骨力，从收束看气息。'}
+                      </p>
+                      <div className="mt-5 h-px bg-stone-200/70" />
+                      <div className="mt-4 space-y-2 text-[12px] font-serif text-stone-700">
+                        <div className="flex items-center justify-between"><span className="text-stone-500 tracking-[0.3em] text-[10px] font-black">现藏</span><span className="tracking-wide">{stele.location}</span></div>
+                        <div className="flex items-center justify-between"><span className="text-stone-500 tracking-[0.3em] text-[10px] font-black">类型</span><span className="tracking-wide">{stele.type}</span></div>
+                      </div>
+                    </div>
+
+                    <div className="mt-auto pt-8 text-center text-[10px] font-serif text-stone-500 tracking-[0.35em] opacity-70">
+                      上滑读原文 · 下滑回题签
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex items-start justify-between">
+                      <div className="inline-flex items-center gap-3">
+                        <div className="w-1.5 h-1.5 bg-[#8B0000] rotate-45" />
+                        <span className="text-[10px] font-black tracking-[0.6em] pl-[0.6em] text-stone-600">原文</span>
+                      </div>
+                      <button
+                        onClick={onOpenFullText}
+                        className="px-4 py-2 rounded-full bg-white/65 border border-stone-200/70 text-stone-700 text-[10px] font-black tracking-[0.35em] pl-[0.35em] shadow-sm active:scale-95 transition"
+                      >
+                        阅读全文
+                      </button>
+                    </div>
+
+                    <div className="mt-6 rounded-[1.75rem] bg-white/65 border border-stone-200/70 p-6 shadow-sm">
+                      <p className="text-sm font-serif text-stone-800 leading-[2.1] tracking-[0.12em] text-justify-zh indent-8 whitespace-pre-wrap">
+                        {excerpt || '此帖原文较长，建议进入“阅读全文”慢读。'}
+                      </p>
+                    </div>
+
+                    <div className="mt-auto pt-8 flex flex-col items-center gap-3">
+                      <button
+                        onClick={onRefresh}
+                        className="px-5 py-3 rounded-[1.25rem] bg-white/60 border border-stone-200/70 text-stone-700 text-[11px] font-black tracking-[0.35em] pl-[0.35em] shadow-sm active:scale-95 transition"
+                      >
+                        刷新内容
+                      </button>
+                      <div className="text-center text-[10px] font-serif text-stone-500 tracking-[0.35em] opacity-70">
+                        上滑进入下一帖 · 下滑回赏析
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      <div className="mt-auto flex items-center justify-between pt-1">
+        <button
+          onClick={() => onNavigate(-1)}
+          className="px-5 py-3 rounded-[1.25rem] bg-white/60 border border-stone-200/70 text-stone-700 text-[11px] font-black tracking-[0.35em] pl-[0.35em] shadow-sm active:scale-95 transition"
+        >
+          上一页
+        </button>
+
+        <div className="flex items-center gap-2">
+          {[0, 1, 2].map((i) => (
+            <div
+              key={i}
+              className={`h-1.5 rounded-full transition-all ${section === i ? 'w-6 bg-[#8B0000]/70' : 'w-1.5 bg-stone-400/40'}`}
+            />
+          ))}
+        </div>
+
+        <button
+          onClick={() => onNavigate(1)}
+          className="px-5 py-3 rounded-[1.25rem] bg-white/60 border border-stone-200/70 text-stone-700 text-[11px] font-black tracking-[0.35em] pl-[0.35em] shadow-sm active:scale-95 transition"
+        >
+          下一页
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function MobileStelePicker({
+  query,
+  onQueryChange,
+  total,
+  filtered,
+  onSelect,
+  onClose,
+}: {
+  query: string;
+  onQueryChange: (q: string) => void;
+  total: number;
+  filtered: Stele[];
+  onSelect: (stele: Stele) => void;
+  onClose: () => void;
+}) {
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[320] bg-black/60" onClick={onClose}>
+      <motion.div
+        initial={{ y: 30, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: 30, opacity: 0 }}
+        transition={{ type: 'spring', stiffness: 260, damping: 26 }}
+        className="absolute left-0 right-0 bottom-0 rounded-t-[2rem] bg-[#F6F1E7] border-t border-white/40 shadow-[0_-40px_120px_rgba(0,0,0,0.45)]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="px-5 pt-4 pb-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-1.5 h-1.5 bg-[#8B0000] rotate-45" />
+            <span className="text-[11px] font-black tracking-[0.6em] pl-[0.6em] text-stone-800">选择名帖</span>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-10 h-10 rounded-full bg-white/60 backdrop-blur-md border border-stone-200/70 flex items-center justify-center text-stone-700 shadow-sm"
+            aria-label="Close"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="px-5 pb-4">
+          <div className="relative bg-white/70 backdrop-blur-md border border-stone-200/80 rounded-[1.25rem] shadow-sm px-4 py-3 flex items-center gap-3">
+            <Search size={16} className="text-stone-500" />
+            <input
+              value={query}
+              onChange={(e) => onQueryChange(e.target.value)}
+              placeholder="搜名帖、书家、朝代、藏地…"
+              className="flex-1 bg-transparent border-none outline-none text-sm font-serif text-stone-800 placeholder-stone-400 tracking-wide"
+            />
+            {query.trim() ? (
+              <button
+                onClick={() => onQueryChange('')}
+                className="w-8 h-8 rounded-full hover:bg-black/5 text-stone-500 flex items-center justify-center"
+                aria-label="Clear"
+              >
+                <X size={14} />
+              </button>
+            ) : null}
+          </div>
+          <div className="mt-3 text-[10px] font-mono text-stone-500 tracking-widest">{filtered.length} / {total}</div>
+        </div>
+
+        <div className="px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] max-h-[62vh] overflow-y-auto">
+          {filtered.length === 0 ? (
+            <div className="py-14 text-center">
+              <p className="text-sm font-serif text-stone-600 tracking-wide">未找到匹配内容</p>
+              <p className="mt-2 text-[10px] font-serif text-stone-500 tracking-[0.3em] opacity-70">试试换个关键词</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {filtered.map((stele) => (
+                <motion.button
+                  key={stele.id}
+                  onClick={() => onSelect(stele)}
+                  whileTap={{ scale: 0.985 }}
+                  className="w-full text-left rounded-[1.5rem] bg-white/70 backdrop-blur-md border border-stone-200/80 shadow-sm overflow-hidden"
+                >
+                  <div className="relative p-4">
+                    <div className="absolute inset-0 opacity-[0.08] bg-[url('https://www.transparenttextures.com/patterns/handmade-paper.png')]" />
+                    <div className="relative flex items-start justify-between gap-4">
+                      <div className="min-w-0">
+                        <div className="text-[15px] font-serif font-black text-stone-900 tracking-wide truncate">{stele.name}</div>
+                        <div className="mt-1 text-[10px] text-stone-500 tracking-[0.28em] font-black">
+                          {stele.dynasty} · {stele.author} · {stele.script_type}
+                        </div>
+                      </div>
+                      <ChevronRight size={18} className="text-stone-400 mt-0.5 shrink-0" />
+                    </div>
+                  </div>
+                </motion.button>
+              ))}
+            </div>
+          )}
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+function MobileSteleFullText({ stele, onClose }: { stele: Stele; onClose: () => void }) {
+  const paragraphs = useMemo(() => formatChineseReadingText(stele.content), [stele.content]);
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[330] bg-black/85 backdrop-blur-2xl" onClick={onClose}>
+      <motion.div
+        initial={{ y: 18, opacity: 0, scale: 0.98 }}
+        animate={{ y: 0, opacity: 1, scale: 1 }}
+        exit={{ y: 18, opacity: 0, scale: 0.98 }}
+        transition={{ type: 'spring', stiffness: 260, damping: 26 }}
+        className="absolute inset-x-0 top-[env(safe-area-inset-top)] bottom-[env(safe-area-inset-bottom)] px-5 pt-5 pb-6"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="h-full max-w-md mx-auto rounded-[2rem] bg-[#F6F1E7] border border-white/10 shadow-[0_40px_120px_rgba(0,0,0,0.65)] overflow-hidden flex flex-col">
+          <div className="px-5 pt-5 pb-4 border-b border-stone-200/70 bg-white/35 backdrop-blur-xl flex items-start justify-between">
+            <div className="min-w-0">
+              <div className="text-[10px] font-black tracking-[0.6em] pl-[0.6em] text-stone-600">阅读全文</div>
+              <div className="mt-3 text-xl font-serif font-black text-stone-900 tracking-wide truncate">{stele.name}</div>
+              <div className="mt-2 text-[10px] text-stone-500 tracking-[0.28em] font-black">{stele.dynasty} · {stele.author} · {stele.script_type}</div>
+            </div>
+            <button
+              onClick={onClose}
+              className="w-10 h-10 rounded-full bg-white/60 backdrop-blur-md border border-stone-200/70 flex items-center justify-center text-stone-700 shadow-sm"
+              aria-label="Close"
+            >
+              <X size={18} />
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto px-5 py-6">
+            <div className="space-y-5">
+              {paragraphs.length ? (
+                paragraphs.map((p, i) => (
+                  <p key={i} className="text-sm font-serif text-stone-800 leading-[2.1] tracking-[0.12em] text-justify-zh indent-8">
+                    {p}
+                  </p>
+                ))
+              ) : (
+                <p className="text-sm font-serif text-stone-700 leading-relaxed tracking-wide">暂未收录原文。</p>
+              )}
+            </div>
+            <div className="mt-10 text-center text-[10px] font-serif text-stone-500 tracking-[0.35em] opacity-70">轻触空白处返回</div>
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+function getExcerpt(text: string, maxLen: number) {
+  const t = (text || '').trim();
+  if (!t) return '';
+  const sliced = t.slice(0, Math.max(0, maxLen));
+  return formatChineseReadingText(sliced).slice(0, 10).join('\n');
+}
+
+function formatChineseReadingText(text: string) {
+  const t = (text || '').trim();
+  if (!t) return [] as string[];
+
+  const normalized = t
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n')
+    .replace(/\s+\n/g, '\n')
+    .replace(/\n\s+/g, '\n')
+    .replace(/([。！？；])/g, '$1\n');
+
+  return normalized
+    .split('\n')
+    .map((s) => s.trim())
+    .filter(Boolean);
 }

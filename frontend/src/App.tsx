@@ -1,5 +1,5 @@
 // 嶧山刻石 - 追光背景与长卷详情精准恢复版
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Globe, Info, X, ChevronRight, ChevronLeft, Library } from 'lucide-react';
@@ -8,12 +8,15 @@ import Logo from './components/Logo';
 import GalleryCorridor from './components/GalleryCorridor';
 import InkFlow from './components/InkFlow';
 import CharCarousel from './components/CharCarousel';
+import { cn } from './utils/cn';
+import { useMediaQuery } from './utils/useMediaQuery';
 
 const YISHAN_IMAGE = "/steles/1-zhuanshu/1-yishankeshi/yishan.jpg";
 const YISHAN2_IMAGE = "/steles/1-zhuanshu/1-yishankeshi/yishan2.jpg";
 
 function App() {
   const { t, i18n } = useTranslation();
+  const isMobile = useMediaQuery('(max-width: 768px)');
   const [imagePath, setImagePath] = useState<string | null>(null);
   const [showTracing, setShowTracing] = useState(false);
   const [showAR, setShowAR] = useState(false);
@@ -24,6 +27,7 @@ function App() {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0, px: 50, py: 50 });
   const [magnifierPos, setMagnifierPos] = useState({ show: false, x: 0, y: 0, imgX: 0, imgY: 0, currentImg: '' });
   const [fullSteleContent, setFullSteleContent] = useState<any[]>([]);
+  const [mobileHeroIndex, setMobileHeroIndex] = useState(0);
 
   const EDICT1_TEXT = "皇帝立國，維初在昔，嗣世稱王。討伐亂逆，威動四極，武義直方。戎臣奉詔，經時不久，滅六暴強。廿有六年，上薦高號，孝道顯明。既獻泰成，乃降慈惠，寴廵遠方。登于繹山，羣臣從者，咸思攸長。追念亂世，分土建邦，以開爭理。功戰日作，流血於野，自前古始。延及五帝，不能禁止。乃今皇帝，一家天下，兵不復起。災害滅除，黔首康定，利澤長久。羣臣誦畧，刻此樂石，以著經紀。";
   const EDICT2_TEXT = "皇帝曰：『金石刻盡始皇帝所爲也。今襲號而金石刻辭不稱始皇帝，其於久遠也，如後嗣爲之者，不稱成功盛德。』丞相斯、去疾、御史大夫德昧死言：『臣請具刻詔書金石刻因明白矣。臣昧死請。』制曰：『可。』";
@@ -46,6 +50,30 @@ function App() {
       })
       .catch(err => console.error("Data load error:", err));
   }, []);
+
+  useEffect(() => {
+    if (!isMobile) return;
+    if (fullSteleContent.length === 0) return;
+
+    const poolSize = Math.min(fullSteleContent.length, 60);
+    const interval = setInterval(() => {
+      setMobileHeroIndex((prev) => (prev + 1) % poolSize);
+    }, 2200);
+
+    return () => clearInterval(interval);
+  }, [isMobile, fullSteleContent.length]);
+
+  const handleNextChar = useCallback(() => {
+    if (!previewChar) return;
+    const nextIdx = (previewChar.globalIndex + 1) % 144; // 仅在一世诏书144字内循环
+    setPreviewChar(fullSteleContent[nextIdx]);
+  }, [previewChar, fullSteleContent]);
+
+  const handlePrevChar = useCallback(() => {
+    if (!previewChar) return;
+    const prevIdx = (previewChar.globalIndex - 1 + 144) % 144;
+    setPreviewChar(fullSteleContent[prevIdx]);
+  }, [previewChar, fullSteleContent]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -85,19 +113,7 @@ function App() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [zoomedImage, previewChar, showDetail, showGallery, showInkFlow, showFullStele]);
-
-  const handleNextChar = () => {
-    if (!previewChar) return;
-    const nextIdx = (previewChar.globalIndex + 1) % 144; // 仅在一世诏书144字内循环
-    setPreviewChar(fullSteleContent[nextIdx]);
-  };
-
-  const handlePrevChar = () => {
-    if (!previewChar) return;
-    const prevIdx = (previewChar.globalIndex - 1 + 144) % 144;
-    setPreviewChar(fullSteleContent[prevIdx]);
-  };
+  }, [zoomedImage, previewChar, showDetail, showGallery, showInkFlow, showFullStele, handleNextChar, handlePrevChar]);
 
   const handleMouseMove = (e: React.MouseEvent) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -111,26 +127,178 @@ function App() {
     });
   };
 
+  const showDetailDesktop = !isMobile && showDetail;
+
   return (
-    <div className="h-screen bg-[#050505] text-stone-200 font-sans selection:bg-amber-500/30 overflow-hidden flex flex-col">
-      <div className="fixed inset-0 pointer-events-none opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/handmade-paper.png')] z-[70]" />
+    <div
+      className={cn(
+        'h-screen selection:bg-amber-500/30 overflow-hidden flex flex-col',
+        isMobile
+          ? 'min-h-[100dvh] bg-[#F6F1E7] text-stone-950 font-serif'
+          : 'bg-[#050505] text-stone-200 font-sans'
+      )}
+    >
+      <div
+        className={cn(
+          'fixed inset-0 pointer-events-none z-[70]',
+          isMobile
+            ? "opacity-[0.10] bg-[url('/noise.png')]"
+            : "opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/handmade-paper.png')]"
+        )}
+      />
 
-      <motion.header initial={{ y: -100 }} animate={{ y: 0 }} className="h-16 border-b border-white/5 bg-stone-900/40 backdrop-blur-xl flex items-center justify-between px-8 z-[80] shrink-0">
-         <div className="flex items-center gap-6">
-           <Logo size={35} />
-           <h1 className="text-xl font-bold tracking-[0.3em] uppercase flex items-center gap-3">墨陣 <span className="text-[8px] font-mono text-stone-600 border border-stone-800 px-2 py-0.5 rounded-full">PRIME</span></h1>
-         </div>
-         <button onClick={() => i18n.changeLanguage(i18n.language === 'zh' ? 'en' : 'zh')} className="p-2 hover:bg-stone-800 rounded-full transition-all text-stone-500"><Globe size={18} /></button>
-      </motion.header>
+      {isMobile ? (
+        <motion.header
+          initial={{ y: -100 }}
+          animate={{ y: 0 }}
+          className="h-14 border-b border-stone-200/60 bg-white/35 backdrop-blur-xl flex items-center justify-between px-5 z-[80] shrink-0"
+        >
+          <div className="flex items-center gap-3">
+            <Logo size={28} />
+            <h1 className="text-base font-black tracking-[0.35em] pl-[0.35em] text-stone-900">墨陣</h1>
+          </div>
+          <button
+            onClick={() => i18n.changeLanguage(i18n.language === 'zh' ? 'en' : 'zh')}
+            className="p-2 hover:bg-black/5 rounded-full transition-all text-stone-600"
+            aria-label="Toggle language"
+          >
+            <Globe size={18} />
+          </button>
+        </motion.header>
+      ) : (
+        <motion.header
+          initial={{ y: -100 }}
+          animate={{ y: 0 }}
+          className="h-16 border-b border-white/5 bg-stone-900/40 backdrop-blur-xl flex items-center justify-between px-8 z-[80] shrink-0"
+        >
+          <div className="flex items-center gap-6">
+            <Logo size={35} />
+            <h1 className="text-xl font-bold tracking-[0.3em] uppercase flex items-center gap-3">
+              墨陣{' '}
+              <span className="text-[8px] font-mono text-stone-600 border border-stone-800 px-2 py-0.5 rounded-full">
+                PRIME
+              </span>
+            </h1>
+          </div>
+          <button
+            onClick={() => i18n.changeLanguage(i18n.language === 'zh' ? 'en' : 'zh')}
+            className="p-2 hover:bg-stone-800 rounded-full transition-all text-stone-500"
+            aria-label="Toggle language"
+          >
+            <Globe size={18} />
+          </button>
+        </motion.header>
+      )}
 
-      <div className="flex-1 p-4 overflow-hidden relative z-10 flex flex-col min-h-0">
-        <section className="flex-1 bg-stone-950/50 rounded-[2.5rem] relative overflow-hidden border border-white/5 shadow-inner flex flex-col">
-           <AnimatePresence mode="wait">
-             {!showDetail ? (
-              <motion.div key="homepage" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onMouseMove={handleMouseMove} className="absolute inset-0 flex items-center overflow-hidden">
-                
-                {/* 数字化美学背景层 */}
-                <div className="absolute inset-0 pointer-events-none overflow-hidden">
+       <div className={cn('flex-1 overflow-hidden relative z-10 flex flex-col min-h-0', isMobile ? 'p-0' : 'p-4')}>
+         <section
+           className={
+             isMobile
+               ? 'flex-1 relative overflow-hidden flex flex-col'
+               : 'flex-1 bg-stone-950/50 rounded-[2.5rem] relative overflow-hidden border border-white/5 shadow-inner flex flex-col'
+           }
+         >
+            <AnimatePresence mode="wait">
+              {!showDetailDesktop ? (
+                isMobile ? (
+                  <motion.div
+                    key="mobile-home"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="absolute inset-0 overflow-hidden"
+                  >
+                    {/* 水墨册页 · 移动端首页 */}
+                    <div className="absolute inset-0">
+                      <div className="absolute inset-0 bg-[#F6F1E7]" />
+                      <div className="absolute inset-0 opacity-[0.14] bg-[url('https://www.transparenttextures.com/patterns/handmade-paper.png')]" />
+                      <div
+                        className="absolute inset-0 opacity-[0.10] bg-cover bg-center grayscale contrast-125"
+                        style={{ backgroundImage: `url(${YISHAN_IMAGE})` }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-b from-white/70 via-transparent to-[#F1E8DA]" />
+                    </div>
+
+                    <motion.div
+                      aria-hidden
+                      className="absolute -top-32 -left-40 w-[520px] h-[520px] rounded-full bg-stone-900/10 blur-3xl"
+                      animate={{ x: [0, 24, 0], y: [0, 18, 0] }}
+                      transition={{ duration: 14, repeat: Infinity, ease: 'easeInOut' }}
+                    />
+                    <motion.div
+                      aria-hidden
+                      className="absolute -bottom-40 -right-48 w-[560px] h-[560px] rounded-full bg-[#8B0000]/10 blur-3xl"
+                      animate={{ x: [0, -18, 0], y: [0, -22, 0] }}
+                      transition={{ duration: 16, repeat: Infinity, ease: 'easeInOut' }}
+                    />
+
+                    <div className="relative z-10 h-full flex flex-col px-6 pt-10 pb-[calc(2.5rem+env(safe-area-inset-bottom))]">
+                      <div className="flex-1 flex flex-col items-center justify-center gap-12">
+                        <div className="text-center">
+                          <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-white/55 backdrop-blur-md border border-stone-200/70 shadow-sm">
+                            <span className="text-[10px] font-black tracking-[0.6em] pl-[0.6em] text-stone-600">册页·竖屏</span>
+                            <span className="text-[10px] font-serif tracking-[0.2em] text-stone-500">一字入墨，轻翻成流</span>
+                          </div>
+                        </div>
+
+                        <div className="relative w-[78vw] max-w-[360px] aspect-square">
+                          <div className="absolute inset-0 rounded-[2.75rem] bg-white/40 border border-stone-200/70 shadow-[0_30px_90px_rgba(0,0,0,0.10)]" />
+                          <div className="absolute inset-0 rounded-[2.75rem] opacity-[0.15] bg-[url('https://www.transparenttextures.com/patterns/handmade-paper.png')]" />
+                          <div className="absolute inset-0 rounded-[2.75rem] ring-1 ring-black/5" />
+
+                          <AnimatePresence mode="wait">
+                            {fullSteleContent[mobileHeroIndex] && (
+                              <motion.img
+                                key={fullSteleContent[mobileHeroIndex].image}
+                                initial={{ opacity: 0, y: 10, scale: 0.98 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, y: -10, scale: 0.98 }}
+                                transition={{ duration: 0.6, ease: 'easeOut' }}
+                                src={fullSteleContent[mobileHeroIndex].image}
+                                alt="篆字"
+                                className="absolute inset-10 w-[calc(100%-5rem)] h-[calc(100%-5rem)] object-contain mix-blend-multiply opacity-90"
+                              />
+                            )}
+                          </AnimatePresence>
+
+                          <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-white/70 backdrop-blur-md border border-stone-200/80 shadow text-[10px] font-black tracking-[0.6em] pl-[0.6em] text-stone-700">
+                            今日一字
+                          </div>
+                        </div>
+
+                        <div className="text-center space-y-4 max-w-sm">
+                          <h2 className="text-[32px] leading-none font-serif font-black tracking-[0.55em] pl-[0.55em] text-stone-900">
+                            墨流
+                          </h2>
+                          <p className="text-sm font-serif text-stone-600 leading-relaxed tracking-wide">
+                            以字为舟，随墨而行。<br />轻翻一页，便见千年笔意。
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-auto">
+                        <motion.button
+                          onClick={() => setShowInkFlow(true)}
+                          whileTap={{ scale: 0.98 }}
+                          className="w-full max-w-sm mx-auto flex items-center justify-between gap-4 px-6 py-5 rounded-[1.75rem] bg-[#8B0000] text-[#F2E6CE] shadow-[0_25px_60px_rgba(139,0,0,0.28)] border border-[#8B0000]/60"
+                        >
+                          <div className="flex flex-col items-start">
+                            <span className="text-[13px] font-black tracking-[0.6em] pl-[0.6em]">墨流</span>
+                            <span className="text-[10px] opacity-80 tracking-[0.2em] font-serif">篆字研习 · 58名帖赏析</span>
+                          </div>
+                          <ChevronRight size={22} className="opacity-80" />
+                        </motion.button>
+                        <div className="mt-4 text-center text-[10px] font-serif text-stone-500 tracking-[0.35em] opacity-70">
+                          只做一件事：让字活起来
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                ) : (
+                  <motion.div key="homepage" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onMouseMove={handleMouseMove} className="absolute inset-0 flex items-center overflow-hidden">
+                 
+                 {/* 数字化美学背景层 */}
+                 <div className="absolute inset-0 pointer-events-none overflow-hidden">
                   {/* 数智界格 - 基础点阵 */}
                   <div className="absolute inset-0 opacity-[0.08]" 
                     style={{ 
@@ -259,9 +427,10 @@ function App() {
                     </div>
                   </button>
                 </motion.div>
-              </motion.div>
-             ) : (
-              <motion.div key="yishan-detail" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-[#080808] flex flex-col">
+               </motion.div>
+                )
+              ) : (
+                  <motion.div key="yishan-detail" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-[#080808] flex flex-col">
                 {/* 详情页页头 */}
                 <div className="h-16 border-b border-white/5 flex items-center justify-between px-10 bg-black/40 backdrop-blur-xl shrink-0 z-20">
                   <button onClick={() => setShowDetail(false)} className="flex items-center gap-3 text-stone-500 hover:text-amber-500 transition-all group">
@@ -395,18 +564,18 @@ function App() {
                     </div>
                   </div>
                 </div>
-              </motion.div>
-             )}
-           </AnimatePresence>
+                  </motion.div>
+              )}
+            </AnimatePresence>
         </section>
       </div>
 
       {/* 全局交互组件 */}
-      <AnimatePresence>{showGallery && <GalleryCorridor ref={galleryRef} isOpen={showGallery} onClose={() => setShowGallery(false)} />}</AnimatePresence>
+      <AnimatePresence>{!isMobile && showGallery && <GalleryCorridor ref={galleryRef} isOpen={showGallery} onClose={() => setShowGallery(false)} />}</AnimatePresence>
       <AnimatePresence>{showInkFlow && <InkFlow ref={inkFlowRef} isOpen={showInkFlow} onClose={() => setShowInkFlow(false)} />}</AnimatePresence>
-      
+       
       {/* 原拓放大 */}
-      <AnimatePresence>{zoomedImage && (
+      <AnimatePresence>{!isMobile && zoomedImage && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setZoomedImage(false)} className="fixed inset-0 z-[120] bg-black/98 backdrop-blur-md flex items-center justify-center p-12 cursor-zoom-out">
           <img src={YISHAN_IMAGE} className="max-h-full object-contain shadow-[0_0_100px_rgba(0,0,0,0.9)] rounded-xl" alt="一世詔書大图" />
           <div className="absolute bottom-10 left-1/2 -translate-x-1/2 text-stone-500 font-serif tracking-[0.5em] text-xs">嶧山刻石 · 始皇詔辭 · 原拓掃描</div>
@@ -415,7 +584,7 @@ function App() {
 
       {/* 独立展示页 */}
       <AnimatePresence>
-        {showFullStele && (
+        {!isMobile && showFullStele && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[150] bg-[#050505] flex flex-col">
             <div className="h-16 border-b border-white/5 flex items-center justify-between px-10 bg-black/60 backdrop-blur-xl z-20">
               <button onClick={() => setShowFullStele(null)} className="flex items-center gap-3 text-stone-500 hover:text-amber-500 transition-all group">
@@ -457,7 +626,7 @@ function App() {
 
       {/* 放大镜效果层 */}
       <AnimatePresence>
-        {magnifierPos.show && (
+        {!isMobile && magnifierPos.show && (
           <motion.div
             initial={{ opacity: 0, scale: 0 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -487,7 +656,7 @@ function App() {
       </AnimatePresence>
 
       {/* 单字详情研学 */}
-      <AnimatePresence>{previewChar && (
+      <AnimatePresence>{!isMobile && previewChar && (
         <div className="fixed inset-0 z-[130] bg-black/95 backdrop-blur-sm flex items-center justify-center p-8" onClick={() => setPreviewChar(null)}>
           <motion.div initial={{ scale: 0.9, opacity: 0, y: 30 }} animate={{ scale: 1, opacity: 1, y: 0 }} onClick={e => e.stopPropagation()} className="w-full max-w-[1100px] h-[80vh] bg-[#0a0a0a] rounded-[4rem] border border-white/10 overflow-hidden flex flex-col shadow-[0_50px_150px_rgba(0,0,0,0.9)]">
             <div className="h-20 border-b border-white/5 flex items-center justify-between px-12 bg-black/40 shrink-0">
