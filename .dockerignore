@@ -47,9 +47,9 @@ debug_*.txt
 *.json.lock
 
 # Large data directories (keep small extracted chars, exclude large originals)
-steles/
-frontend/public/steles/extracted_by_grid/
-public/steles/extracted_by_grid/
+# steles/
+# frontend/public/steles/extracted_by_grid/
+# public/steles/extracted_by_grid/
 
 # Test data (can be mounted separately in production)
 test_data/
