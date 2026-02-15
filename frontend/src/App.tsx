@@ -292,16 +292,19 @@ function App() {
                         <motion.button
                           onClick={() => setShowInkFlow(true)}
                           whileTap={{ scale: 0.98 }}
-                          className="w-full max-w-sm mx-auto flex items-center justify-between gap-4 px-6 py-5 rounded-[1.75rem] bg-[#8B0000] text-[#F2E6CE] shadow-[0_25px_60px_rgba(139,0,0,0.28)] border border-[#8B0000]/60"
+                          className="relative w-full max-w-sm mx-auto flex items-center justify-center px-6 py-5 rounded-[1.75rem] bg-[#8B0000] text-[#F2E6CE] shadow-[0_25px_60px_rgba(139,0,0,0.28)] border border-[#8B0000]/60"
                         >
-                          <div className="flex flex-col items-start">
-                            <span className="text-[13px] font-black tracking-[0.6em] pl-[0.6em]">入墨</span>
-                            <span className="text-[10px] opacity-80 tracking-[0.2em] font-serif">篆字研习 · 58名帖赏析</span>
+                          <div className="flex flex-col items-center text-center">
+                            <span className="text-[13px] font-black tracking-[0.35em]">入墨</span>
+                            <span className="mt-1 text-[10px] opacity-85 tracking-[0.12em] font-serif">篆字研习 · 名帖赏析 · 典藏画册</span>
                           </div>
-                          <ChevronRight size={22} className="opacity-80" />
+                          <ChevronRight size={22} className="absolute right-6 opacity-80" />
                         </motion.button>
                         <div className="mt-4 text-center text-[10px] font-serif text-stone-500 tracking-[0.22em] opacity-80">
                           墨陣 · 墨香千載 · 筆鋒流轉
+                        </div>
+                        <div className="mt-2 text-center text-[9px] font-mono text-stone-500/70 tracking-[0.12em]">
+                          built with love · e13760@gmail.com
                         </div>
                       </div>
                     </div>
@@ -415,8 +418,8 @@ function App() {
                   </div>
                 </div>
 
-                {/* 底部功能入口 - 分列两角布局 */}
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.1 }} className="absolute bottom-12 left-12 z-40">
+                 {/* 底部功能入口 - 分列两角布局 */}
+                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.1 }} className="absolute bottom-12 left-12 z-40">
                   <button onClick={() => setShowGallery(true)} className="group flex items-center gap-6 bg-[#0a0a0b]/60 backdrop-blur-2xl pl-4 pr-10 py-4 rounded-full border border-[#b8860b]/20 hover:border-[#b8860b]/60 transition-all duration-700 shadow-2xl">
                     <div className="w-14 h-14 rounded-full bg-[#0a0a0b] border border-[#b8860b]/30 flex items-center justify-center group-hover:border-[#b8860b] group-hover:bg-[#b8860b]/10 transition-all">
                       <Library size={22} className="text-stone-400 group-hover:text-[#b8860b] transition-colors" />
@@ -428,17 +431,21 @@ function App() {
                   </button>
                 </motion.div>
 
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.1 }} className="absolute bottom-12 right-12 z-40">
+                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.1 }} className="absolute bottom-12 right-12 z-40">
                   <button onClick={() => setShowDetail(true)} className="group flex items-center gap-6 bg-[#0a0a0b]/60 backdrop-blur-2xl pr-4 pl-10 py-4 rounded-full border border-[#b8860b]/20 hover:border-[#b8860b]/60 transition-all duration-700 shadow-2xl">
                     <div className="flex flex-col items-end">
                       <span className="text-[9px] text-[#b8860b] tracking-[0.3em] font-black uppercase mb-1 opacity-70">Appreciation</span>
                       <span className="text-2xl font-serif text-stone-200 group-hover:text-[#b8860b] transition-colors tracking-widest">嶧山鑒賞</span>
                     </div>
-                    <div className="w-14 h-14 rounded-full bg-[#0a0a0b] border border-[#b8860b]/30 flex items-center justify-center group-hover:border-[#b8860b] group-hover:bg-[#b8860b]/10 transition-all">
-                      <ChevronRight size={22} className="text-stone-400 group-hover:text-[#b8860b] transition-colors" />
-                    </div>
-                  </button>
-                </motion.div>
+                   <div className="w-14 h-14 rounded-full bg-[#0a0a0b] border border-[#b8860b]/30 flex items-center justify-center group-hover:border-[#b8860b] group-hover:bg-[#b8860b]/10 transition-all">
+                     <ChevronRight size={22} className="text-stone-400 group-hover:text-[#b8860b] transition-colors" />
+                   </div>
+                 </button>
+               </motion.div>
+
+                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-40 pointer-events-none text-[10px] font-mono text-stone-500/70 tracking-[0.18em]">
+                  built with love · e13760@gmail.com
+                </div>
                </motion.div>
                 )
               ) : (

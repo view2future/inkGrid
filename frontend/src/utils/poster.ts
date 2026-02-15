@@ -57,6 +57,16 @@ export type CuratedCollageInput = {
   }>;
 };
 
+export type NewYearPosterInput = {
+  yearLabel?: string;
+  dayLabel: string;
+  caption: string;
+  glyph: {
+    simplified?: string;
+    image: string;
+  };
+};
+
 const CANVAS_W = 1080;
 const CANVAS_H = 1920;
 
@@ -361,6 +371,160 @@ export async function renderCuratedCollagePng(input: CuratedCollageInput, option
   };
 }
 
+export async function renderNewYearPosterPng(input: NewYearPosterInput, options: RenderPosterOptions = {}) {
+  const canvas = document.createElement('canvas');
+
+  const scale = typeof options.scale === 'number' ? Math.max(0.25, Math.min(1, options.scale)) : 1;
+  const pixelRatio =
+    typeof options.pixelRatio === 'number' && options.pixelRatio > 0
+      ? options.pixelRatio
+      : Math.max(2, Math.floor(window.devicePixelRatio || 1));
+
+  canvas.width = Math.round(CANVAS_W * pixelRatio * scale);
+  canvas.height = Math.round(CANVAS_H * pixelRatio * scale);
+
+  const ctxMaybe = canvas.getContext('2d');
+  if (!ctxMaybe) throw new Error('Canvas not supported');
+  const ctx = ctxMaybe;
+  ctx.scale(pixelRatio * scale, pixelRatio * scale);
+
+  const noiseImg = await loadImage('/noise.png').catch(() => null);
+
+  // base paper
+  ctx.fillStyle = '#F6F1E7';
+  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+  const redWash = ctx.createRadialGradient(CANVAS_W * 0.22, CANVAS_H * 0.16, 0, CANVAS_W * 0.22, CANVAS_H * 0.16, 820);
+  redWash.addColorStop(0, 'rgba(139,0,0,0.18)');
+  redWash.addColorStop(1, 'rgba(139,0,0,0)');
+  ctx.fillStyle = redWash;
+  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+  const warm = ctx.createRadialGradient(CANVAS_W * 0.85, CANVAS_H * 0.68, 0, CANVAS_W * 0.85, CANVAS_H * 0.68, 980);
+  warm.addColorStop(0, 'rgba(184,134,11,0.12)');
+  warm.addColorStop(1, 'rgba(184,134,11,0)');
+  ctx.fillStyle = warm;
+  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+  if (noiseImg) {
+    const p = ctx.createPattern(noiseImg, 'repeat');
+    if (p) {
+      ctx.globalAlpha = 0.14;
+      ctx.fillStyle = p;
+      ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  const padding = 72;
+  await drawBrandHeader(ctx, padding, 72, { tag: (input.yearLabel || '馬年').trim() });
+
+  const frameX = padding;
+  const frameY = 250;
+  const frameW = CANVAS_W - padding * 2;
+  const frameH = 1100;
+  const r = 64;
+
+  // frame
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,0,0,0.14)';
+  ctx.shadowBlur = 26;
+  ctx.fillStyle = 'rgba(255,255,255,0.58)';
+  roundRect(ctx, frameX, frameY, frameW, frameH, r);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = 'rgba(17,24,39,0.10)';
+  ctx.lineWidth = 2;
+  roundRect(ctx, frameX, frameY, frameW, frameH, r);
+  ctx.stroke();
+  ctx.restore();
+
+  const glyphImg = await loadImage(input.glyph.image).catch(() => null);
+  if (glyphImg) {
+    const clipPad = 10;
+    ctx.save();
+    roundRect(ctx, frameX + clipPad, frameY + clipPad, frameW - clipPad * 2, frameH - clipPad * 2, r - 10);
+    ctx.clip();
+
+    // faint tiled background
+    ctx.save();
+    ctx.globalCompositeOperation = 'multiply';
+    ctx.globalAlpha = 0.06;
+    const tileW = frameW * 0.42;
+    const tileH = frameH * 0.42;
+    for (let row = 0; row < 3; row++) {
+      for (let col = 0; col < 2; col++) {
+        const x = frameX + frameW * 0.08 + col * (tileW + frameW * 0.06) + (row % 2 ? 18 : -10);
+        const y = frameY + frameH * 0.06 + row * (tileH + frameH * 0.06);
+        drawContainImage(ctx, glyphImg, x, y, tileW, tileH);
+      }
+    }
+    ctx.restore();
+
+    // main glyph
+    ctx.save();
+    ctx.globalCompositeOperation = 'multiply';
+    ctx.globalAlpha = 0.92;
+    const mainW = frameW * 0.88;
+    const mainH = frameH * 0.88;
+    const x = frameX + (frameW - mainW) / 2;
+    const y = frameY + (frameH - mainH) / 2 - 10;
+    drawCoverImage(ctx, glyphImg, x, y, mainW, mainH, 1.14, 20, 14);
+    ctx.restore();
+
+    ctx.restore();
+  }
+
+  // day text
+  const day = String(input.dayLabel || '').trim();
+  const caption = String(input.caption || '').trim();
+  const simplified = String(input.glyph.simplified || '').trim();
+  const baseY = frameY + frameH + 86;
+
+  ctx.fillStyle = '#111827';
+  ctx.font = "900 86px 'Noto Serif SC', serif";
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+  if (day) ctx.fillText(day, padding, baseY);
+
+  if (caption) {
+    ctx.fillStyle = 'rgba(17,24,39,0.68)';
+    ctx.font = "800 34px 'Noto Serif SC', serif";
+    ctx.fillText(caption, padding, baseY + 60);
+  }
+
+  if (simplified) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(139,0,0,0.10)';
+    roundRect(ctx, padding, baseY + 92, 120, 64, 22);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(139,0,0,0.22)';
+    ctx.lineWidth = 2;
+    roundRect(ctx, padding, baseY + 92, 120, 64, 22);
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(17,24,39,0.92)';
+    ctx.font = "900 42px 'Noto Serif SC', serif";
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(simplified, padding + 60, baseY + 92 + 34);
+    ctx.restore();
+  }
+
+  const qrSize = 200;
+  const qrX = CANVAS_W - padding - qrSize;
+  const qrY = CANVAS_H - padding - qrSize;
+  drawVerticalMotto(ctx, qrX + qrSize / 2, 260, qrY - 150);
+  drawUrlLabelAboveQr(ctx, qrX, qrY, qrSize);
+  await drawQr(ctx, qrX, qrY, qrSize);
+
+  const blob = await canvasToBlob(canvas);
+  return {
+    blob,
+    width: Math.round(CANVAS_W * scale),
+    height: Math.round(CANVAS_H * scale),
+  };
+}
+
 async function drawQr(ctx: CanvasRenderingContext2D, x: number, y: number, size: number) {
   const qrCanvas = document.createElement('canvas');
   await QRCode.toCanvas(qrCanvas, INKGRID_QR_URL, {
@@ -536,31 +700,42 @@ function drawGoldFoilText(ctx: CanvasRenderingContext2D, text: string, x: number
 function drawUrlLabelAboveQr(ctx: CanvasRenderingContext2D, qrX: number, qrY: number, qrSize: number) {
   const label = INKGRID_QR_LABEL;
   ctx.save();
-  ctx.font = "900 32px 'Noto Serif SC', serif";
+  ctx.font = "800 30px 'Fira Code', monospace";
   const w = Math.ceil(ctx.measureText(label).width);
   const padX = 22;
   const pillW = w + padX * 2;
-  const pillH = 62;
+  const pillH = 60;
   const xRaw = qrX + (qrSize - pillW) / 2;
   const x = Math.max(24, Math.min(CANVAS_W - pillW - 24, xRaw));
   const y = qrY - pillH - 18;
 
-  const bg = ctx.createLinearGradient(0, y, 0, y + pillH);
-  bg.addColorStop(0, 'rgba(17,24,39,0.20)');
-  bg.addColorStop(1, 'rgba(17,24,39,0.12)');
-  ctx.fillStyle = bg;
+  ctx.shadowColor = 'rgba(0,0,0,0.32)';
+  ctx.shadowBlur = 18;
+  ctx.fillStyle = 'rgba(17,24,39,0.92)';
   roundRect(ctx, x, y, pillW, pillH, 999);
   ctx.fill();
-  ctx.strokeStyle = 'rgba(255,255,255,0.28)';
-  ctx.lineWidth = 1;
+
+  ctx.shadowBlur = 0;
+  const gloss = ctx.createLinearGradient(0, y, 0, y + pillH);
+  gloss.addColorStop(0, 'rgba(255,255,255,0.18)');
+  gloss.addColorStop(0.55, 'rgba(255,255,255,0.04)');
+  gloss.addColorStop(1, 'rgba(0,0,0,0.10)');
+  ctx.fillStyle = gloss;
+  roundRect(ctx, x, y, pillW, pillH, 999);
+  ctx.fill();
+
+  ctx.strokeStyle = 'rgba(184,134,11,0.55)';
+  ctx.lineWidth = 2;
   roundRect(ctx, x, y, pillW, pillH, 999);
   ctx.stroke();
 
-  ctx.shadowColor = 'rgba(0,0,0,0.35)';
-  ctx.shadowBlur = 10;
   ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
-  drawGoldFoilText(ctx, label, x + padX, y + pillH / 2 + 1);
+
+  ctx.shadowColor = 'rgba(0,0,0,0.25)';
+  ctx.shadowBlur = 10;
+  ctx.fillStyle = '#F2E6CE';
+  ctx.fillText(label, x + padX, y + pillH / 2 + 1);
   ctx.restore();
 }
 
@@ -960,6 +1135,28 @@ function drawContainImage(
   const dh = sh * scale;
   const dx = x + (w - dw) / 2;
   const dy = y + (h - dh) / 2;
+  ctx.drawImage(img, dx, dy, dw, dh);
+}
+
+function drawCoverImage(
+  ctx: CanvasRenderingContext2D,
+  img: HTMLImageElement,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  scaleMul = 1,
+  offsetX = 0,
+  offsetY = 0
+) {
+  const sw = img.naturalWidth || img.width;
+  const sh = img.naturalHeight || img.height;
+  if (!sw || !sh) return;
+  const s = Math.max(w / sw, h / sh) * (scaleMul || 1);
+  const dw = sw * s;
+  const dh = sh * s;
+  const dx = x + (w - dw) / 2 + (offsetX || 0);
+  const dy = y + (h - dh) / 2 + (offsetY || 0);
   ctx.drawImage(img, dx, dy, dw, dh);
 }
 

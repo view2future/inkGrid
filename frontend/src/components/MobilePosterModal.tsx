@@ -49,6 +49,19 @@ export default function MobilePosterModal({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewBlob, setPreviewBlob] = useState<Blob | null>(null);
   const [tip, setTip] = useState<string | null>(null);
+  const [loadingIndex, setLoadingIndex] = useState(0);
+
+  const loadingNotes = useMemo(
+    () =>
+      [
+        { title: '正在研墨…', text: '中鋒用筆，藏鋒起收，氣息自然生。' },
+        { title: '正在拓印…', text: '看字先看勢：勢立則氣生，筆到意到。' },
+        { title: '正在排章…', text: '疏可走馬，密不透風；章法如呼吸。' },
+        { title: '正在落款…', text: '轉折處見筋骨，提按間見節奏。' },
+        { title: '正在成帖…', text: '一字一世界，慢讀方見其厚。' },
+      ],
+    []
+  );
 
   const templates = useMemo(
     () =>
@@ -120,6 +133,24 @@ export default function MobilePosterModal({
       cancelled = true;
     };
   }, [isOpen, template, targetKey]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (!loadingNotes.length) return;
+    setLoadingIndex(Math.floor(Math.random() * loadingNotes.length));
+  }, [isOpen, targetKey, template, loadingNotes.length]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (!isBusy) return;
+    if (loadingNotes.length <= 1) return;
+
+    const timer = window.setInterval(() => {
+      setLoadingIndex((i) => (i + 1) % loadingNotes.length);
+    }, 2600);
+
+    return () => window.clearInterval(timer);
+  }, [isOpen, isBusy, loadingNotes.length]);
 
   useEffect(() => {
     return () => {
@@ -218,7 +249,7 @@ export default function MobilePosterModal({
                   <button
                     key={t.id}
                     onClick={() => setTemplate(t.id)}
-                    className={`flex-1 px-4 py-2 rounded-full text-[11px] font-black tracking-[0.45em] pl-[0.45em] transition ${
+                    className={`flex-1 inline-flex items-center justify-center text-center px-4 py-2 rounded-full text-[11px] font-black tracking-[0.22em] transition ${
                       template === t.id ? 'bg-[#8B0000] text-[#F2E6CE]' : 'text-stone-300'
                     }`}
                   >
@@ -244,6 +275,28 @@ export default function MobilePosterModal({
                         <div className="w-10 h-10 rounded-full border-2 border-white/20 border-t-white/70 animate-spin" />
                       </div>
                     ) : null}
+
+                    <AnimatePresence mode="wait">
+                      {isBusy && loadingNotes[loadingIndex] ? (
+                        <motion.div
+                          key={loadingIndex}
+                          initial={{ opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 8 }}
+                          transition={{ duration: 0.5, ease: 'easeOut' }}
+                          className="absolute inset-x-4 bottom-4"
+                        >
+                          <div className="rounded-[1.5rem] bg-black/40 border border-white/10 shadow-[0_22px_70px_rgba(0,0,0,0.55)] backdrop-blur-md px-5 py-4">
+                            <div className="text-[10px] font-black tracking-[0.22em] text-[#F2E6CE] opacity-90">
+                              {loadingNotes[loadingIndex].title}
+                            </div>
+                            <div className="mt-2 text-[12px] font-serif text-stone-200 leading-relaxed tracking-wide">
+                              {loadingNotes[loadingIndex].text}
+                            </div>
+                          </div>
+                        </motion.div>
+                      ) : null}
+                    </AnimatePresence>
                   </div>
                 </div>
 
@@ -254,7 +307,7 @@ export default function MobilePosterModal({
                   <button
                     onClick={handleDownload}
                     disabled={!previewBlob || isBusy}
-                    className="flex items-center justify-center gap-3 px-4 py-4 rounded-[1.25rem] bg-white/10 border border-white/10 text-stone-100 text-[12px] font-black tracking-[0.35em] pl-[0.35em] active:scale-95 transition disabled:opacity-40"
+                    className="flex items-center justify-center gap-3 px-4 py-4 rounded-[1.25rem] bg-white/10 border border-white/10 text-stone-100 text-[12px] font-black tracking-[0.18em] text-center active:scale-95 transition disabled:opacity-40"
                   >
                     <Download size={16} />
                     保存海报
@@ -263,7 +316,7 @@ export default function MobilePosterModal({
                   <button
                     onClick={() => shareWithFile('发给好友')}
                     disabled={!previewBlob || isBusy}
-                    className="flex items-center justify-center gap-3 px-4 py-4 rounded-[1.25rem] bg-[#8B0000] border border-[#8B0000]/60 text-[#F2E6CE] text-[12px] font-black tracking-[0.35em] pl-[0.35em] shadow-[0_18px_45px_rgba(139,0,0,0.35)] active:scale-95 transition disabled:opacity-40"
+                    className="flex items-center justify-center gap-3 px-4 py-4 rounded-[1.25rem] bg-[#8B0000] border border-[#8B0000]/60 text-[#F2E6CE] text-[12px] font-black tracking-[0.18em] text-center shadow-[0_18px_45px_rgba(139,0,0,0.35)] active:scale-95 transition disabled:opacity-40"
                   >
                     <Share2 size={16} />
                     发给好友
@@ -273,7 +326,7 @@ export default function MobilePosterModal({
                 <button
                   onClick={() => shareWithFile('分享到朋友圈')}
                   disabled={!previewBlob || isBusy}
-                  className="mt-3 w-full flex items-center justify-center gap-3 px-4 py-4 rounded-[1.25rem] bg-white/10 border border-white/10 text-stone-100 text-[12px] font-black tracking-[0.35em] pl-[0.35em] active:scale-95 transition disabled:opacity-40"
+                  className="mt-3 w-full flex items-center justify-center gap-3 px-4 py-4 rounded-[1.25rem] bg-white/10 border border-white/10 text-stone-100 text-[12px] font-black tracking-[0.18em] text-center active:scale-95 transition disabled:opacity-40"
                 >
                   <Share2 size={16} />
                   发到朋友圈

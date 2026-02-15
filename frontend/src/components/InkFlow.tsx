@@ -4,7 +4,7 @@ import { X, BookOpen, Info, Share2, Scroll, Sparkles, MapPin, Download, ChevronL
 import Logo from './Logo';
 import { useMediaQuery } from '../utils/useMediaQuery';
 import MobilePosterModal from './MobilePosterModal';
-import { renderCuratedCollagePng } from '../utils/poster';
+import { renderCuratedCollagePng, renderNewYearPosterPng } from '../utils/poster';
 
 
 interface SteleKnowledge {
@@ -532,7 +532,7 @@ const InkFlow = forwardRef(({ isOpen, onClose }: InkFlowProps, ref) => {
     };
 
     const navigateSteleSection = (dir: number) => {
-      const maxSection = 2;
+      const maxSection = 1;
       const next = mobileSteleSection + dir;
       if (next < 0 || next > maxSection) return;
       setMobileSteleAxis('section');
@@ -876,8 +876,8 @@ const InkFlow = forwardRef(({ isOpen, onClose }: InkFlowProps, ref) => {
       <div className="absolute top-0 left-0 right-0 z-[150] flex items-center justify-between p-10 bg-gradient-to-b from-black to-transparent">
         <button onClick={onClose} className="p-3 rounded-full bg-white/5 text-stone-500 hover:text-white transition-all"><X size={24}/></button>
         <div className="flex bg-[#1A1A1A] rounded-sm p-1.5 border border-stone-800 shadow-2xl">
-          <button onClick={() => { setMode('characters'); setCurrentIndex(0); }} className={`px-12 py-3 font-serif text-sm tracking-[0.5em] transition-all duration-500 ${mode === 'characters' ? 'bg-[#8B0000] text-[#F2E6CE]' : 'text-stone-600 hover:text-stone-400'}`}>篆字研習</button>
-          <button onClick={() => { setMode('steles'); setCurrentIndex(0); }} className={`px-12 py-3 font-serif text-sm tracking-[0.5em] transition-all duration-500 ${mode === 'steles' ? 'bg-[#8B0000] text-[#F2E6CE]' : 'text-stone-600 hover:text-stone-400'}`}>碑帖鑒賞</button>
+          <button onClick={() => { setMode('characters'); setCurrentIndex(0); }} className={`px-12 py-3 font-serif text-sm tracking-[0.5em] text-center transition-all duration-500 ${mode === 'characters' ? 'bg-[#8B0000] text-[#F2E6CE]' : 'text-stone-600 hover:text-stone-400'}`}>篆字研習</button>
+          <button onClick={() => { setMode('steles'); setCurrentIndex(0); }} className={`px-12 py-3 font-serif text-sm tracking-[0.5em] text-center transition-all duration-500 ${mode === 'steles' ? 'bg-[#8B0000] text-[#F2E6CE]' : 'text-stone-600 hover:text-stone-400'}`}>碑帖鑒賞</button>
         </div>
         <div className="flex items-center gap-3"><Logo size={30} /><span className="text-xs font-serif font-black text-[#D4A574] tracking-widest">墨陣</span></div>
       </div>
@@ -1134,8 +1134,51 @@ function MobileInkFlowPosterGallery({
     ].filter((c) => c.cards.filter((x) => x.image).length >= 5);
   }, [curatedChars]);
 
+  const newYearPosters = useMemo(() => {
+    const bySimplified = new Map<string, any>();
+    for (const c of chars || []) {
+      const k = String(c?.simplified || c?.char || '').trim();
+      if (!k) continue;
+      if (!bySimplified.has(k)) bySimplified.set(k, c);
+    }
+
+    const yearLabel = '馬年';
+    const specs = [
+      { id: 'ny_01', dayLabel: '初一', caption: '拜歲迎春', glyph: '年' },
+      { id: 'ny_02', dayLabel: '初二', caption: '回門團圓', glyph: '家' },
+      { id: 'ny_03', dayLabel: '初三', caption: '赤口慎言', glyph: '止' },
+      { id: 'ny_04', dayLabel: '初四', caption: '迎灶納福', glyph: '惠' },
+      { id: 'ny_05', dayLabel: '初五', caption: '破五開市', glyph: '开' },
+      { id: 'ny_06', dayLabel: '初六', caption: '送窮出行', glyph: '泽' },
+      { id: 'ny_07', dayLabel: '初七', caption: '人日安康', glyph: '康' },
+    ];
+
+    return specs
+      .map((s) => {
+        const c = bySimplified.get(s.glyph);
+        if (!c?.image) return null;
+        return {
+          ...s,
+          yearLabel,
+          glyph: {
+            simplified: String(c.simplified || '').trim() || s.glyph,
+            image: String(c.image),
+          },
+        };
+      })
+      .filter(Boolean) as Array<{
+      id: string;
+      yearLabel: string;
+      dayLabel: string;
+      caption: string;
+      glyph: { simplified?: string; image: string };
+    }>;
+  }, [chars]);
+
   const [collageUrls, setCollageUrls] = useState<Record<string, string>>({});
   const [activeCollageId, setActiveCollageId] = useState<string | null>(null);
+  const [newYearUrls, setNewYearUrls] = useState<Record<string, string>>({});
+  const [activeNewYearId, setActiveNewYearId] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -1166,7 +1209,40 @@ function MobileInkFlowPosterGallery({
     };
   }, [collages]);
 
+  useEffect(() => {
+    let cancelled = false;
+    const urls: string[] = [];
+    setNewYearUrls({});
+
+    const run = async () => {
+      for (const p of newYearPosters) {
+        try {
+          const res = await renderNewYearPosterPng(
+            { yearLabel: p.yearLabel, dayLabel: p.dayLabel, caption: p.caption, glyph: p.glyph },
+            { scale: 0.42, pixelRatio: 1 }
+          );
+          if (cancelled) return;
+          const url = URL.createObjectURL(res.blob);
+          urls.push(url);
+          setNewYearUrls((prev) => ({ ...prev, [p.id]: url }));
+        } catch {
+          // ignore
+        }
+      }
+    };
+
+    if (newYearPosters.length) void run();
+    return () => {
+      cancelled = true;
+      for (const u of urls) URL.revokeObjectURL(u);
+    };
+  }, [newYearPosters]);
+
   const activeCollage = useMemo(() => collages.find((c) => c.id === activeCollageId) || null, [collages, activeCollageId]);
+  const activeNewYear = useMemo(
+    () => newYearPosters.find((p) => p.id === activeNewYearId) || null,
+    [newYearPosters, activeNewYearId]
+  );
 
   return (
     <div className="h-full overflow-y-auto px-5 pt-6 pb-[calc(2.5rem+env(safe-area-inset-bottom))]">
@@ -1265,6 +1341,40 @@ function MobileInkFlowPosterGallery({
 
         <section className="space-y-4">
           <div className="flex items-end justify-between">
+            <div className="text-[11px] font-black tracking-[0.5em] pl-[0.5em] text-stone-600">馬年七日</div>
+            <div className="text-[10px] font-mono text-stone-500 tracking-widest">{newYearPosters.length} 张</div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            {newYearPosters.map((p) => {
+              const url = newYearUrls[p.id];
+              return (
+                <button
+                  key={p.id}
+                  onClick={() => setActiveNewYearId(p.id)}
+                  className="w-full rounded-[1.75rem] bg-white/60 backdrop-blur-md border border-stone-200/70 shadow-sm overflow-hidden text-left active:scale-[0.995] transition"
+                >
+                  <div className="relative w-full aspect-[9/16] bg-white/30">
+                    {url ? (
+                      <img src={url} alt={p.dayLabel} className="absolute inset-0 w-full h-full object-cover" draggable={false} />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center text-sm font-serif text-stone-500">
+                        正在生成预览…
+                      </div>
+                    )}
+                    <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/65 via-black/20 to-transparent">
+                      <div className="text-[11px] font-black tracking-[0.18em] text-[#F2E6CE]">{p.dayLabel}</div>
+                      <div className="mt-1 text-[10px] font-serif text-stone-200/90 tracking-wide">{p.caption}</div>
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <div className="flex items-end justify-between">
             <div className="text-[11px] font-black tracking-[0.5em] pl-[0.5em] text-stone-600">名帖精选</div>
             <div className="text-[10px] font-mono text-stone-500 tracking-widest">{curatedSteles.length} 帖</div>
           </div>
@@ -1312,6 +1422,15 @@ function MobileInkFlowPosterGallery({
             onClose={() => setActiveCollageId(null)}
           />
         ) : null}
+
+        {activeNewYear ? (
+          <MobileNewYearPosterModal
+            isOpen
+            previewUrl={newYearUrls[activeNewYear.id] || null}
+            poster={activeNewYear}
+            onClose={() => setActiveNewYearId(null)}
+          />
+        ) : null}
       </AnimatePresence>
     </div>
   );
@@ -1330,12 +1449,40 @@ function MobileCuratedCollageModal({
 }) {
   const [isBusy, setIsBusy] = useState(false);
   const [tip, setTip] = useState<string | null>(null);
+  const [loadingIndex, setLoadingIndex] = useState(0);
+
+  const loadingNotes = useMemo(
+    () =>
+      [
+        { title: '正在铺纸…', text: '纸墨一成，画面便有了呼吸。' },
+        { title: '正在排版…', text: '留白不是空，是气口。' },
+        { title: '正在落款…', text: '一张好海报，要有“起承转合”。' },
+        { title: '正在印码…', text: '金石气与纸本味，可以同在。' },
+      ],
+    []
+  );
 
   const filename = useMemo(() => {
     const date = new Date();
     const stamp = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
     return `inkgrid_${stamp}_${collage.id}.png`;
   }, [collage.id]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (!loadingNotes.length) return;
+    setLoadingIndex(Math.floor(Math.random() * loadingNotes.length));
+  }, [isOpen, collage.id, loadingNotes.length]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (!isBusy) return;
+    if (loadingNotes.length <= 1) return;
+    const timer = window.setInterval(() => {
+      setLoadingIndex((i) => (i + 1) % loadingNotes.length);
+    }, 2600);
+    return () => window.clearInterval(timer);
+  }, [isOpen, isBusy, loadingNotes.length]);
 
   const handleDownload = async () => {
     setIsBusy(true);
@@ -1406,6 +1553,209 @@ function MobileCuratedCollageModal({
                         <div className="w-10 h-10 rounded-full border-2 border-white/20 border-t-white/70 animate-spin" />
                       </div>
                     ) : null}
+
+                    <AnimatePresence mode="wait">
+                      {isBusy && loadingNotes[loadingIndex] ? (
+                        <motion.div
+                          key={loadingIndex}
+                          initial={{ opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 8 }}
+                          transition={{ duration: 0.5, ease: 'easeOut' }}
+                          className="absolute inset-x-4 bottom-4"
+                        >
+                          <div className="rounded-[1.5rem] bg-black/40 border border-white/10 shadow-[0_22px_70px_rgba(0,0,0,0.55)] backdrop-blur-md px-5 py-4">
+                            <div className="text-[10px] font-black tracking-[0.22em] text-[#F2E6CE] opacity-90">
+                              {loadingNotes[loadingIndex].title}
+                            </div>
+                            <div className="mt-2 text-[12px] font-serif text-stone-200 leading-relaxed tracking-wide">
+                              {loadingNotes[loadingIndex].text}
+                            </div>
+                          </div>
+                        </motion.div>
+                      ) : null}
+                    </AnimatePresence>
+                  </div>
+                </div>
+
+                {tip ? <div className="mt-4 text-center text-[12px] font-serif text-stone-300">{tip}</div> : null}
+
+                <div className="mt-6">
+                  <button
+                    onClick={handleDownload}
+                    disabled={isBusy}
+                    className="w-full flex items-center justify-center gap-3 px-4 py-4 rounded-[1.25rem] bg-[#8B0000] border border-[#8B0000]/60 text-[#F2E6CE] text-[12px] font-black tracking-[0.25em] shadow-[0_18px_45px_rgba(139,0,0,0.35)] active:scale-95 transition disabled:opacity-40"
+                  >
+                    <Download size={16} />
+                    保存海报
+                  </button>
+                </div>
+
+                <div className="mt-6 pb-10 text-center text-[11px] font-serif text-stone-300 opacity-80 leading-relaxed">
+                  若无法直接下载：请长按图片保存。
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      ) : null}
+    </AnimatePresence>
+  );
+}
+
+function MobileNewYearPosterModal({
+  isOpen,
+  previewUrl,
+  poster,
+  onClose,
+}: {
+  isOpen: boolean;
+  previewUrl: string | null;
+  poster: {
+    id: string;
+    yearLabel: string;
+    dayLabel: string;
+    caption: string;
+    glyph: { simplified?: string; image: string };
+  };
+  onClose: () => void;
+}) {
+  const [isBusy, setIsBusy] = useState(false);
+  const [tip, setTip] = useState<string | null>(null);
+  const [loadingIndex, setLoadingIndex] = useState(0);
+
+  const loadingNotes = useMemo(
+    () =>
+      [
+        { title: '正在写春…', text: '筆勢貴一氣，章法貴留白。' },
+        { title: '正在入墨…', text: '圓轉見篆意，含蓄見氣韻。' },
+        { title: '正在排景…', text: '一張海報，要有“氣口”。' },
+        { title: '正在印碼…', text: '把墨色留在紙上，也留在時間裡。' },
+      ],
+    []
+  );
+
+  const filename = useMemo(() => {
+    const date = new Date();
+    const stamp = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
+    return `inkgrid_${stamp}_${poster.id}.png`;
+  }, [poster.id]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (!loadingNotes.length) return;
+    setLoadingIndex(Math.floor(Math.random() * loadingNotes.length));
+  }, [isOpen, poster.id, loadingNotes.length]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (!isBusy) return;
+    if (loadingNotes.length <= 1) return;
+    const timer = window.setInterval(() => {
+      setLoadingIndex((i) => (i + 1) % loadingNotes.length);
+    }, 2600);
+    return () => window.clearInterval(timer);
+  }, [isOpen, isBusy, loadingNotes.length]);
+
+  const handleDownload = async () => {
+    setIsBusy(true);
+    setTip(null);
+    try {
+      const res = await renderNewYearPosterPng({
+        yearLabel: poster.yearLabel,
+        dayLabel: poster.dayLabel,
+        caption: poster.caption,
+        glyph: poster.glyph,
+      });
+      const url = URL.createObjectURL(res.blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      setTip('已尝试保存；若无反应，请长按图片保存。');
+    } catch {
+      setTip('生成海报失败，请稍后重试。');
+    } finally {
+      setIsBusy(false);
+    }
+  };
+
+  return (
+    <AnimatePresence>
+      {isOpen ? (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[311] bg-black/90 backdrop-blur-2xl"
+          onClick={onClose}
+        >
+          <motion.div
+            initial={{ y: 18, opacity: 0, scale: 0.98 }}
+            animate={{ y: 0, opacity: 1, scale: 1 }}
+            exit={{ y: 18, opacity: 0, scale: 0.98 }}
+            transition={{ type: 'spring', stiffness: 260, damping: 26 }}
+            className="absolute inset-x-0 top-[env(safe-area-inset-top)] bottom-[env(safe-area-inset-bottom)] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-5 pt-4 pb-3 flex items-center justify-between">
+              <div className="min-w-0">
+                <div className="text-[11px] font-black tracking-[0.18em] text-[#F2E6CE] truncate">
+                  {poster.yearLabel} · {poster.dayLabel}
+                </div>
+                <div className="mt-1 text-[11px] font-serif text-stone-300 tracking-wide truncate">{poster.caption}</div>
+              </div>
+              <button
+                onClick={onClose}
+                className="w-10 h-10 rounded-full bg-white/10 border border-white/10 flex items-center justify-center text-stone-200"
+                aria-label="Close"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-5">
+              <div className="max-w-md mx-auto">
+                <div className="rounded-[2rem] bg-white/5 border border-white/10 shadow-[0_40px_120px_rgba(0,0,0,0.65)] overflow-hidden">
+                  <div className="relative w-full aspect-[9/16] bg-black/30">
+                    {previewUrl ? (
+                      <img src={previewUrl} alt="new-year" className="absolute inset-0 w-full h-full object-cover" />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center text-stone-400 text-sm font-serif">
+                        预览不可用
+                      </div>
+                    )}
+
+                    {isBusy ? (
+                      <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-full border-2 border-white/20 border-t-white/70 animate-spin" />
+                      </div>
+                    ) : null}
+
+                    <AnimatePresence mode="wait">
+                      {isBusy && loadingNotes[loadingIndex] ? (
+                        <motion.div
+                          key={loadingIndex}
+                          initial={{ opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 8 }}
+                          transition={{ duration: 0.5, ease: 'easeOut' }}
+                          className="absolute inset-x-4 bottom-4"
+                        >
+                          <div className="rounded-[1.5rem] bg-black/40 border border-white/10 shadow-[0_22px_70px_rgba(0,0,0,0.55)] backdrop-blur-md px-5 py-4">
+                            <div className="text-[10px] font-black tracking-[0.22em] text-[#F2E6CE] opacity-90">
+                              {loadingNotes[loadingIndex].title}
+                            </div>
+                            <div className="mt-2 text-[12px] font-serif text-stone-200 leading-relaxed tracking-wide">
+                              {loadingNotes[loadingIndex].text}
+                            </div>
+                          </div>
+                        </motion.div>
+                      ) : null}
+                    </AnimatePresence>
                   </div>
                 </div>
 
@@ -1591,8 +1941,9 @@ function MobileInkFlowSteleFeed({
     );
   }
 
-  const sectionLabels = ['题签', '赏析', '原文'];
+  const sectionLabels = ['赏析', '原文'];
   const excerpt = getExcerpt(stele.content, 260);
+  const quote = getExcerpt(stele.content, 88);
 
   return (
     <div className="h-full flex flex-col px-5 pt-4 pb-[calc(2.5rem+env(safe-area-inset-bottom))]">
@@ -1647,15 +1998,18 @@ function MobileInkFlowSteleFeed({
                       {[
                         `${stele.dynasty} · ${stele.author}`,
                         stele.script_type,
+                        stele.year ? stele.year : null,
                         `${stele.total_chars} 字`,
-                      ].map((item) => (
-                        <span
-                          key={item}
-                          className="px-3 py-1 rounded-full bg-white/65 border border-stone-200/70 text-[10px] font-serif text-stone-600 tracking-wide"
-                        >
-                          {item}
-                        </span>
-                      ))}
+                      ]
+                        .filter(Boolean)
+                        .map((item) => (
+                          <span
+                            key={String(item)}
+                            className="px-3 py-1 rounded-full bg-white/65 border border-stone-200/70 text-[10px] font-serif text-stone-600 tracking-wide"
+                          >
+                            {String(item)}
+                          </span>
+                        ))}
                     </div>
 
                     <div className="mt-6 h-px bg-stone-200/70" />
@@ -1664,33 +2018,38 @@ function MobileInkFlowSteleFeed({
                       {stele.description || '以气韵读帖，以笔法入心。'}
                     </p>
 
-                  </>
-                ) : section === 1 ? (
-                  <>
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <div className="inline-flex items-center gap-3">
-                          <div className="w-1.5 h-1.5 bg-[#8B0000] rotate-45" />
-                          <span className="text-[10px] font-black tracking-[0.6em] pl-[0.6em] text-stone-600">赏析</span>
-                        </div>
-                        <div className="mt-4 text-2xl font-serif font-black text-stone-900 tracking-wide">看气韵，也看来处</div>
+                    {quote ? (
+                      <div className="mt-6 rounded-[1.5rem] bg-white/45 border border-stone-200/70 p-5 shadow-sm">
+                        <div className="text-[10px] font-black tracking-[0.18em] text-stone-600">摘句</div>
+                        <p className="mt-3 text-[13px] font-serif text-stone-800 leading-[2.0] tracking-[0.12em] text-justify-zh">
+                          「{quote}…」
+                        </p>
                       </div>
-                      <div className="text-right text-[10px] font-mono text-stone-500 tracking-widest">
-                        {stele.year || ''}
-                      </div>
-                    </div>
+                    ) : null}
 
                     <div className="mt-6 rounded-[1.5rem] bg-white/65 border border-stone-200/70 p-5 shadow-sm">
-                      <p className="text-sm font-serif text-stone-700 leading-relaxed tracking-wide text-justify-zh">
-                        {stele.description || '从起笔看骨力，从收束看气息。'}
-                      </p>
+                      <div className="flex items-start justify-between">
+                        <div className="inline-flex items-center gap-3">
+                          <div className="w-1.5 h-1.5 bg-[#8B0000] rotate-45" />
+                          <span className="text-[10px] font-black tracking-[0.18em] text-stone-600">赏析要点</span>
+                        </div>
+                        <div className="text-right text-[10px] font-mono text-stone-500 tracking-widest">
+                          {stele.year || ''}
+                        </div>
+                      </div>
+
                       <div className="mt-5 h-px bg-stone-200/70" />
                       <div className="mt-4 space-y-2 text-[12px] font-serif text-stone-700">
-                        <div className="flex items-center justify-between"><span className="text-stone-500 tracking-[0.3em] text-[10px] font-black">现藏</span><span className="tracking-wide">{stele.location}</span></div>
-                        <div className="flex items-center justify-between"><span className="text-stone-500 tracking-[0.3em] text-[10px] font-black">类型</span><span className="tracking-wide">{stele.type}</span></div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-stone-500 tracking-[0.18em] text-[10px] font-black">现藏</span>
+                          <span className="tracking-wide text-right">{stele.location}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-stone-500 tracking-[0.18em] text-[10px] font-black">类型</span>
+                          <span className="tracking-wide">{stele.type}</span>
+                        </div>
                       </div>
                     </div>
-
                   </>
                 ) : (
                   <>
@@ -1701,7 +2060,7 @@ function MobileInkFlowSteleFeed({
                       </div>
                       <button
                         onClick={onOpenFullText}
-                        className="px-4 py-2 rounded-full bg-white/65 border border-stone-200/70 text-stone-700 text-[10px] font-black tracking-[0.35em] pl-[0.35em] shadow-sm active:scale-95 transition"
+                        className="inline-flex items-center justify-center text-center px-4 py-2 rounded-full bg-white/65 border border-stone-200/70 text-stone-700 text-[10px] font-black tracking-[0.18em] shadow-sm active:scale-95 transition"
                       >
                         阅读全文
                       </button>
@@ -1724,13 +2083,13 @@ function MobileInkFlowSteleFeed({
       <div className="mt-auto flex items-center justify-between pt-1">
         <button
           onClick={() => onNavigatePost(-1)}
-          className="px-5 py-3 rounded-[1.25rem] bg-white/60 border border-stone-200/70 text-stone-700 text-[11px] font-black tracking-[0.18em] shadow-sm active:scale-95 transition"
+          className="inline-flex items-center justify-center text-center px-5 py-3 rounded-[1.25rem] bg-white/60 border border-stone-200/70 text-stone-700 text-[11px] font-black tracking-[0.18em] shadow-sm active:scale-95 transition"
         >
           上一贴
         </button>
 
         <div className="flex items-center gap-2">
-          {[0, 1, 2].map((i) => (
+          {[0, 1].map((i) => (
             <div
               key={i}
               className={`h-1.5 rounded-full transition-all ${section === i ? 'w-6 bg-[#8B0000]/70' : 'w-1.5 bg-stone-400/40'}`}
@@ -1740,7 +2099,7 @@ function MobileInkFlowSteleFeed({
 
         <button
           onClick={() => onNavigatePost(1)}
-          className="px-5 py-3 rounded-[1.25rem] bg-white/60 border border-stone-200/70 text-stone-700 text-[11px] font-black tracking-[0.18em] shadow-sm active:scale-95 transition"
+          className="inline-flex items-center justify-center text-center px-5 py-3 rounded-[1.25rem] bg-white/60 border border-stone-200/70 text-stone-700 text-[11px] font-black tracking-[0.18em] shadow-sm active:scale-95 transition"
         >
           下一贴
         </button>
