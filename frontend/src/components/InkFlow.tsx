@@ -1692,6 +1692,7 @@ function MobileNewYearPosterModal({
     try {
       const res = kind === 'poster' 
         ? await renderNewYearPosterPng({
+            id: poster.id, // 核心修复：必须传入 ID
             yearLabel: poster.yearLabel,
             dayLabel: poster.dayLabel,
             caption: poster.caption,
