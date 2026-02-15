@@ -13,6 +13,8 @@ import { useMediaQuery } from './utils/useMediaQuery';
 const YISHAN_IMAGE = "/steles/1-zhuanshu/1-yishankeshi/yishan.jpg";
 const YISHAN2_IMAGE = "/steles/1-zhuanshu/1-yishankeshi/yishan2.jpg";
 
+const YISHAN_EXTRACTED_COUNT = 135;
+
 function App() {
   const isMobile = useMediaQuery('(max-width: 768px)');
   const [imagePath, setImagePath] = useState<string | null>(null);
@@ -38,7 +40,7 @@ function App() {
     fetch('/data/yishan_characters.json')
       .then(response => response.json())
       .then(data => {
-        const chars = data.characters.map((char: any, index: number) => ({
+        const chars = (data.characters || []).slice(0, YISHAN_EXTRACTED_COUNT).map((char: any, index: number) => ({
           ...char,
           globalIndex: index,
           aligned_text: char.char,
@@ -63,13 +65,15 @@ function App() {
 
   const handleNextChar = useCallback(() => {
     if (!previewChar) return;
-    const nextIdx = (previewChar.globalIndex + 1) % 144; // 仅在一世诏书144字内循环
+    const loopLen = Math.max(1, Math.min(fullSteleContent.length, YISHAN_EXTRACTED_COUNT));
+    const nextIdx = (previewChar.globalIndex + 1) % loopLen;
     setPreviewChar(fullSteleContent[nextIdx]);
   }, [previewChar, fullSteleContent]);
 
   const handlePrevChar = useCallback(() => {
     if (!previewChar) return;
-    const prevIdx = (previewChar.globalIndex - 1 + 144) % 144;
+    const loopLen = Math.max(1, Math.min(fullSteleContent.length, YISHAN_EXTRACTED_COUNT));
+    const prevIdx = (previewChar.globalIndex - 1 + loopLen) % loopLen;
     setPreviewChar(fullSteleContent[prevIdx]);
   }, [previewChar, fullSteleContent]);
 
@@ -156,7 +160,7 @@ function App() {
             <h1 className="text-base font-black tracking-[0.35em] pl-[0.35em] text-stone-900">墨陣</h1>
           </div>
           <div className="text-right">
-            <div className="text-[10px] font-serif tracking-[0.28em] text-stone-600 opacity-80">让书法活起来</div>
+            <div className="text-[10px] font-serif tracking-[0.22em] text-stone-600 opacity-85">墨香千載 · 筆鋒流轉</div>
           </div>
         </motion.header>
       ) : (
@@ -175,7 +179,7 @@ function App() {
             </h1>
           </div>
           <div className="text-right">
-            <div className="text-[10px] font-serif tracking-[0.35em] text-stone-500 opacity-80">让书法活起来</div>
+            <div className="text-[10px] font-serif tracking-[0.25em] text-stone-500 opacity-85">墨香千載 · 筆鋒流轉</div>
           </div>
         </motion.header>
       )}
@@ -291,13 +295,13 @@ function App() {
                           className="w-full max-w-sm mx-auto flex items-center justify-between gap-4 px-6 py-5 rounded-[1.75rem] bg-[#8B0000] text-[#F2E6CE] shadow-[0_25px_60px_rgba(139,0,0,0.28)] border border-[#8B0000]/60"
                         >
                           <div className="flex flex-col items-start">
-                            <span className="text-[13px] font-black tracking-[0.6em] pl-[0.6em]">墨流</span>
+                            <span className="text-[13px] font-black tracking-[0.6em] pl-[0.6em]">入墨</span>
                             <span className="text-[10px] opacity-80 tracking-[0.2em] font-serif">篆字研习 · 58名帖赏析</span>
                           </div>
                           <ChevronRight size={22} className="opacity-80" />
                         </motion.button>
-                        <div className="mt-4 text-center text-[10px] font-serif text-stone-500 tracking-[0.35em] opacity-70">
-                          墨阵 · 让书法活起来
+                        <div className="mt-4 text-center text-[10px] font-serif text-stone-500 tracking-[0.22em] opacity-80">
+                          墨陣 · 墨香千載 · 筆鋒流轉
                         </div>
                       </div>
                     </div>
@@ -356,7 +360,7 @@ function App() {
                     <div className="relative flex flex-col items-center gap-12">
                       <h2 className="vertical-rl text-[13vh] font-serif font-black tracking-[0.4em] text-[#b8860b] leading-none select-none drop-shadow-[0_10px_50px_rgba(0,0,0,0.9)]">墨陣</h2>
                       
-                      {/* 移动至此：墨流入口，改为绝对定位在标题右侧 */}
+                      {/* 移动至此：入墨入口，改为绝对定位在标题右侧 */}
                       <motion.button 
                         onClick={() => setShowInkFlow(true)}
                         whileHover={{ scale: 1.1 }}
@@ -371,7 +375,7 @@ function App() {
                           <div className="w-3 h-3 bg-[#b8860b] rounded-full relative z-10 shadow-[0_0_10px_rgba(184,134,11,0.5)]" />
                         </div>
                         <span className="vertical-rl text-[9px] font-serif text-stone-500 group-hover:text-[#b8860b] transition-colors tracking-[0.5em] opacity-60 font-bold">
-                          啟動墨流
+                          入墨
                         </span>
                       </motion.button>
 
@@ -395,7 +399,7 @@ function App() {
                       <div className="absolute inset-0 bg-gradient-to-l from-[#b8860b]/5 to-transparent rounded-full blur-3xl" />
                       {fullSteleContent.length > 0 && (
                         <CharCarousel 
-                          characters={fullSteleContent.slice(0, 144)} 
+                          characters={fullSteleContent.slice(0, YISHAN_EXTRACTED_COUNT)} 
                           activeIndex={previewChar?.globalIndex} 
                           onCharClick={(char) => setPreviewChar(char)} 
                         />
@@ -534,26 +538,26 @@ function App() {
                     <div className="w-[600px] h-full flex flex-col justify-center shrink-0">
                        <div className="mb-8 border-l-4 border-amber-600 pl-6">
                          <h3 className="text-3xl font-serif text-stone-100 tracking-widest">一世詔 · 始皇德政</h3>
-                         <p className="text-[9px] font-mono text-stone-600 uppercase tracking-[0.4em] mt-2">First Emperor's Edict (144 Chars)</p>
-                       </div>
-                       <div className="space-y-4 max-h-[70vh] overflow-y-auto custom-scrollbar pr-6">
-                         {Array.from({ length: Math.ceil(144 / 12) }).map((_, lineIdx) => (
-                           <div key={lineIdx} className="flex gap-2 items-center">
-                             {Array.from({ length: 3 }).map((_, groupIdx) => (
-                               <React.Fragment key={groupIdx}>
-                                 <div className="flex gap-1">
-                                   {fullSteleContent.slice(lineIdx * 12 + groupIdx * 4, lineIdx * 12 + groupIdx * 4 + 4).map((char, idx) => (
-                                      <motion.span key={idx} whileHover={{ scale: 1.5, color: '#f59e0b' }} onClick={() => setPreviewChar(char)}
-                                        className="w-8 h-8 flex items-center justify-center text-lg font-serif cursor-pointer text-stone-400"
-                                      >{char.char}</motion.span>
-                                   ))}
-                                 </div>
-                                 {groupIdx < 2 ? <span className="text-stone-700 font-serif">，</span> : <span className="text-stone-700 font-serif">。</span>}
-                               </React.Fragment>
-                             ))}
-                           </div>
-                         ))}
-                       </div>
+                          <p className="text-[9px] font-mono text-stone-600 uppercase tracking-[0.4em] mt-2">First Emperor's Edict ({fullSteleContent.length} Chars)</p>
+                        </div>
+                        <div className="space-y-4 max-h-[70vh] overflow-y-auto custom-scrollbar pr-6">
+                          {Array.from({ length: Math.ceil((fullSteleContent.length || 0) / 12) }).map((_, lineIdx) => (
+                            <div key={lineIdx} className="flex gap-2 items-center">
+                              {Array.from({ length: 3 }).map((_, groupIdx) => (
+                                <React.Fragment key={groupIdx}>
+                                  <div className="flex gap-1">
+                                    {fullSteleContent.slice(lineIdx * 12 + groupIdx * 4, lineIdx * 12 + groupIdx * 4 + 4).map((char, idx) => (
+                                       <motion.span key={idx} whileHover={{ scale: 1.5, color: '#f59e0b' }} onClick={() => setPreviewChar(char)}
+                                         className="w-8 h-8 flex items-center justify-center text-lg font-serif cursor-pointer text-stone-400"
+                                       >{char.char}</motion.span>
+                                    ))}
+                                  </div>
+                                  {groupIdx < 2 ? <span className="text-stone-700 font-serif">，</span> : <span className="text-stone-700 font-serif">。</span>}
+                                </React.Fragment>
+                              ))}
+                            </div>
+                          ))}
+                        </div>
                     </div>
 
                     <div className="w-px h-[40%] bg-white/5 shrink-0 mx-10" />

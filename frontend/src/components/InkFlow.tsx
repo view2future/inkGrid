@@ -45,6 +45,8 @@ type FlowMode = 'characters' | 'steles';
 type CardType = 'char' | 'stele';
 type MobilePage = 'hub' | FlowMode | 'posters';
 
+const YISHAN_EXTRACTED_COUNT = 135;
+
 interface FlowCard {
   id: string;
   type: CardType;
@@ -223,7 +225,7 @@ function SharePoster({ data, type, onClose }: { data: any; type: CardType; onClo
                <div className="flex items-center gap-5">
                   <div className="w-px h-12 bg-stone-200" /><div className="flex flex-col items-start gap-1"><span className="text-sm font-serif font-black text-stone-900">{type === 'char' ? '《嶧山刻石》' : data.author}</span><span className="text-[10px] font-serif text-stone-400 tracking-[0.2em] uppercase">{type === 'char' ? '秦 · 李斯' : `${data.dynasty} · ${data.script_type}`}</span></div>
                </div>
-               <div className="flex items-center gap-3 opacity-40 grayscale"><Logo size={24} /><span className="text-[9px] font-black tracking-[0.4em] text-stone-950 uppercase">墨陣 · 让书法活起来</span></div>
+               <div className="flex items-center gap-3 opacity-40 grayscale"><Logo size={24} /><span className="text-[9px] font-black tracking-[0.18em] text-stone-950">墨香千載 · 筆鋒流轉</span></div>
             </div>
           </div>
         )}
@@ -375,7 +377,7 @@ const InkFlow = forwardRef(({ isOpen, onClose }: InkFlowProps, ref) => {
     const res = await fetch('/data/yishan_characters.json');
     const data = await res.json();
     setCharDataFull(
-      (data.characters || []).map((c: any, i: number) => ({
+      (data.characters || []).slice(0, YISHAN_EXTRACTED_COUNT).map((c: any, i: number) => ({
         ...c,
         id: `y_${i}`,
         image: `/steles/extracted_by_grid/char_${String(i + 1).padStart(4, '0')}.png`,
@@ -729,7 +731,7 @@ const InkFlow = forwardRef(({ isOpen, onClose }: InkFlowProps, ref) => {
                 <span className="text-[11px] font-black tracking-[0.18em] text-stone-900 text-center max-w-[200px]">
                   {title}
                 </span>
-                <span className="text-[10px] font-serif tracking-[0.18em] text-stone-500 mt-1">墨陣 · 让书法活起来</span>
+                <span className="text-[10px] font-serif tracking-[0.14em] text-stone-500 mt-1">墨香千載 · 筆鋒流轉</span>
               </div>
             </div>
 
@@ -1067,21 +1069,29 @@ function MobileInkFlowPosterGallery({
       if (!bySimplified.has(key)) bySimplified.set(key, c);
     }
 
-    const head = wanted.map((k) => bySimplified.get(k)).filter(Boolean);
-    const pool = Array.from(bySimplified.values()).filter((c) => {
-      const key = String(c?.simplified || c?.char || '').trim();
-      return key && !wanted.includes(key);
-    });
+    const selected: any[] = [];
+    const used = new Set<string>();
 
-    const picked: any[] = [];
-    let seed = 219219;
-    while (picked.length < 20 && pool.length > 0) {
-      seed = (seed * 1664525 + 1013904223) >>> 0;
-      const idx = seed % pool.length;
-      picked.push(pool.splice(idx, 1)[0]);
+    for (const k of wanted) {
+      const c = bySimplified.get(k);
+      if (!c) continue;
+      selected.push(c);
+      used.add(k);
     }
 
-    return [...head, ...picked].slice(0, 24);
+    const pool = Array.from(bySimplified.values()).filter((c) => {
+      const key = String(c?.simplified || c?.char || '').trim();
+      return key && !used.has(key);
+    });
+
+    let seed = 219219;
+    while (selected.length < 24 && pool.length > 0) {
+      seed = (seed * 1664525 + 1013904223) >>> 0;
+      const idx = seed % pool.length;
+      selected.push(pool.splice(idx, 1)[0]);
+    }
+
+    return selected.slice(0, 24);
   }, [chars]);
 
   const curatedSteles = useMemo(() => {
@@ -1100,27 +1110,26 @@ function MobileInkFlowPosterGallery({
   }, [steles]);
 
   const collages = useMemo(() => {
-    const base = curatedChars.slice(4);
     const take = (start: number, count: number) =>
-      base.slice(start, start + count).map((c) => ({ simplified: c?.simplified, image: c?.image }));
+      curatedChars.slice(start, start + count).map((c) => ({ simplified: c?.simplified, image: c?.image }));
     return [
       {
         id: 'collage_a',
         title: '字卡平铺 · 一',
-        subtitle: '像翻开一张案头小画册',
-        cards: take(0, 6),
+        subtitle: '把字卡摊开在案头',
+        cards: take(0, 8),
       },
       {
         id: 'collage_b',
         title: '字卡平铺 · 二',
-        subtitle: '把好看的字，放进同一幅画里',
-        cards: take(6, 6),
+        subtitle: '同一方向，细微错落',
+        cards: take(8, 8),
       },
       {
         id: 'collage_c',
         title: '字卡平铺 · 三',
-        subtitle: '留白、纸纹与金石气',
-        cards: take(12, 6),
+        subtitle: '厚本子质感与轻微出界',
+        cards: take(16, 8),
       },
     ].filter((c) => c.cards.filter((x) => x.image).length >= 5);
   }, [curatedChars]);

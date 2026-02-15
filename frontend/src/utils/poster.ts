@@ -12,7 +12,7 @@ export const INKGRID_QR_URL = 'https://www.inkgrid.art';
 export const INKGRID_QR_LABEL = 'www.inkgrid.art';
 
 const INKGRID_BRAND_CN = '墨阵';
-const INKGRID_SLOGAN_CN = '让书法活起来';
+const INKGRID_SLOGAN_CN = '墨香千載 · 筆鋒流轉';
 const INKGRID_GOLD = '#B8860B';
 
 let BRAND_LOGO_PROMISE: Promise<HTMLImageElement> | null = null;
@@ -72,8 +72,9 @@ export async function renderPosterPng(input: PosterInput, options: RenderPosterO
   canvas.width = Math.round(CANVAS_W * pixelRatio * scale);
   canvas.height = Math.round(CANVAS_H * pixelRatio * scale);
 
-  const ctx = canvas.getContext('2d');
-  if (!ctx) throw new Error('Canvas not supported');
+  const ctxMaybe = canvas.getContext('2d');
+  if (!ctxMaybe) throw new Error('Canvas not supported');
+  const ctx = ctxMaybe;
   ctx.scale(pixelRatio * scale, pixelRatio * scale);
 
   const noiseImg = await loadImage('/noise.png').catch(() => null);
@@ -116,109 +117,240 @@ export async function renderCuratedCollagePng(input: CuratedCollageInput, option
   canvas.width = Math.round(CANVAS_W * pixelRatio * scale);
   canvas.height = Math.round(CANVAS_H * pixelRatio * scale);
 
-  const ctx = canvas.getContext('2d');
-  if (!ctx) throw new Error('Canvas not supported');
+  const ctxMaybe = canvas.getContext('2d');
+  if (!ctxMaybe) throw new Error('Canvas not supported');
+  const ctx = ctxMaybe;
   ctx.scale(pixelRatio * scale, pixelRatio * scale);
 
   const noiseImg = await loadImage('/noise.png').catch(() => null);
-  drawWashBase(ctx, noiseImg);
 
-  const padding = 72;
-  await drawBrandHeader(ctx, padding, 72, { tag: input.title?.trim() || '典藏画册' });
+  // --- 桌面底色：参考“故宫日历-多个平铺”氛围 ---
+  const desk = ctx.createLinearGradient(0, 0, 0, CANVAS_H);
+  desk.addColorStop(0, '#B78B52');
+  desk.addColorStop(0.55, '#A57A46');
+  desk.addColorStop(1, '#8C6537');
+  ctx.fillStyle = desk;
+  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
-  if (input.subtitle) {
-    ctx.fillStyle = 'rgba(17,24,39,0.60)';
-    ctx.font = "800 22px 'Noto Serif SC', serif";
-    ctx.fillText(input.subtitle.trim(), padding, 210);
+  const vignette = ctx.createRadialGradient(CANVAS_W * 0.55, CANVAS_H * 0.25, 0, CANVAS_W * 0.55, CANVAS_H * 0.25, 1200);
+  vignette.addColorStop(0, 'rgba(255,255,255,0.15)');
+  vignette.addColorStop(1, 'rgba(0,0,0,0.25)');
+  ctx.fillStyle = vignette;
+  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+  if (noiseImg) {
+    const p = ctx.createPattern(noiseImg, 'repeat');
+    if (p) {
+      ctx.globalAlpha = 0.10;
+      ctx.fillStyle = p;
+      ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+      ctx.globalAlpha = 1;
+    }
   }
 
-  const cards = (input.cards || []).slice(0, 8);
+  const padding = 72;
+  const plateX = 48;
+  const plateY = 48;
+  const plateW = CANVAS_W - 96;
+  const plateH = 240;
+
+  // header plate
+  ctx.save();
+  ctx.fillStyle = 'rgba(246,241,231,0.90)';
+  ctx.shadowColor = 'rgba(0,0,0,0.28)';
+  ctx.shadowBlur = 26;
+  roundRect(ctx, plateX, plateY, plateW, plateH, 48);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = 'rgba(255,255,255,0.30)';
+  ctx.lineWidth = 2;
+  roundRect(ctx, plateX, plateY, plateW, plateH, 48);
+  ctx.stroke();
+  ctx.restore();
+
+  await drawBrandHeader(ctx, plateX + 44, plateY + 34, { tag: input.title?.trim() || '典藏画册' });
+
+  if (input.subtitle) {
+    ctx.fillStyle = 'rgba(17,24,39,0.62)';
+    ctx.font = "800 22px 'Noto Serif SC', serif";
+    const lines = wrapText(ctx, input.subtitle.trim(), plateW - 88);
+    drawLines(ctx, lines.slice(0, 2), plateX + 44, plateY + 188, 30);
+  }
+
+  const cards = (input.cards || []).filter((c) => c.image).slice(0, 8);
   const cardW = 340;
   const cardH = 480;
-  const gapX = 72;
-  const gapY = 44;
-  const startX = 110;
-  const startY = 280;
+  const thickness = 28;
+  const dx = thickness;
+  const dy = Math.round(thickness * 0.62);
+  const radius = 34;
 
-  const rotations = [-6.5, 4.5, -3.8, 6.2, -5.2, 3.6, -2.6, 5.0];
+  const tones = ['#F6F1E7', '#F4EFE5', '#F8F3EA', '#F1E8DA'];
+  const glyphStyles = [
+    { scale: 1.12, ox: -18, oy: 10 },
+    { scale: 0.98, ox: 0, oy: 0 },
+    { scale: 1.18, ox: 14, oy: -18 },
+    { scale: 1.08, ox: 22, oy: 16 },
+    { scale: 1.22, ox: -10, oy: -22 },
+    { scale: 1.04, ox: -24, oy: 6 },
+    { scale: 1.16, ox: 8, oy: 24 },
+    { scale: 1.10, ox: 26, oy: -8 },
+  ];
 
-  for (let i = 0; i < cards.length; i++) {
-    const c = cards[i];
-    const col = i % 2;
-    const row = Math.floor(i / 2);
-    const x = startX + col * (cardW + gapX);
-    const y = startY + row * (cardH + gapY);
-    const rot = rotations[i % rotations.length];
+  const placements = [
+    { x: -26, y: 320 },
+    { x: 360, y: 300 },
+    { x: 730, y: 346 },
+    { x: 72, y: 820 },
+    { x: 430, y: 784 },
+    { x: 780, y: 860 },
+    { x: -10, y: 1310 },
+    { x: 360, y: 1280 },
+  ];
 
-    // card shadow
+  function drawCoverImage(ctx2: CanvasRenderingContext2D, img: HTMLImageElement, x: number, y: number, w: number, h: number, scaleMul: number, ox: number, oy: number) {
+    const sw = img.naturalWidth || img.width;
+    const sh = img.naturalHeight || img.height;
+    if (!sw || !sh) return;
+    const s = Math.max(w / sw, h / sh) * scaleMul;
+    const dw = sw * s;
+    const dh = sh * s;
+    const dx2 = x + (w - dw) / 2 + ox;
+    const dy2 = y + (h - dh) / 2 + oy;
+    ctx2.drawImage(img, dx2, dy2, dw, dh);
+  }
+
+  async function drawBookCard(c: { simplified?: string; image: string }, x: number, y: number, tone: string, style: { scale: number; ox: number; oy: number }) {
+    // shadow
     ctx.save();
-    ctx.translate(x + cardW / 2, y + cardH / 2);
-    ctx.rotate((rot * Math.PI) / 180);
-    ctx.translate(-cardW / 2, -cardH / 2);
-
-    ctx.fillStyle = 'rgba(17,24,39,0.16)';
-    roundRect(ctx, 10, 16, cardW, cardH, 32);
-    ctx.filter = 'blur(18px)';
+    ctx.fillStyle = 'rgba(0,0,0,0.30)';
+    ctx.filter = 'blur(26px)';
+    roundRect(ctx, x + 18, y + 22, cardW + dx, cardH + dy, radius);
     ctx.fill();
     ctx.filter = 'none';
+    ctx.restore();
 
-    // card body
-    ctx.fillStyle = 'rgba(255,255,255,0.78)';
-    roundRect(ctx, 0, 0, cardW, cardH, 32);
+    // thickness faces
+    ctx.save();
+    // right face
+    ctx.fillStyle = 'rgba(233,221,200,0.96)';
+    ctx.beginPath();
+    ctx.moveTo(x + cardW, y + radius);
+    ctx.lineTo(x + cardW + dx, y + radius + dy);
+    ctx.lineTo(x + cardW + dx, y + cardH - radius + dy);
+    ctx.lineTo(x + cardW, y + cardH - radius);
+    ctx.closePath();
     ctx.fill();
-    ctx.strokeStyle = 'rgba(17,24,39,0.10)';
+
+    // bottom face
+    ctx.fillStyle = 'rgba(217,200,170,0.96)';
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y + cardH);
+    ctx.lineTo(x + cardW - radius, y + cardH);
+    ctx.lineTo(x + cardW - radius + dx, y + cardH + dy);
+    ctx.lineTo(x + radius + dx, y + cardH + dy);
+    ctx.closePath();
+    ctx.fill();
+
+    // top face
+    ctx.fillStyle = tone;
+    roundRect(ctx, x, y, cardW, cardH, radius);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(17,24,39,0.12)';
     ctx.lineWidth = 2;
-    roundRect(ctx, 0, 0, cardW, cardH, 32);
+    roundRect(ctx, x, y, cardW, cardH, radius);
     ctx.stroke();
 
-    // simplified tag
-    const simplified = (c.simplified || '').trim();
-    if (simplified) {
-      ctx.fillStyle = 'rgba(139,0,0,0.12)';
-      roundRect(ctx, 22, 22, 88, 56, 18);
+    // subtle paper texture
+    if (noiseImg) {
+      const p = ctx.createPattern(noiseImg, 'repeat');
+      if (p) {
+        ctx.save();
+        roundRect(ctx, x, y, cardW, cardH, radius);
+        ctx.clip();
+        ctx.globalAlpha = 0.10;
+        ctx.fillStyle = p;
+        ctx.fillRect(x, y, cardW, cardH);
+        ctx.restore();
+      }
+    }
+
+    // spine strip
+    ctx.fillStyle = 'rgba(139,0,0,0.12)';
+    roundRect(ctx, x + 18, y + 18, 22, cardH - 36, 18);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(139,0,0,0.18)';
+    ctx.lineWidth = 2;
+    roundRect(ctx, x + 18, y + 18, 22, cardH - 36, 18);
+    ctx.stroke();
+
+    // simplified badge
+    const s = String(c.simplified || '').trim();
+    if (s) {
+      ctx.fillStyle = 'rgba(255,255,255,0.55)';
+      roundRect(ctx, x + cardW - 112, y + 22, 88, 54, 16);
       ctx.fill();
-      ctx.strokeStyle = 'rgba(139,0,0,0.22)';
+      ctx.strokeStyle = 'rgba(17,24,39,0.10)';
       ctx.lineWidth = 2;
-      roundRect(ctx, 22, 22, 88, 56, 18);
+      roundRect(ctx, x + cardW - 112, y + 22, 88, 54, 16);
       ctx.stroke();
       ctx.fillStyle = 'rgba(17,24,39,0.90)';
       ctx.font = "900 34px 'Noto Serif SC', serif";
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(simplified, 22 + 44, 22 + 30);
+      ctx.fillText(s, x + cardW - 112 + 44, y + 22 + 29);
       ctx.textAlign = 'left';
       ctx.textBaseline = 'alphabetic';
     }
 
-    // glyph
-    if (c.image) {
-      const img = await loadImage(c.image).catch(() => null);
-      if (img) {
-        ctx.save();
-        ctx.globalAlpha = 0.94;
-        drawContainImage(ctx, img, 44, 110, cardW - 88, cardH - 170);
-        ctx.restore();
-      }
+    // glyph (clip to top face)
+    const img = await loadImage(c.image).catch(() => null);
+    if (img) {
+      ctx.save();
+      roundRect(ctx, x, y, cardW, cardH, radius);
+      ctx.clip();
+      ctx.globalAlpha = 0.96;
+      ctx.filter = 'contrast(1.12) brightness(1.06)';
+      drawCoverImage(ctx, img, x + 40, y + 96, cardW - 80, cardH - 180, style.scale, style.ox, style.oy);
+      ctx.filter = 'none';
+      ctx.restore();
     }
 
-    // footer brand
-    ctx.fillStyle = 'rgba(17,24,39,0.48)';
+    // footer
+    ctx.fillStyle = 'rgba(17,24,39,0.50)';
     ctx.font = "900 18px 'Noto Serif SC', serif";
-    ctx.fillText(INKGRID_BRAND_CN, 44, cardH - 42);
-    ctx.fillStyle = 'rgba(17,24,39,0.36)';
+    ctx.fillText(INKGRID_BRAND_CN, x + 44, y + cardH - 44);
+    ctx.fillStyle = 'rgba(17,24,39,0.38)';
     ctx.font = "800 16px 'Noto Serif SC', serif";
-    ctx.fillText(INKGRID_SLOGAN_CN, 44, cardH - 18);
-
+    ctx.fillText(INKGRID_SLOGAN_CN, x + 44, y + cardH - 18);
     ctx.restore();
   }
 
-  // QR footer
+  for (let i = 0; i < cards.length; i++) {
+    const p = placements[i % placements.length];
+    const tone = tones[i % tones.length];
+    const st = glyphStyles[i % glyphStyles.length];
+    await drawBookCard(cards[i], p.x, p.y, tone, st);
+  }
+
+  // QR footer (right-lower desk corner)
   const qrSize = 190;
   const qrX = CANVAS_W - padding - qrSize;
   const qrY = CANVAS_H - padding - qrSize;
-  ctx.fillStyle = 'rgba(17,24,39,0.70)';
-  ctx.font = "900 24px 'Noto Serif SC', serif";
-  drawGoldFoilText(ctx, INKGRID_QR_LABEL, qrX - 12, qrY - 18);
+  ctx.save();
+  ctx.fillStyle = 'rgba(246,241,231,0.86)';
+  ctx.shadowColor = 'rgba(0,0,0,0.22)';
+  ctx.shadowBlur = 22;
+  roundRect(ctx, qrX - 18, qrY - 18, qrSize + 36, qrSize + 36, 34);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = 'rgba(255,255,255,0.24)';
+  ctx.lineWidth = 2;
+  roundRect(ctx, qrX - 18, qrY - 18, qrSize + 36, qrSize + 36, 34);
+  ctx.stroke();
+  ctx.restore();
+
+  drawUrlLabelAboveQr(ctx, qrX, qrY, qrSize);
   await drawQr(ctx, qrX, qrY, qrSize);
 
   const blob = await canvasToBlob(canvas);
@@ -401,6 +533,62 @@ function drawGoldFoilText(ctx: CanvasRenderingContext2D, text: string, x: number
   ctx.restore();
 }
 
+function drawUrlLabelAboveQr(ctx: CanvasRenderingContext2D, qrX: number, qrY: number, qrSize: number) {
+  const label = INKGRID_QR_LABEL;
+  ctx.save();
+  ctx.font = "900 32px 'Noto Serif SC', serif";
+  const w = Math.ceil(ctx.measureText(label).width);
+  const padX = 22;
+  const pillW = w + padX * 2;
+  const pillH = 62;
+  const xRaw = qrX + (qrSize - pillW) / 2;
+  const x = Math.max(24, Math.min(CANVAS_W - pillW - 24, xRaw));
+  const y = qrY - pillH - 18;
+
+  const bg = ctx.createLinearGradient(0, y, 0, y + pillH);
+  bg.addColorStop(0, 'rgba(17,24,39,0.20)');
+  bg.addColorStop(1, 'rgba(17,24,39,0.12)');
+  ctx.fillStyle = bg;
+  roundRect(ctx, x, y, pillW, pillH, 999);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.28)';
+  ctx.lineWidth = 1;
+  roundRect(ctx, x, y, pillW, pillH, 999);
+  ctx.stroke();
+
+  ctx.shadowColor = 'rgba(0,0,0,0.35)';
+  ctx.shadowBlur = 10;
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  drawGoldFoilText(ctx, label, x + padX, y + pillH / 2 + 1);
+  ctx.restore();
+}
+
+function drawVerticalMotto(ctx: CanvasRenderingContext2D, xCenter: number, topY: number, bottomY: number) {
+  const motto = INKGRID_SLOGAN_CN.replace(/\s+/g, '').replace(/\./g, '·');
+  const units = Array.from(motto);
+  if (!units.length) return;
+
+  const lineHeight = 46;
+  const totalH = units.length * lineHeight;
+  const y0 = topY + Math.max(0, (bottomY - topY - totalH) / 2);
+
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  ctx.font = "900 30px 'Noto Serif SC', serif";
+  ctx.fillStyle = 'rgba(184,134,11,0.45)';
+  ctx.shadowColor = 'rgba(0,0,0,0.18)';
+  ctx.shadowBlur = 12;
+
+  let y = y0;
+  for (const u of units) {
+    ctx.fillText(u, xCenter, y);
+    y += lineHeight;
+  }
+  ctx.restore();
+}
+
 function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
   const radius = Math.min(r, w / 2, h / 2);
   ctx.beginPath();
@@ -466,9 +654,8 @@ async function drawCharFolio(ctx: CanvasRenderingContext2D, data: PosterChar) {
   const qrSize = 190;
   const qrX = rightX + Math.round((300 - qrSize) / 2);
   const qrY = CANVAS_H - padding - qrSize;
-  ctx.fillStyle = 'rgba(17,24,39,0.70)';
-  ctx.font = "900 26px 'Noto Serif SC', serif";
-  drawGoldFoilText(ctx, INKGRID_QR_LABEL, qrX - 12, qrY - 18);
+  drawVerticalMotto(ctx, rightX + 150, 240, qrY - 110);
+  drawUrlLabelAboveQr(ctx, qrX, qrY, qrSize);
   await drawQr(ctx, qrX, qrY, qrSize);
 }
 
@@ -519,9 +706,8 @@ async function drawSteleFolio(ctx: CanvasRenderingContext2D, stele: PosterStele)
   const qrSize = 190;
   const qrX = rightX + Math.round((300 - qrSize) / 2);
   const qrY = CANVAS_H - padding - qrSize;
-  ctx.fillStyle = 'rgba(17,24,39,0.70)';
-  ctx.font = "900 26px 'Noto Serif SC', serif";
-  drawGoldFoilText(ctx, INKGRID_QR_LABEL, qrX - 12, qrY - 18);
+  drawVerticalMotto(ctx, rightX + 150, 240, qrY - 110);
+  drawUrlLabelAboveQr(ctx, qrX, qrY, qrSize);
   await drawQr(ctx, qrX, qrY, qrSize);
 }
 
@@ -577,9 +763,8 @@ async function drawCharWash(ctx: CanvasRenderingContext2D, data: PosterChar) {
   const qrSize = 190;
   const qrX = rightX + Math.round((rightW - qrSize) / 2);
   const qrY = CANVAS_H - padding - qrSize;
-  ctx.fillStyle = 'rgba(17,24,39,0.70)';
-  ctx.font = "900 26px 'Noto Serif SC', serif";
-  drawGoldFoilText(ctx, INKGRID_QR_LABEL, qrX - 12, qrY - 18);
+  drawVerticalMotto(ctx, rightX + rightW / 2, 240, qrY - 110);
+  drawUrlLabelAboveQr(ctx, qrX, qrY, qrSize);
   await drawQr(ctx, qrX, qrY, qrSize);
 }
 
@@ -627,9 +812,8 @@ async function drawSteleWash(ctx: CanvasRenderingContext2D, stele: PosterStele) 
   const qrSize = 190;
   const qrX = rightX + Math.round((rightW - qrSize) / 2);
   const qrY = CANVAS_H - padding - qrSize;
-  ctx.fillStyle = 'rgba(17,24,39,0.70)';
-  ctx.font = "900 26px 'Noto Serif SC', serif";
-  drawGoldFoilText(ctx, INKGRID_QR_LABEL, qrX - 12, qrY - 18);
+  drawVerticalMotto(ctx, rightX + rightW / 2, 240, qrY - 110);
+  drawUrlLabelAboveQr(ctx, qrX, qrY, qrSize);
   await drawQr(ctx, qrX, qrY, qrSize);
 }
 
@@ -699,9 +883,8 @@ async function drawCharMinimal(ctx: CanvasRenderingContext2D, data: PosterChar) 
   const qrSize = 190;
   const qrX = rightX + Math.round((rightW - qrSize) / 2);
   const qrY = CANVAS_H - padding - qrSize;
-  ctx.fillStyle = 'rgba(17,24,39,0.70)';
-  ctx.font = "900 26px 'Noto Serif SC', serif";
-  drawGoldFoilText(ctx, INKGRID_QR_LABEL, qrX - 12, qrY - 18);
+  drawVerticalMotto(ctx, rightX + rightW / 2, 260, qrY - 110);
+  drawUrlLabelAboveQr(ctx, qrX, qrY, qrSize);
   await drawQr(ctx, qrX, qrY, qrSize);
 }
 
@@ -756,9 +939,8 @@ async function drawSteleMinimal(ctx: CanvasRenderingContext2D, stele: PosterStel
   const qrSize = 190;
   const qrX = rightX + Math.round((rightW - qrSize) / 2);
   const qrY = CANVAS_H - padding - qrSize;
-  ctx.fillStyle = 'rgba(17,24,39,0.70)';
-  ctx.font = "900 26px 'Noto Serif SC', serif";
-  drawGoldFoilText(ctx, INKGRID_QR_LABEL, qrX - 12, qrY - 18);
+  drawVerticalMotto(ctx, rightX + rightW / 2, 260, qrY - 110);
+  drawUrlLabelAboveQr(ctx, qrX, qrY, qrSize);
   await drawQr(ctx, qrX, qrY, qrSize);
 }
 
