@@ -20,6 +20,8 @@ export default function CharCarousel({ characters, onCharClick, activeIndex }: C
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
 
+  const centerChar = characters[currentIndex];
+
   // 当外部传入的 activeIndex 变化时，同步内部索引
   useEffect(() => {
     if (activeIndex !== undefined && activeIndex !== -1) {
@@ -202,19 +204,6 @@ export default function CharCarousel({ characters, onCharClick, activeIndex }: C
                       }}
                     />
 
-                    {/* 简体字标注 */}
-                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 whitespace-nowrap">
-                      <span 
-                        className="text-base font-bold tracking-widest"
-                        style={{
-                          fontFamily: '"Noto Serif SC", serif',
-                          color: '#D4A574',
-                          textShadow: '0 0 20px rgba(212, 165, 116, 0.5)',
-                        }}
-                      >
-                        {char.aligned_text}
-                      </span>
-                    </div>
                   </>
                 )}
               </div>
@@ -222,6 +211,34 @@ export default function CharCarousel({ characters, onCharClick, activeIndex }: C
           );
         })}
       </AnimatePresence>
+
+      {/* 当前轮播对应简体字标注 */}
+      <div className="absolute right-10 top-1/2 -translate-y-1/2 pointer-events-none">
+        <AnimatePresence mode="wait">
+          {centerChar ? (
+            <motion.div
+              key={`simp-${centerChar.globalIndex}`}
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 10 }}
+              className="flex flex-col items-center gap-3"
+            >
+              <div className="w-16 h-16 rounded-2xl border border-amber-500/25 bg-black/25 backdrop-blur-md shadow-[0_24px_70px_rgba(0,0,0,0.55)] flex items-center justify-center">
+                <span
+                  className="text-3xl font-serif font-black"
+                  style={{
+                    color: '#D4A574',
+                    textShadow: '0 0 22px rgba(212, 165, 116, 0.35)',
+                  }}
+                >
+                  {centerChar.simplified || centerChar.aligned_text}
+                </span>
+              </div>
+              <div className="w-px h-12 bg-gradient-to-b from-amber-500/40 to-transparent" />
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
+      </div>
 
       {/* 左右箭头指示 */}
       <div className="absolute left-8 text-stone-700 text-2xl opacity-30">‹</div>

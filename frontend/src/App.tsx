@@ -1,8 +1,7 @@
 // 嶧山刻石 - 追光背景与长卷详情精准恢复版
 import React, { useState, useEffect, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Globe, Info, X, ChevronRight, ChevronLeft, Library } from 'lucide-react';
+import { Search, Info, X, ChevronRight, ChevronLeft, Library } from 'lucide-react';
 import StrokeWriter from './components/StrokeWriter';
 import Logo from './components/Logo';
 import GalleryCorridor from './components/GalleryCorridor';
@@ -15,7 +14,6 @@ const YISHAN_IMAGE = "/steles/1-zhuanshu/1-yishankeshi/yishan.jpg";
 const YISHAN2_IMAGE = "/steles/1-zhuanshu/1-yishankeshi/yishan2.jpg";
 
 function App() {
-  const { t, i18n } = useTranslation();
   const isMobile = useMediaQuery('(max-width: 768px)');
   const [imagePath, setImagePath] = useState<string | null>(null);
   const [showTracing, setShowTracing] = useState(false);
@@ -157,13 +155,9 @@ function App() {
             <Logo size={28} />
             <h1 className="text-base font-black tracking-[0.35em] pl-[0.35em] text-stone-900">墨陣</h1>
           </div>
-          <button
-            onClick={() => i18n.changeLanguage(i18n.language === 'zh' ? 'en' : 'zh')}
-            className="p-2 hover:bg-black/5 rounded-full transition-all text-stone-600"
-            aria-label="Toggle language"
-          >
-            <Globe size={18} />
-          </button>
+          <div className="text-right">
+            <div className="text-[10px] font-serif tracking-[0.28em] text-stone-600 opacity-80">让书法活起来</div>
+          </div>
         </motion.header>
       ) : (
         <motion.header
@@ -180,13 +174,9 @@ function App() {
               </span>
             </h1>
           </div>
-          <button
-            onClick={() => i18n.changeLanguage(i18n.language === 'zh' ? 'en' : 'zh')}
-            className="p-2 hover:bg-stone-800 rounded-full transition-all text-stone-500"
-            aria-label="Toggle language"
-          >
-            <Globe size={18} />
-          </button>
+          <div className="text-right">
+            <div className="text-[10px] font-serif tracking-[0.35em] text-stone-500 opacity-80">让书法活起来</div>
+          </div>
         </motion.header>
       )}
 
@@ -261,17 +251,35 @@ function App() {
                             )}
                           </AnimatePresence>
 
-                          <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-white/70 backdrop-blur-md border border-stone-200/80 shadow text-[10px] font-black tracking-[0.6em] pl-[0.6em] text-stone-700">
-                            今日一字
+                          <AnimatePresence mode="wait">
+                            {fullSteleContent[mobileHeroIndex] && (
+                              <motion.div
+                                key={`simp-${fullSteleContent[mobileHeroIndex].globalIndex}`}
+                                initial={{ opacity: 0, x: 10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: 10 }}
+                                className="absolute right-7 top-1/2 -translate-y-1/2"
+                              >
+                                <div className="w-16 h-16 rounded-2xl bg-white/65 backdrop-blur-md border border-stone-200/80 shadow-[0_18px_45px_rgba(0,0,0,0.14)] flex items-center justify-center">
+                                  <span className="text-3xl font-serif font-black text-stone-900">
+                                    {fullSteleContent[mobileHeroIndex].simplified || fullSteleContent[mobileHeroIndex].aligned_text}
+                                  </span>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+
+                          <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-white/70 backdrop-blur-md border border-stone-200/80 shadow text-[10px] font-black tracking-[0.28em] text-stone-700">
+                            峄山刻石-李斯
                           </div>
                         </div>
 
                         <div className="text-center space-y-4 max-w-sm">
-                          <h2 className="text-[32px] leading-none font-serif font-black tracking-[0.55em] pl-[0.55em] text-stone-900">
-                            墨流
+                          <h2 className="text-[26px] leading-tight font-serif font-black tracking-[0.22em] text-stone-900">
+                            峄山刻石 · 李斯
                           </h2>
                           <p className="text-sm font-serif text-stone-600 leading-relaxed tracking-wide">
-                            以字为舟，随墨而行。<br />轻翻一页，便见千年笔意。
+                            一字一页，慢慢看。<br />让书法从碑石走进指尖。
                           </p>
                         </div>
                       </div>
@@ -289,7 +297,7 @@ function App() {
                           <ChevronRight size={22} className="opacity-80" />
                         </motion.button>
                         <div className="mt-4 text-center text-[10px] font-serif text-stone-500 tracking-[0.35em] opacity-70">
-                          只做一件事：让字活起来
+                          墨阵 · 让书法活起来
                         </div>
                       </div>
                     </div>

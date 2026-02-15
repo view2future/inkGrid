@@ -3,8 +3,23 @@ import QRCode from 'qrcode';
 export type PosterTemplate = 'folio' | 'wash' | 'minimal';
 export type PosterKind = 'char' | 'stele';
 
+export type RenderPosterOptions = {
+  scale?: number;
+  pixelRatio?: number;
+};
+
 export const INKGRID_QR_URL = 'https://www.inkgrid.art';
 export const INKGRID_QR_LABEL = 'www.inkgrid.art';
+
+const INKGRID_BRAND_CN = '墨阵';
+const INKGRID_SLOGAN_CN = '让书法活起来';
+const INKGRID_GOLD = '#B8860B';
+
+let BRAND_LOGO_PROMISE: Promise<HTMLImageElement> | null = null;
+function loadBrandLogo() {
+  if (!BRAND_LOGO_PROMISE) BRAND_LOGO_PROMISE = loadImage('/assets/mo_ink.png');
+  return BRAND_LOGO_PROMISE;
+}
 
 type PosterChar = {
   simplified?: string;
@@ -33,18 +48,33 @@ type PosterInput =
   | { kind: 'char'; template: PosterTemplate; data: PosterChar }
   | { kind: 'stele'; template: PosterTemplate; data: PosterStele };
 
+export type CuratedCollageInput = {
+  title?: string;
+  subtitle?: string;
+  cards: Array<{
+    simplified?: string;
+    image: string;
+  }>;
+};
+
 const CANVAS_W = 1080;
 const CANVAS_H = 1920;
 
-export async function renderPosterPng(input: PosterInput) {
+export async function renderPosterPng(input: PosterInput, options: RenderPosterOptions = {}) {
   const canvas = document.createElement('canvas');
-  const pixelRatio = Math.max(2, Math.floor(window.devicePixelRatio || 1));
-  canvas.width = CANVAS_W * pixelRatio;
-  canvas.height = CANVAS_H * pixelRatio;
+
+  const scale = typeof options.scale === 'number' ? Math.max(0.25, Math.min(1, options.scale)) : 1;
+  const pixelRatio =
+    typeof options.pixelRatio === 'number' && options.pixelRatio > 0
+      ? options.pixelRatio
+      : Math.max(2, Math.floor(window.devicePixelRatio || 1));
+
+  canvas.width = Math.round(CANVAS_W * pixelRatio * scale);
+  canvas.height = Math.round(CANVAS_H * pixelRatio * scale);
 
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('Canvas not supported');
-  ctx.scale(pixelRatio, pixelRatio);
+  ctx.scale(pixelRatio * scale, pixelRatio * scale);
 
   const noiseImg = await loadImage('/noise.png').catch(() => null);
 
@@ -69,8 +99,133 @@ export async function renderPosterPng(input: PosterInput) {
   const blob = await canvasToBlob(canvas);
   return {
     blob,
-    width: CANVAS_W,
-    height: CANVAS_H,
+    width: Math.round(CANVAS_W * scale),
+    height: Math.round(CANVAS_H * scale),
+  };
+}
+
+export async function renderCuratedCollagePng(input: CuratedCollageInput, options: RenderPosterOptions = {}) {
+  const canvas = document.createElement('canvas');
+
+  const scale = typeof options.scale === 'number' ? Math.max(0.25, Math.min(1, options.scale)) : 1;
+  const pixelRatio =
+    typeof options.pixelRatio === 'number' && options.pixelRatio > 0
+      ? options.pixelRatio
+      : Math.max(2, Math.floor(window.devicePixelRatio || 1));
+
+  canvas.width = Math.round(CANVAS_W * pixelRatio * scale);
+  canvas.height = Math.round(CANVAS_H * pixelRatio * scale);
+
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('Canvas not supported');
+  ctx.scale(pixelRatio * scale, pixelRatio * scale);
+
+  const noiseImg = await loadImage('/noise.png').catch(() => null);
+  drawWashBase(ctx, noiseImg);
+
+  const padding = 72;
+  await drawBrandHeader(ctx, padding, 72, { tag: input.title?.trim() || '典藏画册' });
+
+  if (input.subtitle) {
+    ctx.fillStyle = 'rgba(17,24,39,0.60)';
+    ctx.font = "800 22px 'Noto Serif SC', serif";
+    ctx.fillText(input.subtitle.trim(), padding, 210);
+  }
+
+  const cards = (input.cards || []).slice(0, 8);
+  const cardW = 340;
+  const cardH = 480;
+  const gapX = 72;
+  const gapY = 44;
+  const startX = 110;
+  const startY = 280;
+
+  const rotations = [-6.5, 4.5, -3.8, 6.2, -5.2, 3.6, -2.6, 5.0];
+
+  for (let i = 0; i < cards.length; i++) {
+    const c = cards[i];
+    const col = i % 2;
+    const row = Math.floor(i / 2);
+    const x = startX + col * (cardW + gapX);
+    const y = startY + row * (cardH + gapY);
+    const rot = rotations[i % rotations.length];
+
+    // card shadow
+    ctx.save();
+    ctx.translate(x + cardW / 2, y + cardH / 2);
+    ctx.rotate((rot * Math.PI) / 180);
+    ctx.translate(-cardW / 2, -cardH / 2);
+
+    ctx.fillStyle = 'rgba(17,24,39,0.16)';
+    roundRect(ctx, 10, 16, cardW, cardH, 32);
+    ctx.filter = 'blur(18px)';
+    ctx.fill();
+    ctx.filter = 'none';
+
+    // card body
+    ctx.fillStyle = 'rgba(255,255,255,0.78)';
+    roundRect(ctx, 0, 0, cardW, cardH, 32);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(17,24,39,0.10)';
+    ctx.lineWidth = 2;
+    roundRect(ctx, 0, 0, cardW, cardH, 32);
+    ctx.stroke();
+
+    // simplified tag
+    const simplified = (c.simplified || '').trim();
+    if (simplified) {
+      ctx.fillStyle = 'rgba(139,0,0,0.12)';
+      roundRect(ctx, 22, 22, 88, 56, 18);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(139,0,0,0.22)';
+      ctx.lineWidth = 2;
+      roundRect(ctx, 22, 22, 88, 56, 18);
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(17,24,39,0.90)';
+      ctx.font = "900 34px 'Noto Serif SC', serif";
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(simplified, 22 + 44, 22 + 30);
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'alphabetic';
+    }
+
+    // glyph
+    if (c.image) {
+      const img = await loadImage(c.image).catch(() => null);
+      if (img) {
+        ctx.save();
+        ctx.globalAlpha = 0.94;
+        drawContainImage(ctx, img, 44, 110, cardW - 88, cardH - 170);
+        ctx.restore();
+      }
+    }
+
+    // footer brand
+    ctx.fillStyle = 'rgba(17,24,39,0.48)';
+    ctx.font = "900 18px 'Noto Serif SC', serif";
+    ctx.fillText(INKGRID_BRAND_CN, 44, cardH - 42);
+    ctx.fillStyle = 'rgba(17,24,39,0.36)';
+    ctx.font = "800 16px 'Noto Serif SC', serif";
+    ctx.fillText(INKGRID_SLOGAN_CN, 44, cardH - 18);
+
+    ctx.restore();
+  }
+
+  // QR footer
+  const qrSize = 190;
+  const qrX = CANVAS_W - padding - qrSize;
+  const qrY = CANVAS_H - padding - qrSize;
+  ctx.fillStyle = 'rgba(17,24,39,0.70)';
+  ctx.font = "900 24px 'Noto Serif SC', serif";
+  drawGoldFoilText(ctx, INKGRID_QR_LABEL, qrX - 12, qrY - 18);
+  await drawQr(ctx, qrX, qrY, qrSize);
+
+  const blob = await canvasToBlob(canvas);
+  return {
+    blob,
+    width: Math.round(CANVAS_W * scale),
+    height: Math.round(CANVAS_H * scale),
   };
 }
 
@@ -163,21 +318,116 @@ function drawMinimalBase(ctx: CanvasRenderingContext2D, noiseImg: HTMLImageEleme
   }
 }
 
+async function drawBrandHeader(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  opts: {
+    tag?: string;
+    tagAlign?: 'right' | 'left';
+  } = {}
+) {
+  const logoSize = 56;
+  const logo = await loadBrandLogo().catch(() => null);
+
+  if (logo) {
+    ctx.save();
+    ctx.globalAlpha = 0.92;
+    drawContainImage(ctx, logo, x, y, logoSize, logoSize);
+    ctx.restore();
+  }
+
+  const textX = x + (logo ? logoSize + 18 : 0);
+  ctx.save();
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = '#111827';
+  ctx.font = "900 46px 'Noto Serif SC', serif";
+  ctx.fillText(INKGRID_BRAND_CN, textX, y + 44);
+  ctx.fillStyle = 'rgba(17,24,39,0.62)';
+  ctx.font = "800 22px 'Noto Serif SC', serif";
+  ctx.fillText(INKGRID_SLOGAN_CN, textX, y + 78);
+  ctx.restore();
+
+  if (opts.tag) {
+    const tagText = String(opts.tag).trim();
+    if (tagText) {
+      ctx.save();
+      const padX = 18;
+      const padY = 10;
+      ctx.font = "900 20px 'Noto Serif SC', serif";
+      const w = Math.ceil(ctx.measureText(tagText).width);
+      const pillW = w + padX * 2;
+      const pillH = 44;
+      const pillX = opts.tagAlign === 'left' ? x : CANVAS_W - x - pillW;
+      const pillY = y + 6;
+
+      ctx.fillStyle = 'rgba(139,0,0,0.10)';
+      roundRect(ctx, pillX, pillY, pillW, pillH, 999);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(139,0,0,0.22)';
+      ctx.lineWidth = 2;
+      roundRect(ctx, pillX, pillY, pillW, pillH, 999);
+      ctx.stroke();
+
+      ctx.fillStyle = 'rgba(139,0,0,0.86)';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(tagText, pillX + pillW / 2, pillY + pillH / 2 + 1);
+      ctx.restore();
+    }
+  }
+}
+
+function drawGoldFoilText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number) {
+  const t = String(text || '').trim();
+  if (!t) return;
+
+  const w = Math.max(1, ctx.measureText(t).width);
+  const g = ctx.createLinearGradient(x, y - 26, x + w, y + 6);
+  g.addColorStop(0, '#6B4E00');
+  g.addColorStop(0.18, '#B8860B');
+  g.addColorStop(0.45, '#F2E6CE');
+  g.addColorStop(0.68, '#B8860B');
+  g.addColorStop(1, '#4A3500');
+
+  ctx.save();
+  ctx.fillStyle = g;
+  ctx.fillText(t, x, y);
+  ctx.globalAlpha = 0.35;
+  ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+  ctx.lineWidth = 1;
+  ctx.strokeText(t, x, y);
+  ctx.restore();
+}
+
+function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+  const radius = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.arcTo(x + w, y, x + w, y + h, radius);
+  ctx.arcTo(x + w, y + h, x, y + h, radius);
+  ctx.arcTo(x, y + h, x, y, radius);
+  ctx.arcTo(x, y, x + w, y, radius);
+  ctx.closePath();
+}
+
 async function drawCharFolio(ctx: CanvasRenderingContext2D, data: PosterChar) {
   const rightX = CANVAS_W - 300;
   const padding = 72;
   const mainW = rightX - padding * 2;
 
-  ctx.fillStyle = '#111827';
-  ctx.font = "900 54px 'Noto Serif SC', serif";
-  ctx.fillText('墨流', padding, 132);
+  await drawBrandHeader(ctx, padding, 72, { tag: '篆字研习' });
 
-  ctx.fillStyle = 'rgba(17,24,39,0.55)';
-  ctx.font = "800 20px 'Noto Serif SC', serif";
-  ctx.fillText('篆字研习', padding, 172);
+  ctx.strokeStyle = 'rgba(17,24,39,0.10)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(padding, 200);
+  ctx.lineTo(rightX - padding, 200);
+  ctx.stroke();
 
   const charImg = await loadImage(data.image);
-  drawContainImage(ctx, charImg, padding, 250, mainW, 820);
+  drawContainImage(ctx, charImg, padding, 226, mainW, 860);
 
   const simplified = (data.simplified || '').trim() || '字';
   const pinyin = (data.pinyin || '').trim();
@@ -189,17 +439,17 @@ async function drawCharFolio(ctx: CanvasRenderingContext2D, data: PosterChar) {
   const dynasty = data.dynasty || '秦';
 
   ctx.fillStyle = '#111827';
-  ctx.font = "900 88px 'Noto Serif SC', serif";
-  ctx.fillText(simplified, padding, 1180);
+  ctx.font = "900 104px 'Noto Serif SC', serif";
+  ctx.fillText(simplified, padding, 1188);
 
   ctx.fillStyle = '#8B0000';
-  ctx.font = "700 24px 'Fira Code', monospace";
-  if (pinyin) ctx.fillText(pinyin, padding, 1230);
+  ctx.font = "700 26px 'Fira Code', monospace";
+  if (pinyin) ctx.fillText(pinyin, padding, 1242);
 
   ctx.fillStyle = 'rgba(17,24,39,0.72)';
-  ctx.font = "700 28px 'Noto Serif SC', serif";
+  ctx.font = "700 32px 'Noto Serif SC', serif";
   const meaningLines = wrapText(ctx, meaning || '以形观势，以势入心。', mainW);
-  drawLines(ctx, meaningLines.slice(0, 3), padding, 1295, 40);
+  drawLines(ctx, meaningLines.slice(0, 3), padding, 1310, 46);
 
   ctx.fillStyle = 'rgba(17,24,39,0.55)';
   ctx.font = "700 20px 'Noto Serif SC', serif";
@@ -208,32 +458,18 @@ async function drawCharFolio(ctx: CanvasRenderingContext2D, data: PosterChar) {
 
   if (enWord || enMeaning) {
     ctx.fillStyle = 'rgba(17,24,39,0.62)';
-    ctx.font = "700 18px 'Fira Code', monospace";
+    ctx.font = "700 20px 'Fira Code', monospace";
     const en = `${enWord}${enWord && enMeaning ? ' — ' : ''}${enMeaning}`;
-    drawLines(ctx, wrapText(ctx, en, mainW), padding, 1520, 26);
+    drawLines(ctx, wrapText(ctx, en, mainW), padding, 1542, 30);
   }
 
-  await drawQr(ctx, rightX + 60, 1320, 180);
-  ctx.fillStyle = 'rgba(17,24,39,0.65)';
-  ctx.font = "800 16px 'Fira Code', monospace";
-  ctx.fillText(INKGRID_QR_LABEL, rightX + 44, 1525);
-
-  // small seal
-  ctx.save();
-  ctx.translate(rightX + 84, 1120);
-  ctx.rotate((-6 * Math.PI) / 180);
-  ctx.strokeStyle = 'rgba(139,0,0,0.75)';
-  ctx.lineWidth = 6;
-  ctx.strokeRect(0, 0, 120, 120);
-  ctx.fillStyle = 'rgba(139,0,0,0.07)';
-  ctx.fillRect(0, 0, 120, 120);
-  ctx.fillStyle = 'rgba(139,0,0,0.85)';
-  ctx.font = "900 30px 'Noto Serif SC', serif";
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('墨', 60, 44);
-  ctx.fillText('流', 60, 82);
-  ctx.restore();
+  const qrSize = 190;
+  const qrX = rightX + Math.round((300 - qrSize) / 2);
+  const qrY = CANVAS_H - padding - qrSize;
+  ctx.fillStyle = 'rgba(17,24,39,0.70)';
+  ctx.font = "900 26px 'Noto Serif SC', serif";
+  drawGoldFoilText(ctx, INKGRID_QR_LABEL, qrX - 12, qrY - 18);
+  await drawQr(ctx, qrX, qrY, qrSize);
 }
 
 async function drawSteleFolio(ctx: CanvasRenderingContext2D, stele: PosterStele) {
@@ -241,64 +477,52 @@ async function drawSteleFolio(ctx: CanvasRenderingContext2D, stele: PosterStele)
   const padding = 72;
   const mainW = rightX - padding * 2;
 
-  ctx.fillStyle = '#111827';
-  ctx.font = "900 54px 'Noto Serif SC', serif";
-  ctx.fillText('墨流', padding, 132);
+  await drawBrandHeader(ctx, padding, 72, { tag: '名帖赏析' });
 
-  ctx.fillStyle = 'rgba(17,24,39,0.55)';
-  ctx.font = "800 20px 'Noto Serif SC', serif";
-  ctx.fillText('名帖赏析', padding, 172);
+  ctx.strokeStyle = 'rgba(17,24,39,0.10)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(padding, 200);
+  ctx.lineTo(rightX - padding, 200);
+  ctx.stroke();
 
   ctx.fillStyle = '#111827';
-  ctx.font = "900 64px 'Noto Serif SC', serif";
+  ctx.font = "900 72px 'Noto Serif SC', serif";
   const titleLines = wrapText(ctx, stele.name, mainW);
-  drawLines(ctx, titleLines.slice(0, 2), padding, 290, 76);
+  drawLines(ctx, titleLines.slice(0, 2), padding, 286, 82);
 
   ctx.fillStyle = 'rgba(17,24,39,0.60)';
-  ctx.font = "800 20px 'Noto Serif SC', serif";
-  ctx.fillText(`${stele.dynasty} · ${stele.author} · ${stele.script_type}`, padding, 430);
+  ctx.font = "800 22px 'Noto Serif SC', serif";
+  ctx.fillText(`${stele.dynasty} · ${stele.author} · ${stele.script_type}`, padding, 446);
 
   ctx.fillStyle = 'rgba(17,24,39,0.74)';
-  ctx.font = "700 26px 'Noto Serif SC', serif";
+  ctx.font = "700 30px 'Noto Serif SC', serif";
   const desc = (stele.description || '').trim();
   const descLines = wrapText(ctx, desc || '以气韵读帖，以笔法入心。', mainW);
-  drawLines(ctx, descLines.slice(0, 7), padding, 520, 40);
+  drawLines(ctx, descLines.slice(0, 7), padding, 548, 46);
 
   ctx.fillStyle = 'rgba(17,24,39,0.55)';
-  ctx.font = "700 18px 'Fira Code', monospace";
+  ctx.font = "700 20px 'Fira Code', monospace";
   const meta1 = `藏地：${stele.location}`;
   const meta2 = `规模：${stele.total_chars} 字`;
-  ctx.fillText(meta1, padding, 860);
-  ctx.fillText(meta2, padding, 892);
+  ctx.fillText(meta1, padding, 910);
+  ctx.fillText(meta2, padding, 946);
 
   const excerpt = (stele.content || '').trim().slice(0, 240);
   if (excerpt) {
     ctx.fillStyle = 'rgba(17,24,39,0.76)';
-    ctx.font = "700 22px 'Noto Serif SC', serif";
+    ctx.font = "700 26px 'Noto Serif SC', serif";
     const quoteLines = wrapText(ctx, `「${excerpt}…」`, mainW);
-    drawLines(ctx, quoteLines.slice(0, 9), padding, 980, 36);
+    drawLines(ctx, quoteLines.slice(0, 9), padding, 1026, 40);
   }
 
-  await drawQr(ctx, rightX + 60, 1320, 180);
-  ctx.fillStyle = 'rgba(17,24,39,0.65)';
-  ctx.font = "800 16px 'Fira Code', monospace";
-  ctx.fillText(INKGRID_QR_LABEL, rightX + 44, 1525);
-
-  ctx.save();
-  ctx.translate(rightX + 84, 1120);
-  ctx.rotate((-6 * Math.PI) / 180);
-  ctx.strokeStyle = 'rgba(139,0,0,0.75)';
-  ctx.lineWidth = 6;
-  ctx.strokeRect(0, 0, 120, 120);
-  ctx.fillStyle = 'rgba(139,0,0,0.07)';
-  ctx.fillRect(0, 0, 120, 120);
-  ctx.fillStyle = 'rgba(139,0,0,0.85)';
+  const qrSize = 190;
+  const qrX = rightX + Math.round((300 - qrSize) / 2);
+  const qrY = CANVAS_H - padding - qrSize;
+  ctx.fillStyle = 'rgba(17,24,39,0.70)';
   ctx.font = "900 26px 'Noto Serif SC', serif";
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('名', 60, 44);
-  ctx.fillText('帖', 60, 82);
-  ctx.restore();
+  drawGoldFoilText(ctx, INKGRID_QR_LABEL, qrX - 12, qrY - 18);
+  await drawQr(ctx, qrX, qrY, qrSize);
 }
 
 async function drawCharWash(ctx: CanvasRenderingContext2D, data: PosterChar) {
@@ -307,45 +531,40 @@ async function drawCharWash(ctx: CanvasRenderingContext2D, data: PosterChar) {
   const mainW = CANVAS_W - rightW - padding * 2;
   const rightX = CANVAS_W - rightW;
 
-  ctx.fillStyle = 'rgba(17,24,39,0.75)';
-  ctx.font = "900 42px 'Noto Serif SC', serif";
-  ctx.fillText('墨流', padding, 138);
+  await drawBrandHeader(ctx, padding, 72, { tag: '篆字研习' });
 
   const simplified = (data.simplified || '').trim() || '字';
-  ctx.fillStyle = 'rgba(17,24,39,0.55)';
-  ctx.font = "800 22px 'Noto Serif SC', serif";
-  ctx.fillText('篆字研习', padding, 176);
 
   const charImg = await loadImage(data.image);
-  drawContainImage(ctx, charImg, padding, 250, mainW, 880);
+  drawContainImage(ctx, charImg, padding, 236, mainW, 900);
 
   // brush title
   ctx.fillStyle = '#111827';
-  ctx.font = "900 90px 'Noto Serif SC', serif";
-  ctx.fillText(simplified, padding, 1215);
+  ctx.font = "900 108px 'Noto Serif SC', serif";
+  ctx.fillText(simplified, padding, 1228);
 
   ctx.fillStyle = '#8B0000';
-  ctx.font = "700 22px 'Fira Code', monospace";
-  if (data.pinyin) ctx.fillText(data.pinyin, padding, 1258);
+  ctx.font = "700 26px 'Fira Code', monospace";
+  if (data.pinyin) ctx.fillText(data.pinyin, padding, 1272);
 
   ctx.fillStyle = 'rgba(17,24,39,0.72)';
-  ctx.font = "700 26px 'Noto Serif SC', serif";
+  ctx.font = "700 32px 'Noto Serif SC', serif";
   const meaningLines = wrapText(ctx, (data.meaning || '').trim() || '以形观势，以势入心。', mainW);
-  drawLines(ctx, meaningLines.slice(0, 4), padding, 1330, 38);
+  drawLines(ctx, meaningLines.slice(0, 4), padding, 1350, 46);
 
   const sourceTitle = data.sourceTitle || '嶧山刻石';
   const author = data.author || '李斯';
   const dynasty = data.dynasty || '秦';
   ctx.fillStyle = 'rgba(17,24,39,0.56)';
-  ctx.font = "700 18px 'Noto Serif SC', serif";
-  drawLines(ctx, wrapText(ctx, `出处：${sourceTitle}`, mainW), padding, 1502, 28);
-  drawLines(ctx, wrapText(ctx, `作者：${dynasty}·${author}`, mainW), padding, 1534, 28);
+  ctx.font = "700 20px 'Noto Serif SC', serif";
+  drawLines(ctx, wrapText(ctx, `出处：${sourceTitle}`, mainW), padding, 1532, 30);
+  drawLines(ctx, wrapText(ctx, `作者：${dynasty}·${author}`, mainW), padding, 1566, 30);
 
   if (data.en_word || data.en_meaning) {
     ctx.fillStyle = 'rgba(17,24,39,0.60)';
-    ctx.font = "700 18px 'Fira Code', monospace";
+    ctx.font = "700 20px 'Fira Code', monospace";
     const en = `${(data.en_word || '').trim()}${data.en_word && data.en_meaning ? ' — ' : ''}${(data.en_meaning || '').trim()}`;
-    drawLines(ctx, wrapText(ctx, en, mainW), padding, 1606, 26);
+    drawLines(ctx, wrapText(ctx, en, mainW), padding, 1640, 30);
   }
 
   // right column
@@ -354,10 +573,14 @@ async function drawCharWash(ctx: CanvasRenderingContext2D, data: PosterChar) {
   ctx.strokeStyle = 'rgba(17,24,39,0.10)';
   ctx.lineWidth = 1;
   ctx.strokeRect(rightX + 18, 120, rightW - 36, CANVAS_H - 240);
-  await drawQr(ctx, rightX + 50, 1380, 180);
+
+  const qrSize = 190;
+  const qrX = rightX + Math.round((rightW - qrSize) / 2);
+  const qrY = CANVAS_H - padding - qrSize;
   ctx.fillStyle = 'rgba(17,24,39,0.70)';
-  ctx.font = "800 16px 'Fira Code', monospace";
-  ctx.fillText(INKGRID_QR_LABEL, rightX + 34, 1585);
+  ctx.font = "900 26px 'Noto Serif SC', serif";
+  drawGoldFoilText(ctx, INKGRID_QR_LABEL, qrX - 12, qrY - 18);
+  await drawQr(ctx, qrX, qrY, qrSize);
 }
 
 async function drawSteleWash(ctx: CanvasRenderingContext2D, stele: PosterStele) {
@@ -366,49 +589,48 @@ async function drawSteleWash(ctx: CanvasRenderingContext2D, stele: PosterStele) 
   const mainW = CANVAS_W - rightW - padding * 2;
   const rightX = CANVAS_W - rightW;
 
-  ctx.fillStyle = 'rgba(17,24,39,0.75)';
-  ctx.font = "900 42px 'Noto Serif SC', serif";
-  ctx.fillText('墨流', padding, 138);
-  ctx.fillStyle = 'rgba(17,24,39,0.55)';
-  ctx.font = "800 22px 'Noto Serif SC', serif";
-  ctx.fillText('名帖赏析', padding, 176);
+  await drawBrandHeader(ctx, padding, 72, { tag: '名帖赏析' });
 
   ctx.fillStyle = '#111827';
-  ctx.font = "900 70px 'Noto Serif SC', serif";
+  ctx.font = "900 78px 'Noto Serif SC', serif";
   const titleLines = wrapText(ctx, stele.name, mainW);
-  drawLines(ctx, titleLines.slice(0, 2), padding, 290, 82);
+  drawLines(ctx, titleLines.slice(0, 2), padding, 286, 88);
 
   ctx.fillStyle = 'rgba(17,24,39,0.60)';
-  ctx.font = "800 20px 'Noto Serif SC', serif";
-  ctx.fillText(`${stele.dynasty} · ${stele.author} · ${stele.script_type}`, padding, 460);
+  ctx.font = "800 22px 'Noto Serif SC', serif";
+  ctx.fillText(`${stele.dynasty} · ${stele.author} · ${stele.script_type}`, padding, 472);
 
   ctx.fillStyle = 'rgba(17,24,39,0.74)';
-  ctx.font = "700 26px 'Noto Serif SC', serif";
+  ctx.font = "700 30px 'Noto Serif SC', serif";
   const descLines = wrapText(ctx, (stele.description || '').trim() || '以气韵读帖，以笔法入心。', mainW);
-  drawLines(ctx, descLines.slice(0, 9), padding, 560, 40);
+  drawLines(ctx, descLines.slice(0, 9), padding, 588, 46);
 
   const excerpt = (stele.content || '').trim().slice(0, 260);
   if (excerpt) {
     ctx.fillStyle = 'rgba(17,24,39,0.75)';
-    ctx.font = "700 22px 'Noto Serif SC', serif";
+    ctx.font = "700 26px 'Noto Serif SC', serif";
     const quoteLines = wrapText(ctx, `「${excerpt}…」`, mainW);
-    drawLines(ctx, quoteLines.slice(0, 10), padding, 980, 36);
+    drawLines(ctx, quoteLines.slice(0, 10), padding, 1032, 40);
   }
 
   ctx.fillStyle = 'rgba(17,24,39,0.56)';
-  ctx.font = "700 18px 'Fira Code', monospace";
-  ctx.fillText(`藏地：${stele.location}`, padding, 1400);
-  ctx.fillText(`规模：${stele.total_chars} 字`, padding, 1430);
+  ctx.font = "700 20px 'Fira Code', monospace";
+  ctx.fillText(`藏地：${stele.location}`, padding, 1456);
+  ctx.fillText(`规模：${stele.total_chars} 字`, padding, 1492);
 
   ctx.fillStyle = 'rgba(255,255,255,0.60)';
   ctx.fillRect(rightX + 18, 120, rightW - 36, CANVAS_H - 240);
   ctx.strokeStyle = 'rgba(17,24,39,0.10)';
   ctx.lineWidth = 1;
   ctx.strokeRect(rightX + 18, 120, rightW - 36, CANVAS_H - 240);
-  await drawQr(ctx, rightX + 50, 1380, 180);
+
+  const qrSize = 190;
+  const qrX = rightX + Math.round((rightW - qrSize) / 2);
+  const qrY = CANVAS_H - padding - qrSize;
   ctx.fillStyle = 'rgba(17,24,39,0.70)';
-  ctx.font = "800 16px 'Fira Code', monospace";
-  ctx.fillText(INKGRID_QR_LABEL, rightX + 34, 1585);
+  ctx.font = "900 26px 'Noto Serif SC', serif";
+  drawGoldFoilText(ctx, INKGRID_QR_LABEL, qrX - 12, qrY - 18);
+  await drawQr(ctx, qrX, qrY, qrSize);
 }
 
 async function drawCharMinimal(ctx: CanvasRenderingContext2D, data: PosterChar) {
@@ -422,53 +644,65 @@ async function drawCharMinimal(ctx: CanvasRenderingContext2D, data: PosterChar) 
   ctx.lineWidth = 2;
   ctx.strokeRect(48, 48, CANVAS_W - 96, CANVAS_H - 96);
 
-  ctx.fillStyle = 'rgba(17,24,39,0.75)';
-  ctx.font = "700 22px 'Noto Serif SC', serif";
-  ctx.textAlign = 'left';
-  ctx.fillText('○', padding, 120);
-  ctx.font = "900 26px 'Noto Serif SC', serif";
-  ctx.fillText((data.simplified || '').trim() || '字', padding + 44, 120);
+  await drawBrandHeader(ctx, padding, 72, { tag: '篆字研习' });
 
-  ctx.fillStyle = 'rgba(17,24,39,0.65)';
-  ctx.font = "900 54px 'Noto Serif SC', serif";
-  ctx.fillText('一字入墨', padding, 210);
-  ctx.fillText('轻翻成流', padding, 280);
-
-  const charImg = await loadImage(data.image);
-  ctx.globalAlpha = 0.08;
-  drawContainImage(ctx, charImg, padding, 320, mainW, 620);
-  ctx.globalAlpha = 1;
-
-  ctx.fillStyle = 'rgba(17,24,39,0.72)';
-  ctx.font = "700 28px 'Noto Serif SC', serif";
+  const simplified = (data.simplified || '').trim() || '字';
+  const pinyin = (data.pinyin || '').trim();
   const meaning = (data.meaning || '').trim() || '以形观势，以势入心。';
-  const meaningLines = wrapText(ctx, meaning, mainW);
-  drawLines(ctx, meaningLines.slice(0, 9), padding, 560, 44);
-
-  ctx.fillStyle = 'rgba(17,24,39,0.55)';
-  ctx.font = "700 18px 'Fira Code', monospace";
-  const en = `${(data.en_word || '').trim()}${data.en_word && data.en_meaning ? ' — ' : ''}${(data.en_meaning || '').trim()}`.trim();
-  if (en) drawLines(ctx, wrapText(ctx, en, mainW), padding, 1040, 28);
-
+  const enWord = (data.en_word || '').trim();
+  const enMeaning = (data.en_meaning || '').trim();
   const sourceTitle = data.sourceTitle || '嶧山刻石';
   const author = data.author || '李斯';
   const dynasty = data.dynasty || '秦';
-  ctx.fillStyle = 'rgba(17,24,39,0.50)';
-  ctx.font = "700 18px 'Noto Serif SC', serif";
-  drawLines(ctx, wrapText(ctx, `出处：${sourceTitle}`, mainW), padding, 1140, 28);
-  drawLines(ctx, wrapText(ctx, `作者：${dynasty}·${author}`, mainW), padding, 1172, 28);
 
-  ctx.fillStyle = 'rgba(17,24,39,0.35)';
-  ctx.font = "700 18px 'Fira Code', monospace";
-  ctx.fillText('APPROACHES TO LEARNING', padding, CANVAS_H - 120);
+  const charImg = await loadImage(data.image);
+  ctx.save();
+  ctx.globalAlpha = 0.10;
+  drawContainImage(ctx, charImg, padding, 240, mainW, 720);
+  ctx.restore();
 
-  // QR on right
-  ctx.fillStyle = 'rgba(17,24,39,0.04)';
+  ctx.fillStyle = '#111827';
+  ctx.font = "900 120px 'Noto Serif SC', serif";
+  ctx.fillText(simplified, padding, 520);
+
+  ctx.fillStyle = '#8B0000';
+  ctx.font = "700 26px 'Fira Code', monospace";
+  if (pinyin) ctx.fillText(pinyin, padding, 566);
+
+  ctx.fillStyle = 'rgba(17,24,39,0.72)';
+  ctx.font = "700 32px 'Noto Serif SC', serif";
+  const meaningLines = wrapText(ctx, meaning, mainW);
+  drawLines(ctx, meaningLines.slice(0, 5), padding, 650, 46);
+
+  const en = `${enWord}${enWord && enMeaning ? ' — ' : ''}${enMeaning}`.trim();
+  if (en) {
+    ctx.fillStyle = 'rgba(17,24,39,0.62)';
+    ctx.font = "700 20px 'Fira Code', monospace";
+    drawLines(ctx, wrapText(ctx, en, mainW), padding, 900, 30);
+  }
+
+  ctx.fillStyle = 'rgba(17,24,39,0.52)';
+  ctx.font = "700 20px 'Noto Serif SC', serif";
+  drawLines(ctx, wrapText(ctx, `出处：${sourceTitle}`, mainW), padding, 1020, 30);
+  drawLines(ctx, wrapText(ctx, `作者：${dynasty}·${author}`, mainW), padding, 1054, 30);
+
+  // right column and QR
+  ctx.fillStyle = 'rgba(17,24,39,0.03)';
   ctx.fillRect(rightX, 0, rightW, CANVAS_H);
-  await drawQr(ctx, rightX + 40, 1460, 180);
-  ctx.fillStyle = 'rgba(17,24,39,0.62)';
-  ctx.font = "800 16px 'Fira Code', monospace";
-  ctx.fillText(INKGRID_QR_LABEL, rightX + 30, 1665);
+  ctx.strokeStyle = 'rgba(17,24,39,0.06)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(rightX, 0);
+  ctx.lineTo(rightX, CANVAS_H);
+  ctx.stroke();
+
+  const qrSize = 190;
+  const qrX = rightX + Math.round((rightW - qrSize) / 2);
+  const qrY = CANVAS_H - padding - qrSize;
+  ctx.fillStyle = 'rgba(17,24,39,0.70)';
+  ctx.font = "900 26px 'Noto Serif SC', serif";
+  drawGoldFoilText(ctx, INKGRID_QR_LABEL, qrX - 12, qrY - 18);
+  await drawQr(ctx, qrX, qrY, qrSize);
 }
 
 async function drawSteleMinimal(ctx: CanvasRenderingContext2D, stele: PosterStele) {
@@ -481,47 +715,51 @@ async function drawSteleMinimal(ctx: CanvasRenderingContext2D, stele: PosterStel
   ctx.lineWidth = 2;
   ctx.strokeRect(48, 48, CANVAS_W - 96, CANVAS_H - 96);
 
-  ctx.fillStyle = 'rgba(17,24,39,0.70)';
-  ctx.font = "900 22px 'Noto Serif SC', serif";
-  ctx.fillText('名帖赏析', padding, 128);
+  await drawBrandHeader(ctx, padding, 72, { tag: '名帖赏析' });
 
   ctx.fillStyle = 'rgba(17,24,39,0.65)';
-  ctx.font = "900 58px 'Noto Serif SC', serif";
+  ctx.font = "900 72px 'Noto Serif SC', serif";
   const titleLines = wrapText(ctx, stele.name, mainW);
-  drawLines(ctx, titleLines.slice(0, 3), padding, 220, 72);
+  drawLines(ctx, titleLines.slice(0, 3), padding, 286, 82);
 
   ctx.fillStyle = 'rgba(17,24,39,0.55)';
-  ctx.font = "800 18px 'Noto Serif SC', serif";
-  ctx.fillText(`${stele.dynasty} · ${stele.author} · ${stele.script_type}`, padding, 420);
+  ctx.font = "800 22px 'Noto Serif SC', serif";
+  ctx.fillText(`${stele.dynasty} · ${stele.author} · ${stele.script_type}`, padding, 470);
 
   ctx.fillStyle = 'rgba(17,24,39,0.72)';
-  ctx.font = "700 26px 'Noto Serif SC', serif";
+  ctx.font = "700 30px 'Noto Serif SC', serif";
   const descLines = wrapText(ctx, (stele.description || '').trim() || '以气韵读帖，以笔法入心。', mainW);
-  drawLines(ctx, descLines.slice(0, 10), padding, 520, 40);
+  drawLines(ctx, descLines.slice(0, 10), padding, 548, 46);
 
   const excerpt = (stele.content || '').trim().slice(0, 260);
   if (excerpt) {
     ctx.fillStyle = 'rgba(17,24,39,0.70)';
-    ctx.font = "700 22px 'Noto Serif SC', serif";
+    ctx.font = "700 26px 'Noto Serif SC', serif";
     const quoteLines = wrapText(ctx, `「${excerpt}…」`, mainW);
-    drawLines(ctx, quoteLines.slice(0, 12), padding, 980, 34);
+    drawLines(ctx, quoteLines.slice(0, 12), padding, 1030, 40);
   }
 
   ctx.fillStyle = 'rgba(17,24,39,0.55)';
-  ctx.font = "700 18px 'Fira Code', monospace";
-  ctx.fillText(`藏地：${stele.location}`, padding, 1440);
-  ctx.fillText(`规模：${stele.total_chars} 字`, padding, 1470);
+  ctx.font = "700 20px 'Fira Code', monospace";
+  ctx.fillText(`藏地：${stele.location}`, padding, 1456);
+  ctx.fillText(`规模：${stele.total_chars} 字`, padding, 1492);
 
-  ctx.fillStyle = 'rgba(17,24,39,0.35)';
-  ctx.font = "700 18px 'Fira Code', monospace";
-  ctx.fillText('APPROACHES TO LEARNING', padding, CANVAS_H - 120);
-
-  ctx.fillStyle = 'rgba(17,24,39,0.04)';
+  ctx.fillStyle = 'rgba(17,24,39,0.03)';
   ctx.fillRect(rightX, 0, rightW, CANVAS_H);
-  await drawQr(ctx, rightX + 40, 1460, 180);
-  ctx.fillStyle = 'rgba(17,24,39,0.62)';
-  ctx.font = "800 16px 'Fira Code', monospace";
-  ctx.fillText(INKGRID_QR_LABEL, rightX + 30, 1665);
+  ctx.strokeStyle = 'rgba(17,24,39,0.06)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(rightX, 0);
+  ctx.lineTo(rightX, CANVAS_H);
+  ctx.stroke();
+
+  const qrSize = 190;
+  const qrX = rightX + Math.round((rightW - qrSize) / 2);
+  const qrY = CANVAS_H - padding - qrSize;
+  ctx.fillStyle = 'rgba(17,24,39,0.70)';
+  ctx.font = "900 26px 'Noto Serif SC', serif";
+  drawGoldFoilText(ctx, INKGRID_QR_LABEL, qrX - 12, qrY - 18);
+  await drawQr(ctx, qrX, qrY, qrSize);
 }
 
 function drawContainImage(
