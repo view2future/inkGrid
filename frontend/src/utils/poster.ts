@@ -63,6 +63,7 @@ export type NewYearPosterInput = {
   dayLabel: string;
   caption: string;
   date?: string;
+  lunarDateStr?: string;
   glyph: {
     simplified?: string;
     image: string;
