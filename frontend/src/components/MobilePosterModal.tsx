@@ -284,7 +284,7 @@ export default function MobilePosterModal({
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: 8 }}
                           transition={{ duration: 0.5, ease: 'easeOut' }}
-                          className="absolute inset-x-4 bottom-4"
+                          className="absolute inset-x-4 top-1/2 -translate-y-1/2"
                         >
                           <div className="rounded-[1.5rem] bg-black/40 border border-white/10 shadow-[0_22px_70px_rgba(0,0,0,0.55)] backdrop-blur-md px-5 py-4">
                             <div className="text-[10px] font-black tracking-[0.22em] text-[#F2E6CE] opacity-90">

@@ -61,6 +61,7 @@ export type NewYearPosterInput = {
   yearLabel?: string;
   dayLabel: string;
   caption: string;
+  date?: string;
   glyph: {
     simplified?: string;
     image: string;
@@ -422,7 +423,7 @@ export async function renderNewYearPosterPng(input: NewYearPosterInput, options:
   const frameX = padding;
   const frameY = 250;
   const frameW = CANVAS_W - padding * 2;
-  const frameH = 1100;
+  const frameH = 1200;
   const r = 64;
 
   // frame
@@ -465,11 +466,11 @@ export async function renderNewYearPosterPng(input: NewYearPosterInput, options:
     ctx.save();
     ctx.globalCompositeOperation = 'multiply';
     ctx.globalAlpha = 0.92;
-    const mainW = frameW * 0.88;
-    const mainH = frameH * 0.88;
+    const mainW = frameW * 0.92;
+    const mainH = frameH * 0.92;
     const x = frameX + (frameW - mainW) / 2;
     const y = frameY + (frameH - mainH) / 2 - 10;
-    drawCoverImage(ctx, glyphImg, x, y, mainW, mainH, 1.14, 20, 14);
+    drawCoverImage(ctx, glyphImg, x, y, mainW, mainH, 1.18, 20, 14);
     ctx.restore();
 
     ctx.restore();
@@ -479,35 +480,43 @@ export async function renderNewYearPosterPng(input: NewYearPosterInput, options:
   const day = String(input.dayLabel || '').trim();
   const caption = String(input.caption || '').trim();
   const simplified = String(input.glyph.simplified || '').trim();
-  const baseY = frameY + frameH + 86;
+  const baseY = frameY + frameH + 100;
 
   ctx.fillStyle = '#111827';
-  ctx.font = "900 86px 'Noto Serif SC', serif";
+  ctx.font = "900 120px 'Noto Serif SC', serif";
   ctx.textAlign = 'left';
   ctx.textBaseline = 'alphabetic';
   if (day) ctx.fillText(day, padding, baseY);
 
   if (caption) {
     ctx.fillStyle = 'rgba(17,24,39,0.68)';
-    ctx.font = "800 34px 'Noto Serif SC', serif";
-    ctx.fillText(caption, padding, baseY + 60);
+    ctx.font = "800 46px 'Noto Serif SC', serif";
+    ctx.fillText(caption, padding, baseY + 80);
   }
 
   if (simplified) {
     ctx.save();
     ctx.fillStyle = 'rgba(139,0,0,0.10)';
-    roundRect(ctx, padding, baseY + 92, 120, 64, 22);
+    roundRect(ctx, padding, baseY + 116, 140, 74, 24);
     ctx.fill();
     ctx.strokeStyle = 'rgba(139,0,0,0.22)';
     ctx.lineWidth = 2;
-    roundRect(ctx, padding, baseY + 92, 120, 64, 22);
+    roundRect(ctx, padding, baseY + 116, 140, 74, 24);
     ctx.stroke();
     ctx.fillStyle = 'rgba(17,24,39,0.92)';
-    ctx.font = "900 42px 'Noto Serif SC', serif";
+    ctx.font = "900 52px 'Noto Serif SC', serif";
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(simplified, padding + 60, baseY + 92 + 34);
+    ctx.fillText(simplified, padding + 70, baseY + 116 + 39);
     ctx.restore();
+  }
+
+  if (input.date) {
+    ctx.fillStyle = 'rgba(17,24,39,0.52)';
+    ctx.font = "700 24px 'Fira Code', monospace";
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillText(input.date, padding, baseY + 230);
   }
 
   const qrSize = 200;
@@ -633,16 +642,16 @@ async function drawBrandHeader(
     ctx.restore();
   }
 
-  const textX = x + (logo ? logoSize + 18 : 0);
+  const textX = x + (logo ? logoSize + 22 : 0);
   ctx.save();
   ctx.textAlign = 'left';
   ctx.textBaseline = 'alphabetic';
   ctx.fillStyle = '#111827';
-  ctx.font = "900 46px 'Noto Serif SC', serif";
-  ctx.fillText(INKGRID_BRAND_CN, textX, y + 44);
+  ctx.font = "900 56px 'Noto Serif SC', serif";
+  ctx.fillText(INKGRID_BRAND_CN, textX, y + 52);
   ctx.fillStyle = 'rgba(17,24,39,0.62)';
-  ctx.font = "800 22px 'Noto Serif SC', serif";
-  ctx.fillText(INKGRID_SLOGAN_CN, textX, y + 78);
+  ctx.font = "800 26px 'Noto Serif SC', serif";
+  ctx.fillText(INKGRID_SLOGAN_CN, textX, y + 92);
   ctx.restore();
 
   if (opts.tag) {
@@ -790,7 +799,7 @@ async function drawCharFolio(ctx: CanvasRenderingContext2D, data: PosterChar) {
   ctx.stroke();
 
   const charImg = await loadImage(data.image);
-  drawContainImage(ctx, charImg, padding, 226, mainW, 860);
+  drawContainImage(ctx, charImg, padding, 226, mainW, 920);
 
   const simplified = (data.simplified || '').trim() || '字';
   const pinyin = (data.pinyin || '').trim();
@@ -802,28 +811,28 @@ async function drawCharFolio(ctx: CanvasRenderingContext2D, data: PosterChar) {
   const dynasty = data.dynasty || '秦';
 
   ctx.fillStyle = '#111827';
-  ctx.font = "900 104px 'Noto Serif SC', serif";
-  ctx.fillText(simplified, padding, 1188);
+  ctx.font = "900 140px 'Noto Serif SC', serif";
+  ctx.fillText(simplified, padding, 1220);
 
   ctx.fillStyle = '#8B0000';
-  ctx.font = "700 26px 'Fira Code', monospace";
-  if (pinyin) ctx.fillText(pinyin, padding, 1242);
+  ctx.font = "700 32px 'Fira Code', monospace";
+  if (pinyin) ctx.fillText(pinyin, padding, 1280);
 
   ctx.fillStyle = 'rgba(17,24,39,0.72)';
-  ctx.font = "700 32px 'Noto Serif SC', serif";
+  ctx.font = "700 42px 'Noto Serif SC', serif";
   const meaningLines = wrapText(ctx, meaning || '以形观势，以势入心。', mainW);
-  drawLines(ctx, meaningLines.slice(0, 3), padding, 1310, 46);
+  drawLines(ctx, meaningLines.slice(0, 3), padding, 1360, 52);
 
   ctx.fillStyle = 'rgba(17,24,39,0.55)';
-  ctx.font = "700 20px 'Noto Serif SC', serif";
+  ctx.font = "700 26px 'Noto Serif SC', serif";
   const meta = `出处：${sourceTitle}   作者：${dynasty}·${author}`;
-  drawLines(ctx, wrapText(ctx, meta, mainW), padding, 1445, 30);
+  drawLines(ctx, wrapText(ctx, meta, mainW), padding, 1510, 36);
 
   if (enWord || enMeaning) {
     ctx.fillStyle = 'rgba(17,24,39,0.62)';
-    ctx.font = "700 20px 'Fira Code', monospace";
+    ctx.font = "700 24px 'Fira Code', monospace";
     const en = `${enWord}${enWord && enMeaning ? ' — ' : ''}${enMeaning}`;
-    drawLines(ctx, wrapText(ctx, en, mainW), padding, 1542, 30);
+    drawLines(ctx, wrapText(ctx, en, mainW), padding, 1620, 36);
   }
 
   const qrSize = 190;
@@ -849,33 +858,33 @@ async function drawSteleFolio(ctx: CanvasRenderingContext2D, stele: PosterStele)
   ctx.stroke();
 
   ctx.fillStyle = '#111827';
-  ctx.font = "900 72px 'Noto Serif SC', serif";
+  ctx.font = "900 96px 'Noto Serif SC', serif";
   const titleLines = wrapText(ctx, stele.name, mainW);
-  drawLines(ctx, titleLines.slice(0, 2), padding, 286, 82);
+  drawLines(ctx, titleLines.slice(0, 2), padding, 300, 98);
 
   ctx.fillStyle = 'rgba(17,24,39,0.60)';
-  ctx.font = "800 22px 'Noto Serif SC', serif";
-  ctx.fillText(`${stele.dynasty} · ${stele.author} · ${stele.script_type}`, padding, 446);
+  ctx.font = "800 28px 'Noto Serif SC', serif";
+  ctx.fillText(`${stele.dynasty} · ${stele.author} · ${stele.script_type}`, padding, 470);
 
   ctx.fillStyle = 'rgba(17,24,39,0.74)';
-  ctx.font = "700 30px 'Noto Serif SC', serif";
+  ctx.font = "700 40px 'Noto Serif SC', serif";
   const desc = (stele.description || '').trim();
   const descLines = wrapText(ctx, desc || '以气韵读帖，以笔法入心。', mainW);
-  drawLines(ctx, descLines.slice(0, 7), padding, 548, 46);
+  drawLines(ctx, descLines.slice(0, 6), padding, 580, 52);
 
   ctx.fillStyle = 'rgba(17,24,39,0.55)';
-  ctx.font = "700 20px 'Fira Code', monospace";
+  ctx.font = "700 26px 'Fira Code', monospace";
   const meta1 = `藏地：${stele.location}`;
   const meta2 = `规模：${stele.total_chars} 字`;
-  ctx.fillText(meta1, padding, 910);
-  ctx.fillText(meta2, padding, 946);
+  ctx.fillText(meta1, padding, 960);
+  ctx.fillText(meta2, padding, 1000);
 
   const excerpt = (stele.content || '').trim().slice(0, 240);
   if (excerpt) {
     ctx.fillStyle = 'rgba(17,24,39,0.76)';
-    ctx.font = "700 26px 'Noto Serif SC', serif";
+    ctx.font = "700 34px 'Noto Serif SC', serif";
     const quoteLines = wrapText(ctx, `「${excerpt}…」`, mainW);
-    drawLines(ctx, quoteLines.slice(0, 9), padding, 1026, 40);
+    drawLines(ctx, quoteLines.slice(0, 8), padding, 1090, 46);
   }
 
   const qrSize = 190;
@@ -897,35 +906,35 @@ async function drawCharWash(ctx: CanvasRenderingContext2D, data: PosterChar) {
   const simplified = (data.simplified || '').trim() || '字';
 
   const charImg = await loadImage(data.image);
-  drawContainImage(ctx, charImg, padding, 236, mainW, 900);
+  drawContainImage(ctx, charImg, padding, 236, mainW, 960);
 
   // brush title
   ctx.fillStyle = '#111827';
-  ctx.font = "900 108px 'Noto Serif SC', serif";
-  ctx.fillText(simplified, padding, 1228);
+  ctx.font = "900 144px 'Noto Serif SC', serif";
+  ctx.fillText(simplified, padding, 1260);
 
   ctx.fillStyle = '#8B0000';
-  ctx.font = "700 26px 'Fira Code', monospace";
-  if (data.pinyin) ctx.fillText(data.pinyin, padding, 1272);
+  ctx.font = "700 32px 'Fira Code', monospace";
+  if (data.pinyin) ctx.fillText(data.pinyin, padding, 1310);
 
   ctx.fillStyle = 'rgba(17,24,39,0.72)';
-  ctx.font = "700 32px 'Noto Serif SC', serif";
+  ctx.font = "700 42px 'Noto Serif SC', serif";
   const meaningLines = wrapText(ctx, (data.meaning || '').trim() || '以形观势，以势入心。', mainW);
-  drawLines(ctx, meaningLines.slice(0, 4), padding, 1350, 46);
+  drawLines(ctx, meaningLines.slice(0, 4), padding, 1400, 52);
 
   const sourceTitle = data.sourceTitle || '嶧山刻石';
   const author = data.author || '李斯';
   const dynasty = data.dynasty || '秦';
   ctx.fillStyle = 'rgba(17,24,39,0.56)';
-  ctx.font = "700 20px 'Noto Serif SC', serif";
-  drawLines(ctx, wrapText(ctx, `出处：${sourceTitle}`, mainW), padding, 1532, 30);
-  drawLines(ctx, wrapText(ctx, `作者：${dynasty}·${author}`, mainW), padding, 1566, 30);
+  ctx.font = "700 26px 'Noto Serif SC', serif";
+  drawLines(ctx, wrapText(ctx, `出处：${sourceTitle}`, mainW), padding, 1600, 36);
+  drawLines(ctx, wrapText(ctx, `作者：${dynasty}·${author}`, mainW), padding, 1640, 36);
 
   if (data.en_word || data.en_meaning) {
     ctx.fillStyle = 'rgba(17,24,39,0.60)';
-    ctx.font = "700 20px 'Fira Code', monospace";
+    ctx.font = "700 24px 'Fira Code', monospace";
     const en = `${(data.en_word || '').trim()}${data.en_word && data.en_meaning ? ' — ' : ''}${(data.en_meaning || '').trim()}`;
-    drawLines(ctx, wrapText(ctx, en, mainW), padding, 1640, 30);
+    drawLines(ctx, wrapText(ctx, en, mainW), padding, 1720, 36);
   }
 
   // right column
@@ -952,31 +961,31 @@ async function drawSteleWash(ctx: CanvasRenderingContext2D, stele: PosterStele) 
   await drawBrandHeader(ctx, padding, 72, { tag: '名帖赏析' });
 
   ctx.fillStyle = '#111827';
-  ctx.font = "900 78px 'Noto Serif SC', serif";
+  ctx.font = "900 104px 'Noto Serif SC', serif";
   const titleLines = wrapText(ctx, stele.name, mainW);
-  drawLines(ctx, titleLines.slice(0, 2), padding, 286, 88);
+  drawLines(ctx, titleLines.slice(0, 2), padding, 300, 104);
 
   ctx.fillStyle = 'rgba(17,24,39,0.60)';
-  ctx.font = "800 22px 'Noto Serif SC', serif";
-  ctx.fillText(`${stele.dynasty} · ${stele.author} · ${stele.script_type}`, padding, 472);
+  ctx.font = "800 28px 'Noto Serif SC', serif";
+  ctx.fillText(`${stele.dynasty} · ${stele.author} · ${stele.script_type}`, padding, 500);
 
   ctx.fillStyle = 'rgba(17,24,39,0.74)';
-  ctx.font = "700 30px 'Noto Serif SC', serif";
+  ctx.font = "700 40px 'Noto Serif SC', serif";
   const descLines = wrapText(ctx, (stele.description || '').trim() || '以气韵读帖，以笔法入心。', mainW);
-  drawLines(ctx, descLines.slice(0, 9), padding, 588, 46);
+  drawLines(ctx, descLines.slice(0, 8), padding, 620, 52);
 
   const excerpt = (stele.content || '').trim().slice(0, 260);
   if (excerpt) {
     ctx.fillStyle = 'rgba(17,24,39,0.75)';
-    ctx.font = "700 26px 'Noto Serif SC', serif";
+    ctx.font = "700 34px 'Noto Serif SC', serif";
     const quoteLines = wrapText(ctx, `「${excerpt}…」`, mainW);
-    drawLines(ctx, quoteLines.slice(0, 10), padding, 1032, 40);
+    drawLines(ctx, quoteLines.slice(0, 9), padding, 1100, 46);
   }
 
   ctx.fillStyle = 'rgba(17,24,39,0.56)';
-  ctx.font = "700 20px 'Fira Code', monospace";
-  ctx.fillText(`藏地：${stele.location}`, padding, 1456);
-  ctx.fillText(`规模：${stele.total_chars} 字`, padding, 1492);
+  ctx.font = "700 26px 'Fira Code', monospace";
+  ctx.fillText(`藏地：${stele.location}`, padding, 1540);
+  ctx.fillText(`规模：${stele.total_chars} 字`, padding, 1580);
 
   ctx.fillStyle = 'rgba(255,255,255,0.60)';
   ctx.fillRect(rightX + 18, 120, rightW - 36, CANVAS_H - 240);
@@ -1017,33 +1026,33 @@ async function drawCharMinimal(ctx: CanvasRenderingContext2D, data: PosterChar) 
   const charImg = await loadImage(data.image);
   ctx.save();
   ctx.globalAlpha = 0.10;
-  drawContainImage(ctx, charImg, padding, 240, mainW, 720);
+  drawContainImage(ctx, charImg, padding, 240, mainW, 800);
   ctx.restore();
 
   ctx.fillStyle = '#111827';
-  ctx.font = "900 120px 'Noto Serif SC', serif";
-  ctx.fillText(simplified, padding, 520);
+  ctx.font = "900 160px 'Noto Serif SC', serif";
+  ctx.fillText(simplified, padding, 540);
 
   ctx.fillStyle = '#8B0000';
-  ctx.font = "700 26px 'Fira Code', monospace";
-  if (pinyin) ctx.fillText(pinyin, padding, 566);
+  ctx.font = "700 32px 'Fira Code', monospace";
+  if (pinyin) ctx.fillText(pinyin, padding, 590);
 
   ctx.fillStyle = 'rgba(17,24,39,0.72)';
-  ctx.font = "700 32px 'Noto Serif SC', serif";
+  ctx.font = "700 42px 'Noto Serif SC', serif";
   const meaningLines = wrapText(ctx, meaning, mainW);
-  drawLines(ctx, meaningLines.slice(0, 5), padding, 650, 46);
+  drawLines(ctx, meaningLines.slice(0, 4), padding, 690, 52);
 
   const en = `${enWord}${enWord && enMeaning ? ' — ' : ''}${enMeaning}`.trim();
   if (en) {
     ctx.fillStyle = 'rgba(17,24,39,0.62)';
-    ctx.font = "700 20px 'Fira Code', monospace";
-    drawLines(ctx, wrapText(ctx, en, mainW), padding, 900, 30);
+    ctx.font = "700 24px 'Fira Code', monospace";
+    drawLines(ctx, wrapText(ctx, en, mainW), padding, 970, 36);
   }
 
   ctx.fillStyle = 'rgba(17,24,39,0.52)';
-  ctx.font = "700 20px 'Noto Serif SC', serif";
-  drawLines(ctx, wrapText(ctx, `出处：${sourceTitle}`, mainW), padding, 1020, 30);
-  drawLines(ctx, wrapText(ctx, `作者：${dynasty}·${author}`, mainW), padding, 1054, 30);
+  ctx.font = "700 26px 'Noto Serif SC', serif";
+  drawLines(ctx, wrapText(ctx, `出处：${sourceTitle}`, mainW), padding, 1100, 36);
+  drawLines(ctx, wrapText(ctx, `作者：${dynasty}·${author}`, mainW), padding, 1140, 36);
 
   // right column and QR
   ctx.fillStyle = 'rgba(17,24,39,0.03)';
@@ -1076,31 +1085,31 @@ async function drawSteleMinimal(ctx: CanvasRenderingContext2D, stele: PosterStel
   await drawBrandHeader(ctx, padding, 72, { tag: '名帖赏析' });
 
   ctx.fillStyle = 'rgba(17,24,39,0.65)';
-  ctx.font = "900 72px 'Noto Serif SC', serif";
+  ctx.font = "900 96px 'Noto Serif SC', serif";
   const titleLines = wrapText(ctx, stele.name, mainW);
-  drawLines(ctx, titleLines.slice(0, 3), padding, 286, 82);
+  drawLines(ctx, titleLines.slice(0, 3), padding, 300, 98);
 
   ctx.fillStyle = 'rgba(17,24,39,0.55)';
-  ctx.font = "800 22px 'Noto Serif SC', serif";
-  ctx.fillText(`${stele.dynasty} · ${stele.author} · ${stele.script_type}`, padding, 470);
+  ctx.font = "800 28px 'Noto Serif SC', serif";
+  ctx.fillText(`${stele.dynasty} · ${stele.author} · ${stele.script_type}`, padding, 500);
 
   ctx.fillStyle = 'rgba(17,24,39,0.72)';
-  ctx.font = "700 30px 'Noto Serif SC', serif";
+  ctx.font = "700 40px 'Noto Serif SC', serif";
   const descLines = wrapText(ctx, (stele.description || '').trim() || '以气韵读帖，以笔法入心。', mainW);
-  drawLines(ctx, descLines.slice(0, 10), padding, 548, 46);
+  drawLines(ctx, descLines.slice(0, 8), padding, 580, 52);
 
   const excerpt = (stele.content || '').trim().slice(0, 260);
   if (excerpt) {
     ctx.fillStyle = 'rgba(17,24,39,0.70)';
-    ctx.font = "700 26px 'Noto Serif SC', serif";
+    ctx.font = "700 34px 'Noto Serif SC', serif";
     const quoteLines = wrapText(ctx, `「${excerpt}…」`, mainW);
-    drawLines(ctx, quoteLines.slice(0, 12), padding, 1030, 40);
+    drawLines(ctx, quoteLines.slice(0, 10), padding, 1100, 46);
   }
 
   ctx.fillStyle = 'rgba(17,24,39,0.55)';
-  ctx.font = "700 20px 'Fira Code', monospace";
-  ctx.fillText(`藏地：${stele.location}`, padding, 1456);
-  ctx.fillText(`规模：${stele.total_chars} 字`, padding, 1492);
+  ctx.font = "700 26px 'Fira Code', monospace";
+  ctx.fillText(`藏地：${stele.location}`, padding, 1560);
+  ctx.fillText(`规模：${stele.total_chars} 字`, padding, 1600);
 
   ctx.fillStyle = 'rgba(17,24,39,0.03)';
   ctx.fillRect(rightX, 0, rightW, CANVAS_H);

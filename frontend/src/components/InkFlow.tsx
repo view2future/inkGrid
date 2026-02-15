@@ -1144,13 +1144,14 @@ function MobileInkFlowPosterGallery({
 
     const yearLabel = '馬年';
     const specs = [
-      { id: 'ny_01', dayLabel: '初一', caption: '拜歲迎春', glyph: '年' },
-      { id: 'ny_02', dayLabel: '初二', caption: '回門團圓', glyph: '家' },
-      { id: 'ny_03', dayLabel: '初三', caption: '赤口慎言', glyph: '止' },
-      { id: 'ny_04', dayLabel: '初四', caption: '迎灶納福', glyph: '惠' },
-      { id: 'ny_05', dayLabel: '初五', caption: '破五開市', glyph: '开' },
-      { id: 'ny_06', dayLabel: '初六', caption: '送窮出行', glyph: '泽' },
-      { id: 'ny_07', dayLabel: '初七', caption: '人日安康', glyph: '康' },
+      { id: 'ny_01', dayLabel: '初一', caption: '拜歲迎春', glyph: '年', date: '2026-01-29' },
+      { id: 'ny_02', dayLabel: '初二', caption: '回門團圓', glyph: '家', date: '2026-01-30' },
+      { id: 'ny_03', dayLabel: '初三', caption: '赤口慎言', glyph: '止', date: '2026-01-31' },
+      { id: 'ny_04', dayLabel: '初四', caption: '迎灶納福', glyph: '惠', date: '2026-02-01' },
+      { id: 'ny_05', dayLabel: '初五', caption: '破五開市', glyph: '开', date: '2026-02-02' },
+      { id: 'ny_06', dayLabel: '初六', caption: '送窮出行', glyph: '泽', date: '2026-02-03' },
+      { id: 'ny_07', dayLabel: '初七', caption: '人日安康', glyph: '康', date: '2026-02-04' },
+      { id: 'ny_08', dayLabel: '大年三十', caption: '守歲迎新', glyph: '久', date: '2026-02-16' },
     ];
 
     return specs
@@ -1171,6 +1172,7 @@ function MobileInkFlowPosterGallery({
       yearLabel: string;
       dayLabel: string;
       caption: string;
+      date?: string;
       glyph: { simplified?: string; image: string };
     }>;
   }, [chars]);
@@ -1218,7 +1220,7 @@ function MobileInkFlowPosterGallery({
       for (const p of newYearPosters) {
         try {
           const res = await renderNewYearPosterPng(
-            { yearLabel: p.yearLabel, dayLabel: p.dayLabel, caption: p.caption, glyph: p.glyph },
+            { yearLabel: p.yearLabel, dayLabel: p.dayLabel, caption: p.caption, date: p.date, glyph: p.glyph },
             { scale: 0.42, pixelRatio: 1 }
           );
           if (cancelled) return;
@@ -1562,7 +1564,7 @@ function MobileCuratedCollageModal({
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: 8 }}
                           transition={{ duration: 0.5, ease: 'easeOut' }}
-                          className="absolute inset-x-4 bottom-4"
+                          className="absolute inset-x-4 top-1/2 -translate-y-1/2"
                         >
                           <div className="rounded-[1.5rem] bg-black/40 border border-white/10 shadow-[0_22px_70px_rgba(0,0,0,0.55)] backdrop-blur-md px-5 py-4">
                             <div className="text-[10px] font-black tracking-[0.22em] text-[#F2E6CE] opacity-90">
@@ -1616,6 +1618,7 @@ function MobileNewYearPosterModal({
     yearLabel: string;
     dayLabel: string;
     caption: string;
+    date?: string;
     glyph: { simplified?: string; image: string };
   };
   onClose: () => void;
@@ -1665,6 +1668,7 @@ function MobileNewYearPosterModal({
         yearLabel: poster.yearLabel,
         dayLabel: poster.dayLabel,
         caption: poster.caption,
+        date: poster.date,
         glyph: poster.glyph,
       });
       const url = URL.createObjectURL(res.blob);
@@ -1743,7 +1747,7 @@ function MobileNewYearPosterModal({
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: 8 }}
                           transition={{ duration: 0.5, ease: 'easeOut' }}
-                          className="absolute inset-x-4 bottom-4"
+                          className="absolute inset-x-4 top-1/2 -translate-y-1/2"
                         >
                           <div className="rounded-[1.5rem] bg-black/40 border border-white/10 shadow-[0_22px_70px_rgba(0,0,0,0.55)] backdrop-blur-md px-5 py-4">
                             <div className="text-[10px] font-black tracking-[0.22em] text-[#F2E6CE] opacity-90">
@@ -1955,6 +1959,25 @@ function MobileInkFlowSteleFeed({
         <span className="text-[10px] font-mono text-stone-500 tracking-widest">{String(index + 1).padStart(2, '0')} / {String(total).padStart(2, '0')}</span>
       </div>
 
+      <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-20">
+        <button
+          onClick={() => onNavigatePost(-1)}
+          disabled={index <= 0}
+          className="w-12 h-12 rounded-2xl bg-white/35 backdrop-blur-md border border-stone-200/70 text-stone-800 shadow-[0_18px_45px_rgba(0,0,0,0.12)] flex items-center justify-center active:scale-95 transition disabled:opacity-35"
+          aria-label="上一贴"
+        >
+          <ChevronUp size={18} />
+        </button>
+        <button
+          onClick={() => onNavigatePost(1)}
+          disabled={index >= total - 1}
+          className="w-12 h-12 rounded-2xl bg-white/35 backdrop-blur-md border border-stone-200/70 text-stone-800 shadow-[0_18px_45px_rgba(0,0,0,0.12)] flex items-center justify-center active:scale-95 transition disabled:opacity-35"
+          aria-label="下一贴"
+        >
+          <ChevronDown size={18} />
+        </button>
+      </div>
+
       <div className="flex-1 flex items-center justify-center py-6">
         <AnimatePresence mode="wait" custom={direction}>
           <motion.div
@@ -2080,29 +2103,16 @@ function MobileInkFlowSteleFeed({
         </AnimatePresence>
       </div>
 
-      <div className="mt-auto flex items-center justify-between pt-1">
-        <button
-          onClick={() => onNavigatePost(-1)}
-          className="inline-flex items-center justify-center text-center px-5 py-3 rounded-[1.25rem] bg-white/60 border border-stone-200/70 text-stone-700 text-[11px] font-black tracking-[0.18em] shadow-sm active:scale-95 transition"
-        >
-          上一贴
-        </button>
-
+      <div className="mt-auto flex items-center justify-center pt-1">
         <div className="flex items-center gap-2">
           {[0, 1].map((i) => (
-            <div
+            <button
               key={i}
+              onClick={() => onNavigateSection(i - section)}
               className={`h-1.5 rounded-full transition-all ${section === i ? 'w-6 bg-[#8B0000]/70' : 'w-1.5 bg-stone-400/40'}`}
             />
           ))}
         </div>
-
-        <button
-          onClick={() => onNavigatePost(1)}
-          className="inline-flex items-center justify-center text-center px-5 py-3 rounded-[1.25rem] bg-white/60 border border-stone-200/70 text-stone-700 text-[11px] font-black tracking-[0.18em] shadow-sm active:scale-95 transition"
-        >
-          下一贴
-        </button>
       </div>
     </div>
   );
