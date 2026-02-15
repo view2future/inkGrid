@@ -449,30 +449,30 @@ export async function renderNewYearPosterPng(input: NewYearPosterInput, options:
     roundRect(ctx, frameX + clipPad, frameY + clipPad, frameW - clipPad * 2, frameH - clipPad * 2, r - 10);
     ctx.clip();
 
-    // faint tiled background
+    // subtle paper texture background
     ctx.save();
     ctx.globalCompositeOperation = 'multiply';
-    ctx.globalAlpha = 0.06;
-    const tileW = frameW * 0.42;
-    const tileH = frameH * 0.42;
+    ctx.globalAlpha = 0.04;
+    const tileW = frameW * 0.38;
+    const tileH = frameH * 0.38;
     for (let row = 0; row < 3; row++) {
       for (let col = 0; col < 2; col++) {
-        const x = frameX + frameW * 0.08 + col * (tileW + frameW * 0.06) + (row % 2 ? 18 : -10);
-        const y = frameY + frameH * 0.06 + row * (tileH + frameH * 0.06);
+        const x = frameX + frameW * 0.10 + col * (tileW + frameW * 0.05) + (row % 2 ? 16 : -8);
+        const y = frameY + frameH * 0.06 + row * (tileH + frameH * 0.05);
         drawContainImage(ctx, glyphImg, x, y, tileW, tileH);
       }
     }
     ctx.restore();
 
-    // main glyph
+    // main glyph - sharper rendering
     ctx.save();
-    ctx.globalCompositeOperation = 'multiply';
-    ctx.globalAlpha = 0.92;
-    const mainW = frameW * 0.92;
-    const mainH = frameH * 0.92;
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1.0;
+    const mainW = frameW * 0.88;
+    const mainH = frameH * 0.88;
     const x = frameX + (frameW - mainW) / 2;
     const y = frameY + (frameH - mainH) / 2 - 10;
-    drawCoverImage(ctx, glyphImg, x, y, mainW, mainH, 1.18, 20, 14);
+    drawCoverImage(ctx, glyphImg, x, y, mainW, mainH, 1.0, 0, 0);
     ctx.restore();
 
     ctx.restore();
