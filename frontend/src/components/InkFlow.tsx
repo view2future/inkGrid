@@ -4,7 +4,7 @@ import { X, BookOpen, Info, Share2, Scroll, Sparkles, MapPin, Download, ChevronL
 import Logo from './Logo';
 import { useMediaQuery } from '../utils/useMediaQuery';
 import MobilePosterModal from './MobilePosterModal';
-import { renderCuratedCollagePng, renderNewYearPosterPng } from '../utils/poster';
+import { renderCuratedCollagePng, renderNewYearPosterPng, renderNewYearConceptPng } from '../utils/poster';
 
 
 interface SteleKnowledge {
@@ -1222,16 +1222,21 @@ function MobileInkFlowPosterGallery({
     const run = async () => {
       for (const p of newYearPosters) {
         try {
+          console.log('[InkFlow] Rendering preview for:', p.id);
           const res = await renderNewYearPosterPng(
-            { id: p.id, yearLabel: p.yearLabel, dayLabel: p.dayLabel, caption: p.caption, date: p.date, glyph: { simplified: p.glyph.simplified, image: p.glyph.image, index: p.glyph.index, source: p.glyph.source } },
+            { id: p.id, yearLabel: p.yearLabel, dayLabel: p.dayLabel, caption: p.caption, date: p.date, lunarDateStr: p.lunarDateStr, glyph: { simplified: p.glyph.simplified, image: p.glyph.image, index: p.glyph.index, source: p.glyph.source } },
             { scale: 0.42, pixelRatio: 2 }
           );
-          if (cancelled) return;
+          if (cancelled) {
+            console.log('[InkFlow] Render cancelled for:', p.id);
+            return;
+          }
           const url = URL.createObjectURL(res.blob);
           urls.push(url);
           setNewYearUrls((prev) => ({ ...prev, [p.id]: url }));
-        } catch {
-          // ignore
+          console.log('[InkFlow] Preview ready:', p.id);
+        } catch (err) {
+          console.error('[InkFlow] Preview failed for:', p.id, err);
         }
       }
     };
@@ -1630,6 +1635,7 @@ function MobileNewYearPosterModal({
   const [isBusy, setIsBusy] = useState(false);
   const [tip, setTip] = useState<string | null>(null);
   const [loadingIndex, setLoadingIndex] = useState(0);
+  const [conceptUrl, setConceptUrl] = useState<string | null>(null);
 
   const loadingNotes = useMemo(
     () =>
@@ -1637,7 +1643,7 @@ function MobileNewYearPosterModal({
         { title: '正在写春…', text: '筆勢貴一氣，章法貴留白。' },
         { title: '正在入墨…', text: '圓轉見篆意，含蓄見氣韻。' },
         { title: '正在排景…', text: '一張海報，要有“氣口”。' },
-        { title: '正在印碼…', text: '把墨色留在紙上，也留在時間裡。' },
+        { title: '正在印碼…', text: '把墨色留在紙上，也留在时间里。' },
       ],
     []
   );
@@ -1652,7 +1658,23 @@ function MobileNewYearPosterModal({
     if (!isOpen) return;
     if (!loadingNotes.length) return;
     setLoadingIndex(Math.floor(Math.random() * loadingNotes.length));
-  }, [isOpen, poster.id, loadingNotes.length]);
+    
+    let cancelled = false;
+    const runConcept = async () => {
+      try {
+        const res = await renderNewYearConceptPng(poster.id, { pixelRatio: 2 });
+        if (cancelled) return;
+        setConceptUrl(URL.createObjectURL(res.blob));
+      } catch (err) {
+        console.error('Failed to generate concept card', err);
+      }
+    };
+    void runConcept();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, poster.id]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -1664,29 +1686,32 @@ function MobileNewYearPosterModal({
     return () => window.clearInterval(timer);
   }, [isOpen, isBusy, loadingNotes.length]);
 
-  const handleDownload = async () => {
+  const handleDownload = async (kind: 'poster' | 'concept') => {
     setIsBusy(true);
     setTip(null);
     try {
-      const res = await renderNewYearPosterPng({
-        yearLabel: poster.yearLabel,
-        dayLabel: poster.dayLabel,
-        caption: poster.caption,
-        date: poster.date,
-        lunarDateStr: poster.lunarDateStr,
-        glyph: { simplified: poster.glyph.simplified, image: poster.glyph.image, index: poster.glyph.index, source: poster.glyph.source },
-      }, { pixelRatio: 3 });
+      const res = kind === 'poster' 
+        ? await renderNewYearPosterPng({
+            yearLabel: poster.yearLabel,
+            dayLabel: poster.dayLabel,
+            caption: poster.caption,
+            date: poster.date,
+            lunarDateStr: poster.lunarDateStr,
+            glyph: { simplified: poster.glyph.simplified, image: poster.glyph.image, index: poster.glyph.index, source: poster.glyph.source },
+          }, { pixelRatio: 3 })
+        : await renderNewYearConceptPng(poster.id, { pixelRatio: 3 });
+
       const url = URL.createObjectURL(res.blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = filename;
+      a.download = kind === 'poster' ? filename : `note_${filename}`;
       document.body.appendChild(a);
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
       setTip('已尝试保存；若无反应，请长按图片保存。');
     } catch {
-      setTip('生成海报失败，请稍后重试。');
+      setTip('生成失败，请稍后重试。');
     } finally {
       setIsBusy(false);
     }
@@ -1726,64 +1751,57 @@ function MobileNewYearPosterModal({
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-5">
-              <div className="max-w-md mx-auto">
-                <div className="rounded-[2rem] bg-white/5 border border-white/10 shadow-[0_40px_120px_rgba(0,0,0,0.65)] overflow-hidden">
-                  <div className="relative w-full aspect-[9/16] bg-black/30">
-                    {previewUrl ? (
-                      <img src={previewUrl} alt="new-year" className="absolute inset-0 w-full h-full object-cover" />
-                    ) : (
-                      <div className="absolute inset-0 flex items-center justify-center text-stone-400 text-sm font-serif">
-                        预览不可用
-                      </div>
-                    )}
-
-                    {isBusy ? (
-                      <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                        <div className="w-10 h-10 rounded-full border-2 border-white/20 border-t-white/70 animate-spin" />
-                      </div>
-                    ) : null}
-
-                    <AnimatePresence mode="wait">
-                      {isBusy && loadingNotes[loadingIndex] ? (
-                        <motion.div
-                          key={loadingIndex}
-                          initial={{ opacity: 0, y: 8 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: 8 }}
-                          transition={{ duration: 0.5, ease: 'easeOut' }}
-                          className="absolute inset-x-4 top-1/2 -translate-y-1/2"
-                        >
-                          <div className="rounded-[1.5rem] bg-black/40 border border-white/10 shadow-[0_22px_70px_rgba(0,0,0,0.55)] backdrop-blur-md px-5 py-4">
-                            <div className="text-[10px] font-black tracking-[0.22em] text-[#F2E6CE] opacity-90">
-                              {loadingNotes[loadingIndex].title}
-                            </div>
-                            <div className="mt-2 text-[12px] font-serif text-stone-200 leading-relaxed tracking-wide">
-                              {loadingNotes[loadingIndex].text}
-                            </div>
-                          </div>
-                        </motion.div>
-                      ) : null}
-                    </AnimatePresence>
+            <div className="flex-1 overflow-y-auto px-5 custom-scrollbar">
+              <div className="max-w-md mx-auto space-y-10 pb-12">
+                {/* 海报预览 */}
+                <div className="space-y-4">
+                  <div className="text-[10px] font-black tracking-[0.4em] text-stone-500 uppercase px-1">典藏海报</div>
+                  <div className="rounded-[2rem] bg-white/5 border border-white/10 shadow-[0_40px_120px_rgba(0,0,0,0.65)] overflow-hidden">
+                    <div className="relative w-full aspect-[9/16] bg-black/30">
+                      {previewUrl ? (
+                        <img src={previewUrl} alt="new-year" className="absolute inset-0 w-full h-full object-cover" />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center text-stone-400 text-sm font-serif">预览不可用</div>
+                      )}
+                      {isBusy && (
+                        <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                          <div className="w-10 h-10 rounded-full border-2 border-white/20 border-t-white/70 animate-spin" />
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-
-                {tip ? <div className="mt-4 text-center text-[12px] font-serif text-stone-300">{tip}</div> : null}
-
-                <div className="mt-6">
                   <button
-                    onClick={handleDownload}
+                    onClick={() => handleDownload('poster')}
                     disabled={isBusy}
-                    className="w-full flex items-center justify-center gap-3 px-4 py-4 rounded-[1.25rem] bg-[#8B0000] border border-[#8B0000]/60 text-[#F2E6CE] text-[12px] font-black tracking-[0.25em] shadow-[0_18px_45px_rgba(139,0,0,0.35)] active:scale-95 transition disabled:opacity-40"
+                    className="w-full flex items-center justify-center gap-3 px-4 py-4 rounded-[1.25rem] bg-[#8B0000] border border-[#8B0000]/60 text-[#F2E6CE] text-[12px] font-black tracking-[0.25em] shadow-xl active:scale-95 transition disabled:opacity-40"
                   >
-                    <Download size={16} />
-                    保存海报
+                    <Download size={16} /> 保存典藏海报
                   </button>
                 </div>
 
-                <div className="mt-6 pb-10 text-center text-[11px] font-serif text-stone-300 opacity-80 leading-relaxed">
-                  若无法直接下载：请长按图片保存。
+                {/* 理念札记预览 */}
+                <div className="space-y-4">
+                  <div className="text-[10px] font-black tracking-[0.4em] text-stone-500 uppercase px-1">设计札记</div>
+                  <div className="rounded-[1.5rem] bg-white/5 border border-white/10 shadow-2xl overflow-hidden">
+                    <div className="relative w-full aspect-square bg-black/20">
+                      {conceptUrl ? (
+                        <img src={conceptUrl} alt="concept" className="absolute inset-0 w-full h-full object-cover" />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center text-stone-500 text-xs font-serif">正在研墨写札记…</div>
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleDownload('concept')}
+                    disabled={isBusy || !conceptUrl}
+                    className="w-full flex items-center justify-center gap-3 px-4 py-4 rounded-[1.25rem] bg-stone-100 text-stone-900 text-[12px] font-black tracking-[0.25em] active:scale-95 transition disabled:opacity-40"
+                  >
+                    <Download size={16} /> 保存设计札记
+                  </button>
                 </div>
+
+                {tip ? <div className="text-center text-[12px] font-serif text-stone-300">{tip}</div> : null}
+                <div className="text-center text-[11px] font-serif text-stone-300 opacity-40 pb-10">一张为墨，一张为记。两份珍藏，共贺新岁。</div>
               </div>
             </div>
           </motion.div>

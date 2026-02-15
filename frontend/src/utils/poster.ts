@@ -13,7 +13,6 @@ export const INKGRID_QR_LABEL = 'www.inkgrid.art';
 
 const INKGRID_BRAND_CN = '墨阵';
 const INKGRID_SLOGAN_CN = '墨香千載 · 筆鋒流轉';
-const INKGRID_GOLD = '#B8860B';
 
 let BRAND_LOGO_PROMISE: Promise<HTMLImageElement> | null = null;
 function loadBrandLogo() {
@@ -75,1253 +74,362 @@ export type NewYearPosterInput = {
 const CANVAS_W = 1080;
 const CANVAS_H = 1920;
 
-export async function renderPosterPng(input: PosterInput, options: RenderPosterOptions = {}) {
-  const canvas = document.createElement('canvas');
-
-  const scale = typeof options.scale === 'number' ? Math.max(0.25, Math.min(1, options.scale)) : 1;
-  const pixelRatio =
-    typeof options.pixelRatio === 'number' && options.pixelRatio > 0
-      ? options.pixelRatio
-      : Math.max(2, Math.floor(window.devicePixelRatio || 1));
-
-  canvas.width = Math.round(CANVAS_W * pixelRatio * scale);
-  canvas.height = Math.round(CANVAS_H * pixelRatio * scale);
-
-  const ctxMaybe = canvas.getContext('2d');
-  if (!ctxMaybe) throw new Error('Canvas not supported');
-  const ctx = ctxMaybe;
-  ctx.scale(pixelRatio * scale, pixelRatio * scale);
-
-  const noiseImg = await loadImage('/noise.png').catch(() => null);
-
-  if (input.template === 'folio') {
-    drawFolioBase(ctx, noiseImg);
-    if (input.kind === 'char') await drawCharFolio(ctx, input.data);
-    else await drawSteleFolio(ctx, input.data);
-  }
-
-  if (input.template === 'wash') {
-    drawWashBase(ctx, noiseImg);
-    if (input.kind === 'char') await drawCharWash(ctx, input.data);
-    else await drawSteleWash(ctx, input.data);
-  }
-
-  if (input.template === 'minimal') {
-    drawMinimalBase(ctx, noiseImg);
-    if (input.kind === 'char') await drawCharMinimal(ctx, input.data);
-    else await drawSteleMinimal(ctx, input.data);
-  }
-
-  const blob = await canvasToBlob(canvas);
-  return {
-    blob,
-    width: Math.round(CANVAS_W * scale),
-    height: Math.round(CANVAS_H * scale),
-  };
-}
-
-export async function renderCuratedCollagePng(input: CuratedCollageInput, options: RenderPosterOptions = {}) {
-  const canvas = document.createElement('canvas');
-
-  const scale = typeof options.scale === 'number' ? Math.max(0.25, Math.min(1, options.scale)) : 1;
-  const pixelRatio =
-    typeof options.pixelRatio === 'number' && options.pixelRatio > 0
-      ? options.pixelRatio
-      : Math.max(2, Math.floor(window.devicePixelRatio || 1));
-
-  canvas.width = Math.round(CANVAS_W * pixelRatio * scale);
-  canvas.height = Math.round(CANVAS_H * pixelRatio * scale);
-
-  const ctxMaybe = canvas.getContext('2d');
-  if (!ctxMaybe) throw new Error('Canvas not supported');
-  const ctx = ctxMaybe;
-  ctx.scale(pixelRatio * scale, pixelRatio * scale);
-
-  const noiseImg = await loadImage('/noise.png').catch(() => null);
-
-  // --- 桌面底色：参考“故宫日历-多个平铺”氛围 ---
-  const desk = ctx.createLinearGradient(0, 0, 0, CANVAS_H);
-  desk.addColorStop(0, '#B78B52');
-  desk.addColorStop(0.55, '#A57A46');
-  desk.addColorStop(1, '#8C6537');
-  ctx.fillStyle = desk;
-  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
-
-  const vignette = ctx.createRadialGradient(CANVAS_W * 0.55, CANVAS_H * 0.25, 0, CANVAS_W * 0.55, CANVAS_H * 0.25, 1200);
-  vignette.addColorStop(0, 'rgba(255,255,255,0.15)');
-  vignette.addColorStop(1, 'rgba(0,0,0,0.25)');
-  ctx.fillStyle = vignette;
-  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
-
-  if (noiseImg) {
-    const p = ctx.createPattern(noiseImg, 'repeat');
-    if (p) {
-      ctx.globalAlpha = 0.10;
-      ctx.fillStyle = p;
-      ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
-      ctx.globalAlpha = 1;
-    }
-  }
-
-  const padding = 72;
-  const plateX = 48;
-  const plateY = 48;
-  const plateW = CANVAS_W - 96;
-  const plateH = 240;
-
-  // header plate
-  ctx.save();
-  ctx.fillStyle = 'rgba(246,241,231,0.90)';
-  ctx.shadowColor = 'rgba(0,0,0,0.28)';
-  ctx.shadowBlur = 26;
-  roundRect(ctx, plateX, plateY, plateW, plateH, 48);
-  ctx.fill();
-  ctx.shadowBlur = 0;
-  ctx.strokeStyle = 'rgba(255,255,255,0.30)';
-  ctx.lineWidth = 2;
-  roundRect(ctx, plateX, plateY, plateW, plateH, 48);
-  ctx.stroke();
-  ctx.restore();
-
-  await drawBrandHeader(ctx, plateX + 44, plateY + 34, { tag: input.title?.trim() || '典藏画册' });
-
-  if (input.subtitle) {
-    ctx.fillStyle = 'rgba(17,24,39,0.62)';
-    ctx.font = "800 22px 'Noto Serif SC', serif";
-    const lines = wrapText(ctx, input.subtitle.trim(), plateW - 88);
-    drawLines(ctx, lines.slice(0, 2), plateX + 44, plateY + 188, 30);
-  }
-
-  const cards = (input.cards || []).filter((c) => c.image).slice(0, 8);
-  const cardW = 340;
-  const cardH = 480;
-  const thickness = 28;
-  const dx = thickness;
-  const dy = Math.round(thickness * 0.62);
-  const radius = 34;
-
-  const tones = ['#F6F1E7', '#F4EFE5', '#F8F3EA', '#F1E8DA'];
-  const glyphStyles = [
-    { scale: 1.12, ox: -18, oy: 10 },
-    { scale: 0.98, ox: 0, oy: 0 },
-    { scale: 1.18, ox: 14, oy: -18 },
-    { scale: 1.08, ox: 22, oy: 16 },
-    { scale: 1.22, ox: -10, oy: -22 },
-    { scale: 1.04, ox: -24, oy: 6 },
-    { scale: 1.16, ox: 8, oy: 24 },
-    { scale: 1.10, ox: 26, oy: -8 },
-  ];
-
-  const placements = [
-    { x: -26, y: 320 },
-    { x: 360, y: 300 },
-    { x: 730, y: 346 },
-    { x: 72, y: 820 },
-    { x: 430, y: 784 },
-    { x: 780, y: 860 },
-    { x: -10, y: 1310 },
-    { x: 360, y: 1280 },
-  ];
-
-  function drawCoverImage(ctx2: CanvasRenderingContext2D, img: HTMLImageElement, x: number, y: number, w: number, h: number, scaleMul: number, ox: number, oy: number) {
-    const sw = img.naturalWidth || img.width;
-    const sh = img.naturalHeight || img.height;
-    if (!sw || !sh) return;
-    const s = Math.max(w / sw, h / sh) * scaleMul;
-    const dw = sw * s;
-    const dh = sh * s;
-    const dx2 = x + (w - dw) / 2 + ox;
-    const dy2 = y + (h - dh) / 2 + oy;
-    ctx2.drawImage(img, dx2, dy2, dw, dh);
-  }
-
-  async function drawBookCard(c: { simplified?: string; image: string }, x: number, y: number, tone: string, style: { scale: number; ox: number; oy: number }) {
-    // shadow
-    ctx.save();
-    ctx.fillStyle = 'rgba(0,0,0,0.30)';
-    ctx.filter = 'blur(26px)';
-    roundRect(ctx, x + 18, y + 22, cardW + dx, cardH + dy, radius);
-    ctx.fill();
-    ctx.filter = 'none';
-    ctx.restore();
-
-    // thickness faces
-    ctx.save();
-    // right face
-    ctx.fillStyle = 'rgba(233,221,200,0.96)';
-    ctx.beginPath();
-    ctx.moveTo(x + cardW, y + radius);
-    ctx.lineTo(x + cardW + dx, y + radius + dy);
-    ctx.lineTo(x + cardW + dx, y + cardH - radius + dy);
-    ctx.lineTo(x + cardW, y + cardH - radius);
-    ctx.closePath();
-    ctx.fill();
-
-    // bottom face
-    ctx.fillStyle = 'rgba(217,200,170,0.96)';
-    ctx.beginPath();
-    ctx.moveTo(x + radius, y + cardH);
-    ctx.lineTo(x + cardW - radius, y + cardH);
-    ctx.lineTo(x + cardW - radius + dx, y + cardH + dy);
-    ctx.lineTo(x + radius + dx, y + cardH + dy);
-    ctx.closePath();
-    ctx.fill();
-
-    // top face
-    ctx.fillStyle = tone;
-    roundRect(ctx, x, y, cardW, cardH, radius);
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(17,24,39,0.12)';
-    ctx.lineWidth = 2;
-    roundRect(ctx, x, y, cardW, cardH, radius);
-    ctx.stroke();
-
-    // subtle paper texture
-    if (noiseImg) {
-      const p = ctx.createPattern(noiseImg, 'repeat');
-      if (p) {
-        ctx.save();
-        roundRect(ctx, x, y, cardW, cardH, radius);
-        ctx.clip();
-        ctx.globalAlpha = 0.10;
-        ctx.fillStyle = p;
-        ctx.fillRect(x, y, cardW, cardH);
-        ctx.restore();
-      }
-    }
-
-    // spine strip
-    ctx.fillStyle = 'rgba(139,0,0,0.12)';
-    roundRect(ctx, x + 18, y + 18, 22, cardH - 36, 18);
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(139,0,0,0.18)';
-    ctx.lineWidth = 2;
-    roundRect(ctx, x + 18, y + 18, 22, cardH - 36, 18);
-    ctx.stroke();
-
-    // simplified badge
-    const s = String(c.simplified || '').trim();
-    if (s) {
-      ctx.fillStyle = 'rgba(255,255,255,0.55)';
-      roundRect(ctx, x + cardW - 112, y + 22, 88, 54, 16);
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(17,24,39,0.10)';
-      ctx.lineWidth = 2;
-      roundRect(ctx, x + cardW - 112, y + 22, 88, 54, 16);
-      ctx.stroke();
-      ctx.fillStyle = 'rgba(17,24,39,0.90)';
-      ctx.font = "900 34px 'Noto Serif SC', serif";
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(s, x + cardW - 112 + 44, y + 22 + 29);
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'alphabetic';
-    }
-
-    // glyph (clip to top face)
-    const img = await loadImage(c.image).catch(() => null);
-    if (img) {
-      ctx.save();
-      roundRect(ctx, x, y, cardW, cardH, radius);
-      ctx.clip();
-      ctx.globalAlpha = 0.96;
-      ctx.filter = 'contrast(1.12) brightness(1.06)';
-      drawCoverImage(ctx, img, x + 40, y + 96, cardW - 80, cardH - 180, style.scale, style.ox, style.oy);
-      ctx.filter = 'none';
-      ctx.restore();
-    }
-
-    // footer
-    ctx.fillStyle = 'rgba(17,24,39,0.50)';
-    ctx.font = "900 18px 'Noto Serif SC', serif";
-    ctx.fillText(INKGRID_BRAND_CN, x + 44, y + cardH - 44);
-    ctx.fillStyle = 'rgba(17,24,39,0.38)';
-    ctx.font = "800 16px 'Noto Serif SC', serif";
-    ctx.fillText(INKGRID_SLOGAN_CN, x + 44, y + cardH - 18);
-    ctx.restore();
-  }
-
-  for (let i = 0; i < cards.length; i++) {
-    const p = placements[i % placements.length];
-    const tone = tones[i % tones.length];
-    const st = glyphStyles[i % glyphStyles.length];
-    await drawBookCard(cards[i], p.x, p.y, tone, st);
-  }
-
-  // QR footer (right-lower desk corner)
-  const qrSize = 190;
-  const qrX = CANVAS_W - padding - qrSize;
-  const qrY = CANVAS_H - padding - qrSize;
-  ctx.save();
-  ctx.fillStyle = 'rgba(246,241,231,0.86)';
-  ctx.shadowColor = 'rgba(0,0,0,0.22)';
-  ctx.shadowBlur = 22;
-  roundRect(ctx, qrX - 18, qrY - 18, qrSize + 36, qrSize + 36, 34);
-  ctx.fill();
-  ctx.shadowBlur = 0;
-  ctx.strokeStyle = 'rgba(255,255,255,0.24)';
-  ctx.lineWidth = 2;
-  roundRect(ctx, qrX - 18, qrY - 18, qrSize + 36, qrSize + 36, 34);
-  ctx.stroke();
-  ctx.restore();
-
-  drawUrlLabelAboveQr(ctx, qrX, qrY, qrSize);
-  await drawQr(ctx, qrX, qrY, qrSize);
-
-  const blob = await canvasToBlob(canvas);
-  return {
-    blob,
-    width: Math.round(CANVAS_W * scale),
-    height: Math.round(CANVAS_H * scale),
-  };
-}
-
-export async function renderNewYearPosterPng(input: NewYearPosterInput, options: RenderPosterOptions = {}) {
-  const canvas = document.createElement('canvas');
-
-  const scale = typeof options.scale === 'number' ? Math.max(0.25, Math.min(1, options.scale)) : 1;
-  const pixelRatio =
-    typeof options.pixelRatio === 'number' && options.pixelRatio > 0
-      ? options.pixelRatio
-      : Math.max(2, Math.floor(window.devicePixelRatio || 1));
-
-  canvas.width = Math.round(CANVAS_W * pixelRatio * scale);
-  canvas.height = Math.round(CANVAS_H * pixelRatio * scale);
-
-  const ctxMaybe = canvas.getContext('2d');
-  if (!ctxMaybe) throw new Error('Canvas not supported');
-  const ctx = ctxMaybe;
-  ctx.scale(pixelRatio * scale, pixelRatio * scale);
-
-  // --- 春节雅致配色 ---
-  const CHINA_RED = '#C02C38'; // 中国红
-  const RICH_BLACK = '#1F1F1F'; // 浓墨
-  
-  // 背景色
-  const paperTones = [
-    '#F9F4E8', // 暖白
-    '#FDF6E3', // 米黄
-    '#FFF0E6', // 极淡红
-    '#F5F5F0', // 象牙
-  ];
-
-  const layoutId = input.id || 'default';
-  const layoutIndex = parseInt(layoutId.replace(/\D/g, '')) || 1;
-  const paperColor = paperTones[(layoutIndex - 1) % paperTones.length];
-  
-  const padding = 72;
-
-  // 1. 背景铺设
-  ctx.fillStyle = paperColor;
-  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
-
-  const noiseImg = await loadImage('/noise.png').catch(() => null);
-  if (noiseImg) {
-    const p = ctx.createPattern(noiseImg, 'repeat');
-    if (p) {
-      ctx.globalAlpha = 0.1;
-      ctx.fillStyle = p;
-      ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
-      ctx.globalAlpha = 1;
-    }
-  }
-
-  // 装饰：极淡的红色边框
-  ctx.strokeStyle = 'rgba(192, 44, 56, 0.08)';
-  ctx.lineWidth = 2;
-  const borderPad = 40;
-  ctx.strokeRect(borderPad, borderPad, CANVAS_W - borderPad*2, CANVAS_H - borderPad*2);
-
-  // 2. 左上角：品牌区 (放大2倍)
-  const logo = await loadBrandLogo().catch(() => null);
-  const headerY = padding + 20;
-  let headerTextX = padding;
-  
-  if (logo) {
-    const logoSize = 88;
-    ctx.save();
-    ctx.globalAlpha = 0.9;
-    drawContainImage(ctx, logo, padding, headerY - 10, logoSize, logoSize);
-    ctx.restore();
-    headerTextX += 110;
-  }
-
-  ctx.save();
-  ctx.font = "900 48px 'Noto Serif SC', serif"; 
-  ctx.fillStyle = RICH_BLACK;
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(INKGRID_BRAND_CN, headerTextX, headerY + 10);
-  
-  ctx.font = "600 32px 'Noto Serif SC', serif";
-  ctx.fillStyle = 'rgba(0,0,0,0.5)';
-  ctx.fillText(INKGRID_SLOGAN_CN, headerTextX, headerY + 60);
-  ctx.restore();
-
-
-  // 3. 核心篆字 (墨迹悬浮效果)
-  const glyphImg = await loadImage(input.glyph.image).catch(() => null);
-  
-  const imgSize = 800; 
-  const imgX = (CANVAS_W - imgSize) / 2;
-  const imgY = 320; 
-
-  if (glyphImg) {
-    ctx.save();
-    
-    // 3.1 投影层 (纯粹的阴影，让字浮起来)
-    ctx.save();
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.2)'; // 比较软的阴影
-    ctx.shadowBlur = 25;
-    ctx.shadowOffsetY = 12;
-    // 绘制一个透明度很低的图片作为阴影源
-    ctx.globalAlpha = 0.8; 
-    drawContainImage(ctx, glyphImg, imgX, imgY, imgSize, imgSize); 
-    ctx.restore();
-
-    // 3.2 实体层 (墨迹本色)
-    // 叠加 Multiply 模式，保留墨色质感
-    ctx.globalCompositeOperation = 'multiply';
-    ctx.filter = 'contrast(1.15) brightness(0.95)'; // 稍微加深一点墨色
-    drawContainImage(ctx, glyphImg, imgX, imgY, imgSize, imgSize);
-
-    ctx.restore();
-  }
-
-  // 4. 右上角闲章 (紧贴篆字右上角)
-  const simplified = String(input.glyph.simplified || '').trim();
-  if (simplified) {
-    const badgeSize = 100;
-    const badgeX = imgX + imgSize - 100; 
-    const badgeY = imgY + 80;
-
-    ctx.save();
-    ctx.shadowColor = 'rgba(139, 0, 0, 0.3)';
-    ctx.shadowBlur = 15;
-    ctx.shadowOffsetY = 8;
-    ctx.fillStyle = CHINA_RED;
-    roundRect(ctx, badgeX, badgeY, badgeSize, badgeSize, 16);
-    ctx.fill();
-    ctx.shadowBlur = 0;
-
-    ctx.fillStyle = '#FDF6E3'; 
-    ctx.font = "900 60px 'Noto Serif SC', serif";
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(simplified, badgeX + badgeSize/2, badgeY + badgeSize/2 + 4);
-    
-    ctx.strokeStyle = 'rgba(255,215,0, 0.4)';
-    ctx.lineWidth = 2;
-    roundRect(ctx, badgeX + 6, badgeY + 6, badgeSize - 12, badgeSize - 12, 10);
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  // 5. 中轴线信息流
-  let cursorY = imgY + imgSize + 50; 
-
-  // 5.1 出处 (精致说明牌风格)
-  const sourceText = input.glyph.source || '嶧山刻石';
-  const author = '秦 · 李斯'; 
-  const indexText = (input.glyph.index && input.glyph.index > 0) ? `第${input.glyph.index}字` : '';
-  
-  ctx.save();
-  ctx.textAlign = 'center';
-  
-  // 装饰线 (更细，更宽)
-  ctx.beginPath();
-  ctx.strokeStyle = 'rgba(0,0,0,0.1)';
-  ctx.lineWidth = 1;
-  ctx.moveTo(CANVAS_W/2 - 50, cursorY - 20);
-  ctx.lineTo(CANVAS_W/2 + 50, cursorY - 20);
-  ctx.stroke();
-
-  // 字体：宋体，中等字重，显得考究
-  ctx.font = "500 32px 'Noto Serif SC', serif"; 
-  ctx.fillStyle = '#666'; 
-  
-  // 组合字符串
-  let fullSourceStr = `《${sourceText}》${author}`;
-  if (indexText) fullSourceStr += ` · ${indexText}`;
-  
-  ctx.fillText(fullSourceStr, CANVAS_W / 2, cursorY + 15);
-  ctx.restore();
-
-  // 增加显著间距，下沉标题
-  cursorY += 160; 
-
-  // 5.2 标题组：初四 & 迎灶纳福 (书法字体，更有韵味)
-  const dayLabel = String(input.dayLabel || '').trim();
-  const caption = String(input.caption || '').trim();
-  
-  ctx.save();
-  ctx.textAlign = 'center';
-  // 字体：改用 ZCOOL XiaoWei (书法体)，字号加大
-  ctx.font = "400 90px 'ZCOOL XiaoWei', 'Noto Serif SC', serif"; 
-  
-  // 组合文字
-  const titleLine = `${dayLabel} · ${caption}`;
-  
-  ctx.fillStyle = RICH_BLACK;
-  ctx.fillText(titleLine, CANVAS_W / 2, cursorY);
-  ctx.restore();
-
-
-  // 6. 底部 Footer (增加底部 padding)
-  const footerY = CANVAS_H - padding - 60; // 向上提一点，留出底部空间
-
-  // 6.1 左下角：日期 (丙午年...)
-  const yearText = "丙午年";
-  const monthText = "正月";
-  const dateObj = input.date ? new Date(input.date) : new Date();
-  const dateNum = dateObj.getDate();
-  const dateMap = ['日','一','二','三','四','五','六','七','八','九','十','十一','十二','十三','十四','十五','十六','十七','十八','十九','二十','二十一','二十二','二十三','二十四','二十五','二十六','二十七','二十八','二十九','三十','三十一'];
-  const dateChinese = dateMap[dateNum] || dateNum;
-  const fullDate = `${yearText} · ${monthText} · ${dateChinese}`; 
-  const solarDate = `${dateObj.getFullYear()}.${String(dateObj.getMonth()+1).padStart(2,'0')}.${String(dateObj.getDate()).padStart(2,'0')}`;
-
-  ctx.save();
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'bottom';
-  
-  // 竖线装饰
-  ctx.fillStyle = CHINA_RED;
-  ctx.fillRect(padding, footerY - 50, 4, 54);
-  
-  ctx.font = "600 30px 'Noto Serif SC', serif";
-  ctx.fillStyle = RICH_BLACK;
-  ctx.fillText(fullDate, padding + 20, footerY - 18);
-  
-  ctx.font = "500 20px 'Fira Code', monospace";
-  ctx.fillStyle = '#888';
-  ctx.fillText(solarDate, padding + 20, footerY + 10);
-  ctx.restore();
-
-
-  // 6.2 右下角：红色二维码
-  const qrSize = 120;
-  const qrX = CANVAS_W - padding - qrSize;
-  const qrY = CANVAS_H - padding - qrSize + 20;
-
-  ctx.save();
-  const qrColor = { dark: '#C02C38', light: '#00000000' };
-  const qrCanvas = document.createElement('canvas');
-  await QRCode.toCanvas(qrCanvas, INKGRID_QR_URL, {
-    width: qrSize,
-    margin: 0,
-    color: qrColor,
-  });
-  
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-  ctx.fillRect(qrX, qrY, qrSize, qrSize);
-
-  ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
-  
-  ctx.strokeStyle = CHINA_RED;
-  ctx.lineWidth = 3;
-  ctx.strokeRect(qrX - 5, qrY - 5, qrSize + 10, qrSize + 10);
-  
-  ctx.font = "500 14px 'Noto Serif SC', serif";
-  ctx.fillStyle = 'rgba(192, 44, 56, 0.5)';
-  ctx.textAlign = 'center';
-  ctx.fillText("墨阵", qrX + qrSize/2, qrY + qrSize + 24);
-  ctx.restore();
-
-  const blob = await canvasToBlob(canvas);
-  return {
-    blob,
-    width: Math.round(CANVAS_W * scale),
-    height: Math.round(CANVAS_H * scale),
-  };
-}
-
-
-async function drawQr(ctx: CanvasRenderingContext2D, x: number, y: number, size: number) {
-  const qrCanvas = document.createElement('canvas');
-  await QRCode.toCanvas(qrCanvas, INKGRID_QR_URL, {
-    width: size,
-    margin: 1,
-    color: {
-      dark: '#111111',
-      light: '#00000000',
-    },
-  });
-  ctx.drawImage(qrCanvas, x, y, size, size);
-}
-
-function drawFolioBase(ctx: CanvasRenderingContext2D, noiseImg: HTMLImageElement | null) {
-  ctx.fillStyle = '#F6F1E7';
-  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
-
-  const rightW = 300;
-  ctx.fillStyle = '#FBF7EF';
-  ctx.fillRect(CANVAS_W - rightW, 0, rightW, CANVAS_H);
-  ctx.fillStyle = 'rgba(0,0,0,0.06)';
-  ctx.fillRect(CANVAS_W - rightW, 0, 1, CANVAS_H);
-
-  const g = ctx.createLinearGradient(0, 0, 0, CANVAS_H);
-  g.addColorStop(0, 'rgba(255,255,255,0.75)');
-  g.addColorStop(0.55, 'rgba(255,255,255,0.05)');
-  g.addColorStop(1, 'rgba(241,232,218,0.85)');
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
-
-  if (noiseImg) {
-    const p = ctx.createPattern(noiseImg, 'repeat');
-    if (p) {
-      ctx.globalAlpha = 0.12;
-      ctx.fillStyle = p;
-      ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
-      ctx.globalAlpha = 1;
-    }
-  }
-}
-
-function drawWashBase(ctx: CanvasRenderingContext2D, noiseImg: HTMLImageElement | null) {
-  ctx.fillStyle = '#F7F2E9';
-  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
-
-  const wash1 = ctx.createRadialGradient(CANVAS_W * 0.15, CANVAS_H * 0.18, 0, CANVAS_W * 0.15, CANVAS_H * 0.18, 520);
-  wash1.addColorStop(0, 'rgba(17,24,39,0.12)');
-  wash1.addColorStop(1, 'rgba(17,24,39,0)');
-  ctx.fillStyle = wash1;
-  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
-
-  const wash2 = ctx.createRadialGradient(CANVAS_W * 0.9, CANVAS_H * 0.76, 0, CANVAS_W * 0.9, CANVAS_H * 0.76, 640);
-  wash2.addColorStop(0, 'rgba(139,0,0,0.10)');
-  wash2.addColorStop(1, 'rgba(139,0,0,0)');
-  ctx.fillStyle = wash2;
-  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
-
-  const g = ctx.createLinearGradient(0, 0, 0, CANVAS_H);
-  g.addColorStop(0, 'rgba(255,255,255,0.85)');
-  g.addColorStop(0.6, 'rgba(255,255,255,0.08)');
-  g.addColorStop(1, 'rgba(242,233,219,0.85)');
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
-
-  if (noiseImg) {
-    const p = ctx.createPattern(noiseImg, 'repeat');
-    if (p) {
-      ctx.globalAlpha = 0.14;
-      ctx.fillStyle = p;
-      ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
-      ctx.globalAlpha = 1;
-    }
-  }
-}
-
-function drawMinimalBase(ctx: CanvasRenderingContext2D, noiseImg: HTMLImageElement | null) {
-  ctx.fillStyle = '#FFFFFF';
-  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
-  if (noiseImg) {
-    const p = ctx.createPattern(noiseImg, 'repeat');
-    if (p) {
-      ctx.globalAlpha = 0.08;
-      ctx.fillStyle = p;
-      ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
-      ctx.globalAlpha = 1;
-    }
-  }
-}
-
-async function drawBrandHeader(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  opts: {
-    tag?: string;
-    tagAlign?: 'right' | 'left';
-  } = {}
-) {
-  const logoSize = 56;
-  const logo = await loadBrandLogo().catch(() => null);
-
-  if (logo) {
-    ctx.save();
-    ctx.globalAlpha = 0.92;
-    drawContainImage(ctx, logo, x, y, logoSize, logoSize);
-    ctx.restore();
-  }
-
-  const textX = x + (logo ? logoSize + 22 : 0);
-  ctx.save();
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'alphabetic';
-  ctx.fillStyle = '#111827';
-  ctx.font = "900 56px 'Noto Serif SC', serif";
-  ctx.fillText(INKGRID_BRAND_CN, textX, y + 52);
-  ctx.fillStyle = 'rgba(17,24,39,0.62)';
-  ctx.font = "800 26px 'Noto Serif SC', serif";
-  ctx.fillText(INKGRID_SLOGAN_CN, textX, y + 92);
-  ctx.restore();
-
-  if (opts.tag) {
-    const tagText = String(opts.tag).trim();
-    if (tagText) {
-      ctx.save();
-      const padX = 18;
-      const padY = 10;
-      ctx.font = "900 20px 'Noto Serif SC', serif";
-      const w = Math.ceil(ctx.measureText(tagText).width);
-      const pillW = w + padX * 2;
-      const pillH = 44;
-      const pillX = opts.tagAlign === 'left' ? x : CANVAS_W - x - pillW;
-      const pillY = y + 6;
-
-      ctx.fillStyle = 'rgba(139,0,0,0.10)';
-      roundRect(ctx, pillX, pillY, pillW, pillH, 999);
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(139,0,0,0.22)';
-      ctx.lineWidth = 2;
-      roundRect(ctx, pillX, pillY, pillW, pillH, 999);
-      ctx.stroke();
-
-      ctx.fillStyle = 'rgba(139,0,0,0.86)';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(tagText, pillX + pillW / 2, pillY + pillH / 2 + 1);
-      ctx.restore();
-    }
-  }
-}
-
-function drawGoldFoilText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number) {
-  const t = String(text || '').trim();
-  if (!t) return;
-
-  const w = Math.max(1, ctx.measureText(t).width);
-  const g = ctx.createLinearGradient(x, y - 26, x + w, y + 6);
-  g.addColorStop(0, '#6B4E00');
-  g.addColorStop(0.18, '#B8860B');
-  g.addColorStop(0.45, '#F2E6CE');
-  g.addColorStop(0.68, '#B8860B');
-  g.addColorStop(1, '#4A3500');
-
-  ctx.save();
-  ctx.fillStyle = g;
-  ctx.fillText(t, x, y);
-  ctx.globalAlpha = 0.35;
-  ctx.strokeStyle = 'rgba(255,255,255,0.55)';
-  ctx.lineWidth = 1;
-  ctx.strokeText(t, x, y);
-  ctx.restore();
-}
-
-function drawUrlLabelAboveQr(ctx: CanvasRenderingContext2D, qrX: number, qrY: number, qrSize: number) {
-  const label = INKGRID_QR_LABEL;
-  ctx.save();
-  ctx.font = "800 30px 'Fira Code', monospace";
-  const w = Math.ceil(ctx.measureText(label).width);
-  const padX = 22;
-  const pillW = w + padX * 2;
-  const pillH = 60;
-  const xRaw = qrX + (qrSize - pillW) / 2;
-  const x = Math.max(24, Math.min(CANVAS_W - pillW - 24, xRaw));
-  const y = qrY - pillH - 18;
-
-  ctx.shadowColor = 'rgba(0,0,0,0.32)';
-  ctx.shadowBlur = 18;
-  ctx.fillStyle = 'rgba(17,24,39,0.92)';
-  roundRect(ctx, x, y, pillW, pillH, 999);
-  ctx.fill();
-
-  ctx.shadowBlur = 0;
-  const gloss = ctx.createLinearGradient(0, y, 0, y + pillH);
-  gloss.addColorStop(0, 'rgba(255,255,255,0.18)');
-  gloss.addColorStop(0.55, 'rgba(255,255,255,0.04)');
-  gloss.addColorStop(1, 'rgba(0,0,0,0.10)');
-  ctx.fillStyle = gloss;
-  roundRect(ctx, x, y, pillW, pillH, 999);
-  ctx.fill();
-
-  ctx.strokeStyle = 'rgba(184,134,11,0.55)';
-  ctx.lineWidth = 2;
-  roundRect(ctx, x, y, pillW, pillH, 999);
-  ctx.stroke();
-
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'middle';
-
-  ctx.shadowColor = 'rgba(0,0,0,0.25)';
-  ctx.shadowBlur = 10;
-  ctx.fillStyle = '#F2E6CE';
-  ctx.fillText(label, x + padX, y + pillH / 2 + 1);
-  ctx.restore();
-}
-
-function drawVerticalMotto(ctx: CanvasRenderingContext2D, xCenter: number, topY: number, bottomY: number) {
-  const motto = INKGRID_SLOGAN_CN.replace(/\s+/g, '').replace(/\./g, '·');
-  const units = Array.from(motto);
-  if (!units.length) return;
-
-  const lineHeight = 46;
-  const totalH = units.length * lineHeight;
-  const y0 = topY + Math.max(0, (bottomY - topY - totalH) / 2);
-
-  ctx.save();
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'top';
-  ctx.font = "900 30px 'Noto Serif SC', serif";
-  ctx.fillStyle = 'rgba(184,134,11,0.45)';
-  ctx.shadowColor = 'rgba(0,0,0,0.18)';
-  ctx.shadowBlur = 12;
-
-  let y = y0;
-  for (const u of units) {
-    ctx.fillText(u, xCenter, y);
-    y += lineHeight;
-  }
-  ctx.restore();
-}
-
-function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
-  const radius = Math.min(r, w / 2, h / 2);
-  ctx.beginPath();
-  ctx.moveTo(x + radius, y);
-  ctx.arcTo(x + w, y, x + w, y + h, radius);
-  ctx.arcTo(x + w, y + h, x, y + h, radius);
-  ctx.arcTo(x, y + h, x, y, radius);
-  ctx.arcTo(x, y, x + w, y, radius);
-  ctx.closePath();
-}
-
-async function drawCharFolio(ctx: CanvasRenderingContext2D, data: PosterChar) {
-  const rightX = CANVAS_W - 300;
-  const padding = 72;
-  const mainW = rightX - padding * 2;
-
-  await drawBrandHeader(ctx, padding, 72, { tag: '篆字研习' });
-
-  ctx.strokeStyle = 'rgba(17,24,39,0.10)';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(padding, 200);
-  ctx.lineTo(rightX - padding, 200);
-  ctx.stroke();
-
-  const charImg = await loadImage(data.image);
-  drawContainImage(ctx, charImg, padding, 226, mainW, 920);
-
-  const simplified = (data.simplified || '').trim() || '字';
-  const pinyin = (data.pinyin || '').trim();
-  const meaning = (data.meaning || '').trim();
-  const enWord = (data.en_word || '').trim();
-  const enMeaning = (data.en_meaning || '').trim();
-  const sourceTitle = data.sourceTitle || '嶧山刻石';
-  const author = data.author || '李斯';
-  const dynasty = data.dynasty || '秦';
-
-  ctx.fillStyle = '#111827';
-  ctx.font = "900 140px 'Noto Serif SC', serif";
-  ctx.fillText(simplified, padding, 1220);
-
-  ctx.fillStyle = '#8B0000';
-  ctx.font = "700 32px 'Fira Code', monospace";
-  if (pinyin) ctx.fillText(pinyin, padding, 1280);
-
-  ctx.fillStyle = 'rgba(17,24,39,0.72)';
-  ctx.font = "700 42px 'Noto Serif SC', serif";
-  const meaningLines = wrapText(ctx, meaning || '以形观势，以势入心。', mainW);
-  drawLines(ctx, meaningLines.slice(0, 3), padding, 1360, 52);
-
-  ctx.fillStyle = 'rgba(17,24,39,0.55)';
-  ctx.font = "700 26px 'Noto Serif SC', serif";
-  const meta = `出处：${sourceTitle}   作者：${dynasty}·${author}`;
-  drawLines(ctx, wrapText(ctx, meta, mainW), padding, 1510, 36);
-
-  if (enWord || enMeaning) {
-    ctx.fillStyle = 'rgba(17,24,39,0.62)';
-    ctx.font = "700 24px 'Fira Code', monospace";
-    const en = `${enWord}${enWord && enMeaning ? ' — ' : ''}${enMeaning}`;
-    drawLines(ctx, wrapText(ctx, en, mainW), padding, 1620, 36);
-  }
-
-  const qrSize = 190;
-  const qrX = rightX + Math.round((300 - qrSize) / 2);
-  const qrY = CANVAS_H - padding - qrSize;
-  drawVerticalMotto(ctx, rightX + 150, 240, qrY - 110);
-  drawUrlLabelAboveQr(ctx, qrX, qrY, qrSize);
-  await drawQr(ctx, qrX, qrY, qrSize);
-}
-
-async function drawSteleFolio(ctx: CanvasRenderingContext2D, stele: PosterStele) {
-  const rightX = CANVAS_W - 300;
-  const padding = 72;
-  const mainW = rightX - padding * 2;
-
-  await drawBrandHeader(ctx, padding, 72, { tag: '名帖赏析' });
-
-  ctx.strokeStyle = 'rgba(17,24,39,0.10)';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(padding, 200);
-  ctx.lineTo(rightX - padding, 200);
-  ctx.stroke();
-
-  ctx.fillStyle = '#111827';
-  ctx.font = "900 96px 'Noto Serif SC', serif";
-  const titleLines = wrapText(ctx, stele.name, mainW);
-  drawLines(ctx, titleLines.slice(0, 2), padding, 300, 98);
-
-  ctx.fillStyle = 'rgba(17,24,39,0.60)';
-  ctx.font = "800 28px 'Noto Serif SC', serif";
-  ctx.fillText(`${stele.dynasty} · ${stele.author} · ${stele.script_type}`, padding, 470);
-
-  ctx.fillStyle = 'rgba(17,24,39,0.74)';
-  ctx.font = "700 40px 'Noto Serif SC', serif";
-  const desc = (stele.description || '').trim();
-  const descLines = wrapText(ctx, desc || '以气韵读帖，以笔法入心。', mainW);
-  drawLines(ctx, descLines.slice(0, 6), padding, 580, 52);
-
-  ctx.fillStyle = 'rgba(17,24,39,0.55)';
-  ctx.font = "700 26px 'Fira Code', monospace";
-  const meta1 = `藏地：${stele.location}`;
-  const meta2 = `规模：${stele.total_chars} 字`;
-  ctx.fillText(meta1, padding, 960);
-  ctx.fillText(meta2, padding, 1000);
-
-  const excerpt = (stele.content || '').trim().slice(0, 240);
-  if (excerpt) {
-    ctx.fillStyle = 'rgba(17,24,39,0.76)';
-    ctx.font = "700 34px 'Noto Serif SC', serif";
-    const quoteLines = wrapText(ctx, `「${excerpt}…」`, mainW);
-    drawLines(ctx, quoteLines.slice(0, 8), padding, 1090, 46);
-  }
-
-  const qrSize = 190;
-  const qrX = rightX + Math.round((300 - qrSize) / 2);
-  const qrY = CANVAS_H - padding - qrSize;
-  drawVerticalMotto(ctx, rightX + 150, 240, qrY - 110);
-  drawUrlLabelAboveQr(ctx, qrX, qrY, qrSize);
-  await drawQr(ctx, qrX, qrY, qrSize);
-}
-
-async function drawCharWash(ctx: CanvasRenderingContext2D, data: PosterChar) {
-  const padding = 78;
-  const rightW = 280;
-  const mainW = CANVAS_W - rightW - padding * 2;
-  const rightX = CANVAS_W - rightW;
-
-  await drawBrandHeader(ctx, padding, 72, { tag: '篆字研习' });
-
-  const simplified = (data.simplified || '').trim() || '字';
-
-  const charImg = await loadImage(data.image);
-  drawContainImage(ctx, charImg, padding, 236, mainW, 960);
-
-  // brush title
-  ctx.fillStyle = '#111827';
-  ctx.font = "900 144px 'Noto Serif SC', serif";
-  ctx.fillText(simplified, padding, 1260);
-
-  ctx.fillStyle = '#8B0000';
-  ctx.font = "700 32px 'Fira Code', monospace";
-  if (data.pinyin) ctx.fillText(data.pinyin, padding, 1310);
-
-  ctx.fillStyle = 'rgba(17,24,39,0.72)';
-  ctx.font = "700 42px 'Noto Serif SC', serif";
-  const meaningLines = wrapText(ctx, (data.meaning || '').trim() || '以形观势，以势入心。', mainW);
-  drawLines(ctx, meaningLines.slice(0, 4), padding, 1400, 52);
-
-  const sourceTitle = data.sourceTitle || '嶧山刻石';
-  const author = data.author || '李斯';
-  const dynasty = data.dynasty || '秦';
-  ctx.fillStyle = 'rgba(17,24,39,0.56)';
-  ctx.font = "700 26px 'Noto Serif SC', serif";
-  drawLines(ctx, wrapText(ctx, `出处：${sourceTitle}`, mainW), padding, 1600, 36);
-  drawLines(ctx, wrapText(ctx, `作者：${dynasty}·${author}`, mainW), padding, 1640, 36);
-
-  if (data.en_word || data.en_meaning) {
-    ctx.fillStyle = 'rgba(17,24,39,0.60)';
-    ctx.font = "700 24px 'Fira Code', monospace";
-    const en = `${(data.en_word || '').trim()}${data.en_word && data.en_meaning ? ' — ' : ''}${(data.en_meaning || '').trim()}`;
-    drawLines(ctx, wrapText(ctx, en, mainW), padding, 1720, 36);
-  }
-
-  // right column
-  ctx.fillStyle = 'rgba(255,255,255,0.60)';
-  ctx.fillRect(rightX + 18, 120, rightW - 36, CANVAS_H - 240);
-  ctx.strokeStyle = 'rgba(17,24,39,0.10)';
-  ctx.lineWidth = 1;
-  ctx.strokeRect(rightX + 18, 120, rightW - 36, CANVAS_H - 240);
-
-  const qrSize = 190;
-  const qrX = rightX + Math.round((rightW - qrSize) / 2);
-  const qrY = CANVAS_H - padding - qrSize;
-  drawVerticalMotto(ctx, rightX + rightW / 2, 240, qrY - 110);
-  drawUrlLabelAboveQr(ctx, qrX, qrY, qrSize);
-  await drawQr(ctx, qrX, qrY, qrSize);
-}
-
-async function drawSteleWash(ctx: CanvasRenderingContext2D, stele: PosterStele) {
-  const padding = 78;
-  const rightW = 280;
-  const mainW = CANVAS_W - rightW - padding * 2;
-  const rightX = CANVAS_W - rightW;
-
-  await drawBrandHeader(ctx, padding, 72, { tag: '名帖赏析' });
-
-  ctx.fillStyle = '#111827';
-  ctx.font = "900 104px 'Noto Serif SC', serif";
-  const titleLines = wrapText(ctx, stele.name, mainW);
-  drawLines(ctx, titleLines.slice(0, 2), padding, 300, 104);
-
-  ctx.fillStyle = 'rgba(17,24,39,0.60)';
-  ctx.font = "800 28px 'Noto Serif SC', serif";
-  ctx.fillText(`${stele.dynasty} · ${stele.author} · ${stele.script_type}`, padding, 500);
-
-  ctx.fillStyle = 'rgba(17,24,39,0.74)';
-  ctx.font = "700 40px 'Noto Serif SC', serif";
-  const descLines = wrapText(ctx, (stele.description || '').trim() || '以气韵读帖，以笔法入心。', mainW);
-  drawLines(ctx, descLines.slice(0, 8), padding, 620, 52);
-
-  const excerpt = (stele.content || '').trim().slice(0, 260);
-  if (excerpt) {
-    ctx.fillStyle = 'rgba(17,24,39,0.75)';
-    ctx.font = "700 34px 'Noto Serif SC', serif";
-    const quoteLines = wrapText(ctx, `「${excerpt}…」`, mainW);
-    drawLines(ctx, quoteLines.slice(0, 9), padding, 1100, 46);
-  }
-
-  ctx.fillStyle = 'rgba(17,24,39,0.56)';
-  ctx.font = "700 26px 'Fira Code', monospace";
-  ctx.fillText(`藏地：${stele.location}`, padding, 1540);
-  ctx.fillText(`规模：${stele.total_chars} 字`, padding, 1580);
-
-  ctx.fillStyle = 'rgba(255,255,255,0.60)';
-  ctx.fillRect(rightX + 18, 120, rightW - 36, CANVAS_H - 240);
-  ctx.strokeStyle = 'rgba(17,24,39,0.10)';
-  ctx.lineWidth = 1;
-  ctx.strokeRect(rightX + 18, 120, rightW - 36, CANVAS_H - 240);
-
-  const qrSize = 190;
-  const qrX = rightX + Math.round((rightW - qrSize) / 2);
-  const qrY = CANVAS_H - padding - qrSize;
-  drawVerticalMotto(ctx, rightX + rightW / 2, 240, qrY - 110);
-  drawUrlLabelAboveQr(ctx, qrX, qrY, qrSize);
-  await drawQr(ctx, qrX, qrY, qrSize);
-}
-
-async function drawCharMinimal(ctx: CanvasRenderingContext2D, data: PosterChar) {
-  const padding = 96;
-  const rightW = 260;
-  const mainW = CANVAS_W - rightW - padding * 2;
-  const rightX = CANVAS_W - rightW;
-
-  // subtle border
-  ctx.strokeStyle = 'rgba(17,24,39,0.08)';
-  ctx.lineWidth = 2;
-  ctx.strokeRect(48, 48, CANVAS_W - 96, CANVAS_H - 96);
-
-  await drawBrandHeader(ctx, padding, 72, { tag: '篆字研习' });
-
-  const simplified = (data.simplified || '').trim() || '字';
-  const pinyin = (data.pinyin || '').trim();
-  const meaning = (data.meaning || '').trim() || '以形观势，以势入心。';
-  const enWord = (data.en_word || '').trim();
-  const enMeaning = (data.en_meaning || '').trim();
-  const sourceTitle = data.sourceTitle || '嶧山刻石';
-  const author = data.author || '李斯';
-  const dynasty = data.dynasty || '秦';
-
-  const charImg = await loadImage(data.image);
-  ctx.save();
-  ctx.globalAlpha = 0.10;
-  drawContainImage(ctx, charImg, padding, 240, mainW, 800);
-  ctx.restore();
-
-  ctx.fillStyle = '#111827';
-  ctx.font = "900 160px 'Noto Serif SC', serif";
-  ctx.fillText(simplified, padding, 540);
-
-  ctx.fillStyle = '#8B0000';
-  ctx.font = "700 32px 'Fira Code', monospace";
-  if (pinyin) ctx.fillText(pinyin, padding, 590);
-
-  ctx.fillStyle = 'rgba(17,24,39,0.72)';
-  ctx.font = "700 42px 'Noto Serif SC', serif";
-  const meaningLines = wrapText(ctx, meaning, mainW);
-  drawLines(ctx, meaningLines.slice(0, 4), padding, 690, 52);
-
-  const en = `${enWord}${enWord && enMeaning ? ' — ' : ''}${enMeaning}`.trim();
-  if (en) {
-    ctx.fillStyle = 'rgba(17,24,39,0.62)';
-    ctx.font = "700 24px 'Fira Code', monospace";
-    drawLines(ctx, wrapText(ctx, en, mainW), padding, 970, 36);
-  }
-
-  ctx.fillStyle = 'rgba(17,24,39,0.52)';
-  ctx.font = "700 26px 'Noto Serif SC', serif";
-  drawLines(ctx, wrapText(ctx, `出处：${sourceTitle}`, mainW), padding, 1100, 36);
-  drawLines(ctx, wrapText(ctx, `作者：${dynasty}·${author}`, mainW), padding, 1140, 36);
-
-  // right column and QR
-  ctx.fillStyle = 'rgba(17,24,39,0.03)';
-  ctx.fillRect(rightX, 0, rightW, CANVAS_H);
-  ctx.strokeStyle = 'rgba(17,24,39,0.06)';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(rightX, 0);
-  ctx.lineTo(rightX, CANVAS_H);
-  ctx.stroke();
-
-  const qrSize = 190;
-  const qrX = rightX + Math.round((rightW - qrSize) / 2);
-  const qrY = CANVAS_H - padding - qrSize;
-  drawVerticalMotto(ctx, rightX + rightW / 2, 260, qrY - 110);
-  drawUrlLabelAboveQr(ctx, qrX, qrY, qrSize);
-  await drawQr(ctx, qrX, qrY, qrSize);
-}
-
-async function drawSteleMinimal(ctx: CanvasRenderingContext2D, stele: PosterStele) {
-  const padding = 96;
-  const rightW = 260;
-  const mainW = CANVAS_W - rightW - padding * 2;
-  const rightX = CANVAS_W - rightW;
-
-  ctx.strokeStyle = 'rgba(17,24,39,0.08)';
-  ctx.lineWidth = 2;
-  ctx.strokeRect(48, 48, CANVAS_W - 96, CANVAS_H - 96);
-
-  await drawBrandHeader(ctx, padding, 72, { tag: '名帖赏析' });
-
-  ctx.fillStyle = 'rgba(17,24,39,0.65)';
-  ctx.font = "900 96px 'Noto Serif SC', serif";
-  const titleLines = wrapText(ctx, stele.name, mainW);
-  drawLines(ctx, titleLines.slice(0, 3), padding, 300, 98);
-
-  ctx.fillStyle = 'rgba(17,24,39,0.55)';
-  ctx.font = "800 28px 'Noto Serif SC', serif";
-  ctx.fillText(`${stele.dynasty} · ${stele.author} · ${stele.script_type}`, padding, 500);
-
-  ctx.fillStyle = 'rgba(17,24,39,0.72)';
-  ctx.font = "700 40px 'Noto Serif SC', serif";
-  const descLines = wrapText(ctx, (stele.description || '').trim() || '以气韵读帖，以笔法入心。', mainW);
-  drawLines(ctx, descLines.slice(0, 8), padding, 580, 52);
-
-  const excerpt = (stele.content || '').trim().slice(0, 260);
-  if (excerpt) {
-    ctx.fillStyle = 'rgba(17,24,39,0.70)';
-    ctx.font = "700 34px 'Noto Serif SC', serif";
-    const quoteLines = wrapText(ctx, `「${excerpt}…」`, mainW);
-    drawLines(ctx, quoteLines.slice(0, 10), padding, 1100, 46);
-  }
-
-  ctx.fillStyle = 'rgba(17,24,39,0.55)';
-  ctx.font = "700 26px 'Fira Code', monospace";
-  ctx.fillText(`藏地：${stele.location}`, padding, 1560);
-  ctx.fillText(`规模：${stele.total_chars} 字`, padding, 1600);
-
-  ctx.fillStyle = 'rgba(17,24,39,0.03)';
-  ctx.fillRect(rightX, 0, rightW, CANVAS_H);
-  ctx.strokeStyle = 'rgba(17,24,39,0.06)';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(rightX, 0);
-  ctx.lineTo(rightX, CANVAS_H);
-  ctx.stroke();
-
-  const qrSize = 190;
-  const qrX = rightX + Math.round((rightW - qrSize) / 2);
-  const qrY = CANVAS_H - padding - qrSize;
-  drawVerticalMotto(ctx, rightX + rightW / 2, 260, qrY - 110);
-  drawUrlLabelAboveQr(ctx, qrX, qrY, qrSize);
-  await drawQr(ctx, qrX, qrY, qrSize);
-}
-
-function drawContainImage(
-  ctx: CanvasRenderingContext2D,
-  img: HTMLImageElement,
-  x: number,
-  y: number,
-  w: number,
-  h: number
-) {
-  const sw = img.naturalWidth || img.width;
-  const sh = img.naturalHeight || img.height;
-  if (!sw || !sh) return;
-  const scale = Math.min(w / sw, h / sh);
-  const dw = sw * scale;
-  const dh = sh * scale;
-  const dx = x + (w - dw) / 2;
-  const dy = y + (h - dh) / 2;
-  ctx.drawImage(img, dx, dy, dw, dh);
-}
-
-function drawCoverImage(
-  ctx: CanvasRenderingContext2D,
-  img: HTMLImageElement,
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-  scaleMul = 1,
-  offsetX = 0,
-  offsetY = 0
-) {
-  const sw = img.naturalWidth || img.width;
-  const sh = img.naturalHeight || img.height;
-  if (!sw || !sh) return;
-  const s = Math.max(w / sw, h / sh) * (scaleMul || 1);
-  const dw = sw * s;
-  const dh = sh * s;
-  const dx = x + (w - dw) / 2 + (offsetX || 0);
-  const dy = y + (h - dh) / 2 + (offsetY || 0);
-  ctx.drawImage(img, dx, dy, dw, dh);
-}
-
-function drawLines(ctx: CanvasRenderingContext2D, lines: string[], x: number, y: number, lineHeight: number) {
-  let currentY = y;
-  for (const line of lines) {
-    ctx.fillText(line, x, currentY);
-    currentY += lineHeight;
-  }
-}
-
-function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number) {
-  const t = (text || '').replace(/\s+/g, ' ').trim();
-  if (!t) return [] as string[];
-
-  const units = t.includes(' ') ? t.split(' ') : Array.from(t);
-  const lines: string[] = [];
-  let current = '';
-
-  for (const unit of units) {
-    const next = current ? (t.includes(' ') ? `${current} ${unit}` : `${current}${unit}`) : unit;
-    const w = ctx.measureText(next).width;
-    if (w <= maxWidth) {
-      current = next;
-      continue;
-    }
-
-    if (current) lines.push(current);
-    current = unit;
-  }
-
-  if (current) lines.push(current);
-  return lines;
-}
+// --- UTILS (Hoisted) ---
 
 function loadImage(url: string) {
   return new Promise<HTMLImageElement>((resolve, reject) => {
-    const img = new Image();
-    img.decoding = 'async';
-    img.crossOrigin = 'anonymous';
-    img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error(`Failed to load image: ${url}`));
+    const img = new Image(); img.decoding = 'async'; img.crossOrigin = 'anonymous';
+    img.onload = () => resolve(img); img.onerror = () => reject(new Error(`Failed to load image: ${url}`));
     img.src = url;
   });
 }
 
 function canvasToBlob(canvas: HTMLCanvasElement) {
   return new Promise<Blob>((resolve, reject) => {
-    canvas.toBlob((blob) => {
-      if (!blob) {
-        reject(new Error('Failed to create blob'));
-        return;
-      }
-      resolve(blob);
-    }, 'image/png');
+    canvas.toBlob((blob) => { if (!blob) { reject(new Error('Failed to create blob')); return; } resolve(blob); }, 'image/png');
   });
 }
+
+function drawContainImage(ctx: CanvasRenderingContext2D, img: HTMLImageElement, x: number, y: number, w: number, h: number) {
+  const sw = img.naturalWidth || img.width; const sh = img.naturalHeight || img.height;
+  if (!sw || !sh) return;
+  const scale = Math.min(w / sw, h / sh); const dw = sw * scale; const dh = sh * scale;
+  ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
+}
+
+function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+  const radius = Math.min(r, w / 2, h / 2);
+  ctx.beginPath(); ctx.moveTo(x + radius, y); ctx.arcTo(x + w, y, x + w, y + h, radius);
+  ctx.arcTo(x + w, y + h, x, y + h, radius); ctx.arcTo(x, y + h, x, y, radius); ctx.arcTo(x, y, x + w, y, radius); ctx.closePath();
+}
+
+function drawLines(ctx: CanvasRenderingContext2D, lines: string[], x: number, y: number, lineHeight: number) {
+  let currentY = y; for (const line of lines) { ctx.fillText(line, x, currentY); currentY += lineHeight; }
+}
+
+function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number) {
+  const t = (text || '').replace(/\s+/g, ' ').trim(); if (!t) return [] as string[];
+  const units = t.includes(' ') ? t.split(' ') : Array.from(t);
+  const lines: string[] = []; let current = '';
+  for (const unit of units) {
+    const next = current ? (t.includes(' ') ? `${current} ${unit}` : `${current}${unit}`) : unit;
+    if (ctx.measureText(next).width <= maxWidth) { current = next; } else { if (current) lines.push(current); current = unit; }
+  }
+  if (current) lines.push(current); return lines;
+}
+
+// --- SHARED DRAWING HELPERS ---
+
+type SceneEnv = { ctx: CanvasRenderingContext2D; input: NewYearPosterInput; noiseImg: HTMLImageElement | null; logoImg: HTMLImageElement | null; glyphImg: HTMLImageElement | null; };
+
+function drawTextureBackground(ctx: CanvasRenderingContext2D, color: string, noiseImg: HTMLImageElement | null, opacity = 0.1) {
+  ctx.fillStyle = color; ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+  if (noiseImg) {
+    const p = ctx.createPattern(noiseImg, 'repeat');
+    if (p) { ctx.save(); ctx.globalAlpha = opacity; ctx.globalCompositeOperation = 'multiply'; ctx.fillStyle = p; ctx.fillRect(0, 0, CANVAS_W, CANVAS_H); ctx.restore(); }
+  }
+}
+
+function drawFloatingInkGlyph(ctx: CanvasRenderingContext2D, img: HTMLImageElement | null, x: number, y: number, size: number, shadowBlur = 25) {
+  if (!img) return;
+  ctx.save();
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.25)'; ctx.shadowBlur = shadowBlur; ctx.shadowOffsetY = shadowBlur * 0.5;
+  ctx.globalAlpha = 0.85; drawContainImage(ctx, img, x, y, size, size);
+  ctx.shadowColor = 'transparent'; ctx.globalCompositeOperation = 'multiply'; ctx.filter = 'contrast(1.15) brightness(0.95)';
+  drawContainImage(ctx, img, x, y, size, size); ctx.restore();
+}
+
+function drawRedSeal(ctx: CanvasRenderingContext2D, text: string, centerX: number, centerY: number, size = 100, color = '#C02C38') {
+  if (!text) return;
+  ctx.save(); ctx.shadowColor = 'rgba(139, 0, 0, 0.3)'; ctx.shadowBlur = 15; ctx.shadowOffsetY = 8;
+  ctx.fillStyle = color; const r = size / 2; roundRect(ctx, centerX - r, centerY - r, size, size, 16); ctx.fill();
+  ctx.shadowColor = 'transparent'; ctx.fillStyle = '#FDF6E3'; ctx.font = `900 ${size * 0.6}px 'Noto Serif SC', serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(text, centerX, centerY + size * 0.05);
+  ctx.strokeStyle = 'rgba(255,215,0, 0.4)'; ctx.lineWidth = 2; roundRect(ctx, centerX - r + 6, centerY - r + 6, size - 12, size - 12, 10); ctx.stroke(); ctx.restore();
+}
+
+async function drawStandardHeader(env: SceneEnv, color = '#1F1F1F') {
+  const { ctx, logoImg } = env; const padding = 72;
+  if (logoImg) { ctx.save(); ctx.globalAlpha = 0.9; drawContainImage(ctx, logoImg, padding, padding + 10, 88, 88); ctx.restore(); }
+  ctx.save(); ctx.font = "900 48px 'Noto Serif SC', serif"; ctx.fillStyle = color; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(INKGRID_BRAND_CN, padding + 110, padding + 30);
+  ctx.font = "600 32px 'Noto Serif SC', serif"; ctx.globalAlpha = 0.5; ctx.fillText(INKGRID_SLOGAN_CN, padding + 110, padding + 80); ctx.restore();
+}
+
+function drawGoldSprinkle(ctx: CanvasRenderingContext2D) {
+  ctx.save(); ctx.fillStyle = '#D4AF37'; ctx.globalAlpha = 0.6;
+  for (let i = 0; i < 80; i++) { const x = Math.random() * CANVAS_W; const y = Math.random() * CANVAS_H; const r = Math.random() * 2 + 0.5; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); }
+  ctx.restore();
+}
+
+async function drawFooterQR(env: SceneEnv, x: number, y: number, color = '#C02C38') {
+  const { ctx } = env; const qrSize = 120;
+  const qrCanvas = document.createElement('canvas'); await QRCode.toCanvas(qrCanvas, INKGRID_QR_URL, { width: qrSize, margin: 0, color: { dark: color, light: '#00000000' } });
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.5)'; ctx.fillRect(x, y, qrSize, qrSize); ctx.drawImage(qrCanvas, x, y, qrSize, qrSize);
+  ctx.strokeStyle = color; ctx.lineWidth = 3; ctx.strokeRect(x - 5, y - 5, qrSize + 10, qrSize + 10);
+}
+
+function drawStandardFooter(env: SceneEnv, yStart: number, color = '#1F1F1F') {
+  const { ctx, input } = env; const padding = 72; let cursorY = yStart;
+  const fullSource = `《${input.glyph.source || '嶧山刻石'}》 · 第${input.glyph.index}字`;
+  ctx.save(); ctx.textAlign = 'center'; ctx.font = "700 36px 'Noto Serif SC', serif"; ctx.fillStyle = '#444'; ctx.fillText(fullSource, CANVAS_W / 2, cursorY); ctx.restore();
+  cursorY += 160;
+  ctx.save(); ctx.textAlign = 'center'; ctx.font = "400 90px 'ZCOOL XiaoWei', 'Noto Serif SC', serif"; ctx.fillStyle = color; ctx.fillText(`${input.dayLabel} · ${input.caption}`, CANVAS_W / 2, cursorY); ctx.restore();
+  const footerY = CANVAS_H - padding - 60;
+  ctx.save(); ctx.textAlign = 'left'; ctx.textBaseline = 'bottom'; ctx.fillStyle = '#C02C38'; ctx.fillRect(padding, footerY - 50, 4, 54);
+  ctx.font = "600 30px 'Noto Serif SC', serif"; ctx.fillStyle = color; ctx.fillText(input.lunarDateStr || '', padding + 20, footerY - 18); ctx.restore();
+}
+
+// --- SCENES (Collectible Edition) ---
+
+async function drawSceneNY08_Eve(env: SceneEnv) {
+  const { ctx, noiseImg, glyphImg, input } = env; drawTextureBackground(ctx, '#8B1A1A', noiseImg, 0.15);
+  const grad = ctx.createRadialGradient(CANVAS_W/2, 600, 100, CANVAS_W/2, 600, 1000); grad.addColorStop(0, 'rgba(255,100,100,0.15)'); grad.addColorStop(1, 'rgba(0,0,0,0.4)'); ctx.fillStyle = grad; ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+  await drawStandardHeader(env, '#F2E6CE'); if (glyphImg) { drawFloatingInkGlyph(ctx, glyphImg, (CANVAS_W-750)/2, 350, 750); drawRedSeal(ctx, input.glyph.simplified || '', (CANVAS_W-750)/2 + 650, 420, 110); }
+  drawStandardFooter(env, 1200, '#F2E6CE'); await drawFooterQR(env, CANVAS_W - 72 - 120, CANVAS_H - 72 - 120 + 20, '#F2E6CE'); drawGoldSprinkle(ctx);
+}
+async function drawSceneNY01_Spring(env: SceneEnv) {
+  const { ctx, noiseImg, glyphImg, input } = env; drawTextureBackground(ctx, '#C02C38', noiseImg, 0.1); drawGoldSprinkle(ctx); await drawStandardHeader(env, '#FDF6E3');
+  ctx.save(); ctx.translate(CANVAS_W/2, 680); ctx.rotate(-Math.PI / 4); ctx.shadowColor = 'rgba(0,0,0,0.3)'; ctx.shadowBlur = 40; ctx.shadowOffsetY = 20; ctx.fillStyle = '#F9F4E8'; ctx.fillRect(-350, -350, 700, 700); ctx.restore();
+  if (glyphImg) { drawFloatingInkGlyph(ctx, glyphImg, (CANVAS_W-650)/2, 680 - 325, 650); drawRedSeal(ctx, input.glyph.simplified || '', (CANVAS_W/2) + 240, 480, 100); }
+  drawStandardFooter(env, 1300, '#FDF6E3'); await drawFooterQR(env, CANVAS_W - 72 - 120, CANVAS_H - 72 - 120 + 20, '#FDF6E3');
+}
+async function drawSceneNY02_Home(env: SceneEnv) {
+  const { ctx, noiseImg, glyphImg, input } = env; drawTextureBackground(ctx, '#D2B48C', noiseImg, 0.2);
+  ctx.save(); ctx.translate(CANVAS_W/2 + 20, 800); ctx.rotate(0.01); ctx.shadowColor = 'rgba(0,0,0,0.15)'; ctx.shadowBlur = 30; ctx.shadowOffsetY = 10; ctx.fillStyle = '#FFF0E6'; ctx.fillRect(-420, -550, 840, 1100);
+  ctx.strokeStyle = 'rgba(192, 44, 56, 0.12)'; ctx.lineWidth = 2; for(let x = -380; x <= 380; x += 80) { ctx.beginPath(); ctx.moveTo(x, -510); ctx.lineTo(x, 510); ctx.stroke(); } ctx.restore();
+  await drawStandardHeader(env, '#4A3B32'); if (glyphImg) { drawFloatingInkGlyph(ctx, glyphImg, (CANVAS_W-700)/2, 450, 700); drawRedSeal(ctx, input.glyph.simplified || '', (CANVAS_W/2) + 280, 420, 110); }
+  drawStandardFooter(env, 1250, '#3E2A1C'); await drawFooterQR(env, CANVAS_W - 72 - 120, CANVAS_H - 72 - 120 + 20, '#C02C38');
+}
+async function drawSceneNY03_Quiet(env: SceneEnv) {
+  const { ctx, noiseImg, glyphImg, input } = env; drawTextureBackground(ctx, '#E0E5E5', noiseImg, 0.12);
+  const sW = 600, sH = 1200, sX = (CANVAS_W - sW) / 2, sY = 320;
+  ctx.save(); ctx.fillStyle = '#C0C8C8'; ctx.shadowColor = 'rgba(0,0,0,0.2)'; ctx.shadowBlur = 20; ctx.fillRect(sX - 30, sY - 30, sW + 60, sH + 60); ctx.fillStyle = '#F7F9FA'; ctx.fillRect(sX, sY, sW, sH); ctx.restore();
+  await drawStandardHeader(env, '#2F4F4F'); if (glyphImg) { drawFloatingInkGlyph(ctx, glyphImg, (CANVAS_W-520)/2, sY + 80, 520); drawRedSeal(ctx, input.glyph.simplified || '', sX + sW - 80, sY + 120, 90); }
+  ctx.save(); ctx.textAlign = 'center'; ctx.fillStyle = '#2F2F2F'; ctx.font = "500 24px 'Noto Serif SC', serif"; ctx.fillText(`《${input.glyph.source}》 · 第${input.glyph.index}字`, CANVAS_W/2, sY + 700); ctx.font = "400 80px 'ZCOOL XiaoWei', 'Noto Serif SC', serif"; ctx.fillText(`${input.dayLabel} · ${input.caption}`, CANVAS_W/2, sY + 850); ctx.restore();
+  ctx.save(); ctx.font = "600 28px 'Noto Serif SC', serif"; ctx.fillStyle = '#2F4F4F'; ctx.fillText(input.lunarDateStr || '', 72, CANVAS_H - 100); ctx.restore();
+  await drawFooterQR(env, CANVAS_W - 72 - 120, CANVAS_H - 72 - 120 + 20, '#2F4F4F');
+}
+async function drawSceneNY04_Stove(env: SceneEnv) {
+  const { ctx, noiseImg, glyphImg, input } = env; drawTextureBackground(ctx, '#FAD6A5', noiseImg, 0.15);
+  ctx.save(); const fY = 450, fR = 950, fA = Math.PI / 1.6; ctx.translate(CANVAS_W/2, fY + fR); ctx.beginPath(); ctx.arc(0, 0, fR, -Math.PI/2 - fA/2, -Math.PI/2 + fA/2); ctx.arc(0, 0, fR * 0.45, -Math.PI/2 + fA/2, -Math.PI/2 - fA/2, true); ctx.closePath(); ctx.fillStyle = '#FFF8F0'; ctx.shadowColor = 'rgba(0,0,0,0.1)'; ctx.shadowBlur = 30; ctx.fill(); ctx.clip(); ctx.restore();
+  await drawStandardHeader(env, '#5D4037'); if (glyphImg) { drawFloatingInkGlyph(ctx, glyphImg, (CANVAS_W-500)/2, fY + 120, 500); drawRedSeal(ctx, input.glyph.simplified || '', CANVAS_W/2 + 180, fY + 180, 90); }
+  drawStandardFooter(env, 1280, '#5D4037'); await drawFooterQR(env, CANVAS_W - 72 - 120, CANVAS_H - 72 - 120 + 20, '#C02C38');
+}
+async function drawSceneNY05_Wealth(env: SceneEnv) {
+  const { ctx, noiseImg, glyphImg, input } = env; drawTextureBackground(ctx, '#C7A252', noiseImg, 0.2); drawGoldSprinkle(ctx);
+  const rW = 780, rH = 1000, rY = 320; ctx.save(); ctx.fillStyle = '#1A1A1A'; ctx.shadowColor = 'rgba(0,0,0,0.4)'; ctx.shadowBlur = 30; ctx.fillRect((CANVAS_W-rW)/2, rY, rW, rH); ctx.restore();
+  await drawStandardHeader(env, '#1A1A1A'); if (glyphImg) { ctx.save(); ctx.filter = 'invert(1) brightness(1.6) contrast(1.2)'; ctx.globalAlpha = 0.9; drawContainImage(ctx, glyphImg, (CANVAS_W-680)/2, rY + 100, 680, 680); ctx.restore(); drawRedSeal(ctx, input.glyph.simplified || '', CANVAS_W/2 + 250, rY + 140, 110, '#FF3333'); }
+  ctx.save(); ctx.textAlign = 'center'; ctx.fillStyle = '#B22222'; ctx.font = "400 90px 'ZCOOL XiaoWei', 'Noto Serif SC', serif"; ctx.fillText(`${input.dayLabel} · ${input.caption}`, CANVAS_W/2, 1380); ctx.font = "500 32px 'Noto Serif SC', serif"; ctx.fillStyle = '#1A1A1A'; ctx.fillText(`《${input.glyph.source}》 · 第${input.glyph.index}字`, CANVAS_W/2, 1440); ctx.restore();
+  const footerY = CANVAS_H - 110; ctx.save(); ctx.fillStyle = '#1A1A1A'; ctx.font = "600 28px 'Noto Serif SC', serif"; ctx.fillText(input.lunarDateStr || '', 72 + 20, footerY - 15); ctx.fillStyle = '#B22222'; ctx.fillRect(72, footerY - 45, 4, 50); ctx.restore();
+  await drawFooterQR(env, CANVAS_W - 72 - 120, CANVAS_H - 72 - 120 + 20, '#1A1A1A');
+}
+async function drawSceneNY06_Travel(env: SceneEnv) {
+  const { ctx, noiseImg, glyphImg, input } = env; drawTextureBackground(ctx, '#D8C8B0', noiseImg, 0.2);
+  ctx.save(); ctx.strokeStyle = 'rgba(0,0,0,0.04)'; ctx.lineWidth = 1; for(let i=0; i<CANVAS_H; i+=5) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(CANVAS_W, i); ctx.stroke(); } ctx.restore();
+  await drawStandardHeader(env, '#3E3E3E'); if (glyphImg) { drawFloatingInkGlyph(ctx, glyphImg, 80, 280, 750); drawRedSeal(ctx, input.glyph.simplified || '', 80 + 750 - 60, 280 + 750 - 120, 100); }
+  drawStandardFooter(env, 1250, '#3E3E3E'); await drawFooterQR(env, CANVAS_W - 72 - 120, CANVAS_H - 72 - 120 + 20, '#8B0000');
+}
+async function drawSceneNY07_Human(env: SceneEnv) {
+  const { ctx, noiseImg, glyphImg, input } = env; drawTextureBackground(ctx, '#F7F9F5', noiseImg, 0.1);
+  ctx.save(); ctx.fillStyle = 'rgba(50, 80, 50, 0.04)'; ctx.beginPath(); ctx.moveTo(CANVAS_W, 100); ctx.lineTo(CANVAS_W - 300, 400); ctx.lineTo(CANVAS_W, 700); ctx.fill(); ctx.restore();
+  await drawStandardHeader(env, '#555'); if (glyphImg) { ctx.save(); ctx.strokeStyle = 'rgba(0,0,0,0.08)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(CANVAS_W/2, 650, 450, 0, Math.PI*2); ctx.stroke(); ctx.restore(); drawFloatingInkGlyph(ctx, glyphImg, (CANVAS_W-650)/2, 325, 650); drawRedSeal(ctx, input.glyph.simplified || '', CANVAS_W/2 + 220, 850, 90, '#C02C38'); }
+  drawStandardFooter(env, 1320, '#333'); await drawFooterQR(env, CANVAS_W - 72 - 120, CANVAS_H - 72 - 120 + 20, '#333');
+}
+
+/**
+ * New Year Concept Explanation Card (1:1 Hand-札 style)
+ */
+export async function renderNewYearConceptPng(id: string, options: RenderPosterOptions = {}) {
+  const SIZE = 1080;
+  const canvas = document.createElement('canvas');
+  const scale = options.scale || 1;
+  const pixelRatio = options.pixelRatio || 2;
+
+  canvas.width = Math.round(SIZE * pixelRatio * scale);
+  canvas.height = Math.round(SIZE * pixelRatio * scale);
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('Canvas not supported');
+  ctx.scale(pixelRatio * scale, pixelRatio * scale);
+
+  // 1. 获取理念文字
+  const concepts: Record<string, { title: string; text: string; tone: string }> = {
+    'ny_08': { title: '守岁灯火', text: '除夕之夜，灯火可亲。以深红胭脂色为底，辅以聚光灯效，模拟围炉守岁之温暖。金色字体跃动，寓意薪火相传，岁岁长久。', tone: '#F9F4E8' },
+    'ny_01': { title: '开门大吉', text: '初一春节，万象更新。采用正红洒金斗方构图，模拟民间张贴春联、门神的习俗。中轴对称，气势端庄，尽显节日仪式感。', tone: '#FDF6E3' },
+    'ny_02': { title: '团圆家书', text: '初二回门，纸短情长。模拟薛涛笺红格信纸，微微倾斜摆放于案头。通过竖排文字排版，营造家书抵万金的温情归宁氛围。', tone: '#FFF0E6' },
+    'ny_03': { title: '静心修身', text: '初三赤口，宜静不宜动。采用天青宋锦装裱立轴构图。窄条画心与大面积留白，表现书斋读帖、神游金石的文人精神生活。', tone: '#F5F5F0' },
+    'ny_04': { title: '人间烟火', text: '初四接灶，福气盈门。以杏黄衬底，泥金扇面构图。弧形排列的文字模拟扇面书画，呈现接灶神、纳福气的温馨烟火气。', tone: '#F9F4E8' },
+    'ny_05': { title: '金石纳福', text: '初五破五，金玉满堂。模拟汉砖魏碑拓片质感，黑底白字。赭石衬底表现厚重的金石气，寓意财富如碑刻般经久留存。', tone: '#FDF6E3' },
+    'ny_06': { title: '行云流水', text: '初六送穷，志在四方。采用仿古绢本材质，对角线灵动构图。墨迹线条如水流动，表现送穷出门、万事顺遂的生机与气韵。', tone: '#FFF0E6' },
+    'ny_07': { title: '众生安康', text: '初七人日，万物祥和。竹纸留白，禅意圆框。极简排版表现人人生日、万物平等的清雅气息。窗外竹影摇曳，寓意岁岁平安。', tone: '#F5F5F0' },
+  };
+
+  const info = concepts[id] || concepts['ny_01'];
+  const noiseImg = await loadImage('/noise.png').catch(() => null);
+
+  // 2. 绘制纸张背景
+  ctx.fillStyle = info.tone;
+  ctx.fillRect(0, 0, SIZE, SIZE);
+  if (noiseImg) {
+    const p = ctx.createPattern(noiseImg, 'repeat');
+    if (p) { ctx.save(); ctx.globalAlpha = 0.12; ctx.globalCompositeOperation = 'multiply'; ctx.fillStyle = p; ctx.fillRect(0, 0, SIZE, SIZE); ctx.restore(); }
+  }
+
+  // 3. 绘制手札红格 (竖排)
+  const padding = 100;
+  const gridW = SIZE - padding * 2;
+  const gridH = SIZE - padding * 2;
+  ctx.strokeStyle = 'rgba(192, 44, 56, 0.15)';
+  ctx.lineWidth = 1.5;
+  for (let x = padding; x <= SIZE - padding; x += 80) {
+    ctx.beginPath(); ctx.moveTo(x, padding); ctx.lineTo(x, SIZE - padding); ctx.stroke();
+  }
+  // 边框
+  ctx.strokeStyle = 'rgba(192, 44, 56, 0.3)';
+  ctx.strokeRect(padding - 10, padding - 10, gridW + 20, gridH + 20);
+
+  // 4. 写入文字 (手札风格：从右往左，竖排)
+  try { await document.fonts.load("400 40px 'Ma Shan Zheng'"); } catch(e) {}
+  
+  ctx.fillStyle = '#1A1A1A';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  
+  // 4.1 标题
+  ctx.font = "400 64px 'Ma Shan Zheng', cursive";
+  const titleX = SIZE - padding - 40;
+  const titleChars = Array.from(info.title);
+  let curY = padding + 20;
+  for (const char of titleChars) {
+    ctx.fillText(char, titleX, curY);
+    curY += 70;
+  }
+
+  // 4.2 理念说明文字 (竖排分列)
+  ctx.font = "400 36px 'Ma Shan Zheng', cursive";
+  ctx.globalAlpha = 0.85;
+  const textChars = Array.from(info.text);
+  let textX = titleX - 100;
+  let textY = padding + 20;
+  const colHeight = gridH - 60;
+  
+  for (const char of textChars) {
+    if (textY + 40 > padding + colHeight) {
+      textX -= 80;
+      textY = padding + 20;
+    }
+    ctx.fillText(char, textX, textY);
+    textY += 48;
+  }
+
+  // 5. 底部装饰 (品牌落款)
+  ctx.globalAlpha = 1;
+  const footerX = padding + 20;
+  const footerY = SIZE - padding - 60;
+  
+  // 5.1 品牌名与印章
+  const logoImg_concept = await loadBrandLogo().catch(() => null);
+  if (logoImg_concept) {
+    ctx.save();
+    ctx.globalAlpha = 0.8;
+    drawContainImage(ctx, logoImg_concept, footerX, footerY - 40, 64, 64);
+    ctx.restore();
+  }
+  
+  ctx.save();
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#1A1A1A';
+  ctx.font = "900 32px 'Noto Serif SC', serif";
+  ctx.fillText(INKGRID_BRAND_CN, footerX + 80, footerY - 15);
+  
+  // 5.2 Slogan
+  ctx.font = "600 20px 'Noto Serif SC', serif";
+  ctx.fillStyle = '#666';
+  ctx.fillText(INKGRID_SLOGAN_CN, footerX + 80, footerY + 20);
+  ctx.restore();
+
+  const blob = await canvasToBlob(canvas);
+  return { blob, width: SIZE, height: SIZE };
+}
+
+// --- MAIN ENTRYPOINT & EXPORTS ---
+
+export async function renderPosterPng(input: PosterInput, options: RenderPosterOptions = {}) {
+  const canvas = document.createElement('canvas');
+  const scale = typeof options.scale === 'number' ? Math.max(0.25, Math.min(1, options.scale)) : 1;
+  const pixelRatio = typeof options.pixelRatio === 'number' && options.pixelRatio > 0 ? options.pixelRatio : Math.max(2, Math.floor(window.devicePixelRatio || 1));
+  canvas.width = Math.round(CANVAS_W * pixelRatio * scale); canvas.height = Math.round(CANVAS_H * pixelRatio * scale);
+  const ctx = canvas.getContext('2d'); if (!ctx) throw new Error('Canvas not supported'); ctx.scale(pixelRatio * scale, pixelRatio * scale);
+  const noiseImg = await loadImage('/noise.png').catch(() => null);
+  if (input.template === 'folio') { drawFolioBase(ctx, noiseImg); if (input.kind === 'char') await drawCharFolio(ctx, input.data); else await drawSteleFolio(ctx, input.data); }
+  else if (input.template === 'wash') { drawWashBase(ctx, noiseImg); if (input.kind === 'char') await drawCharWash(ctx, input.data); else await drawSteleWash(ctx, input.data); }
+  else if (input.template === 'minimal') { drawMinimalBase(ctx, noiseImg); if (input.kind === 'char') await drawCharMinimal(ctx, input.data); else await drawSteleMinimal(ctx, input.data); }
+  const blob = await canvasToBlob(canvas); return { blob, width: Math.round(CANVAS_W * scale), height: Math.round(CANVAS_H * scale) };
+}
+
+export async function renderCuratedCollagePng(input: CuratedCollageInput, options: RenderPosterOptions = {}) {
+  const canvas = document.createElement('canvas');
+  const scale = typeof options.scale === 'number' ? Math.max(0.25, Math.min(1, options.scale)) : 1;
+  const pixelRatio = typeof options.pixelRatio === 'number' && options.pixelRatio > 0 ? options.pixelRatio : Math.max(2, Math.floor(window.devicePixelRatio || 1));
+  canvas.width = Math.round(CANVAS_W * pixelRatio * scale); canvas.height = Math.round(CANVAS_H * pixelRatio * scale);
+  const ctx = canvas.getContext('2d'); if (!ctx) throw new Error('Canvas not supported'); ctx.scale(pixelRatio * scale, pixelRatio * scale);
+  const noiseImg = await loadImage('/noise.png').catch(() => null);
+  const desk = ctx.createLinearGradient(0, 0, 0, CANVAS_H); desk.addColorStop(0, '#B78B52'); desk.addColorStop(0.55, '#A57A46'); desk.addColorStop(1, '#8C6537'); ctx.fillStyle = desk; ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+  if (noiseImg) { const p = ctx.createPattern(noiseImg, 'repeat'); if (p) { ctx.globalAlpha = 0.10; ctx.fillStyle = p; ctx.fillRect(0, 0, CANVAS_W, CANVAS_H); ctx.globalAlpha = 1; } }
+  const plateX = 48, plateY = 48, plateW = CANVAS_W - 96, plateH = 240; ctx.save(); ctx.fillStyle = 'rgba(246,241,231,0.90)'; roundRect(ctx, plateX, plateY, plateW, plateH, 48); ctx.fill(); ctx.restore();
+  await drawBrandHeader(ctx, plateX + 44, plateY + 34, { tag: '典藏画册' });
+  const cards = (input.cards || []).filter(c => c.image).slice(0, 8);
+  const tones = ['#F6F1E7', '#F4EFE5', '#F8F3EA', '#F1E8DA']; const placements = [{x:-26,y:320},{x:360,y:300},{x:730,y:346},{x:72,y:820},{x:430,y:784},{x:780,y:860},{x:-10,y:1310},{x:360,y:1280}];
+  for(let i=0; i<cards.length; i++) {
+    const c = cards[i]; const p = placements[i%placements.length]; const tone = tones[i%tones.length];
+    ctx.save(); ctx.fillStyle = 'rgba(0,0,0,0.30)'; ctx.filter = 'blur(26px)'; roundRect(ctx, p.x+18, p.y+22, 340+28, 480+18, 34); ctx.fill(); ctx.restore();
+    ctx.fillStyle = tone; roundRect(ctx,p.x,p.y,340,480,34); ctx.fill();
+    const img = await loadImage(c.image).catch(()=>null); if(img){ ctx.save(); roundRect(ctx,p.x,p.y,340,480,34); ctx.clip(); drawContainImage(ctx,img,p.x+40,p.y+96,340-80,480-180); ctx.restore(); }
+    if(c.simplified){ ctx.fillStyle='rgba(17,24,39,0.90)'; ctx.font="900 34px 'Noto Serif SC', serif"; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(c.simplified, p.x+340-112+44, p.y+22+29); }
+  }
+  const blob = await canvasToBlob(canvas); return { blob, width: Math.round(CANVAS_W * scale), height: Math.round(CANVAS_H * scale) };
+}
+
+export async function renderNewYearPosterPng(input: NewYearPosterInput, options: RenderPosterOptions = {}) {
+  try { await document.fonts.load("900 120px 'ZCOOL XiaoWei'"); } catch(e) {}
+  const canvas = document.createElement('canvas');
+  const scale = typeof options.scale === 'number' ? Math.max(0.25, Math.min(1, options.scale)) : 1;
+  const pixelRatio = typeof options.pixelRatio === 'number' && options.pixelRatio > 0 ? options.pixelRatio : Math.max(2, Math.floor(window.devicePixelRatio || 1));
+  canvas.width = Math.round(CANVAS_W * pixelRatio * scale); canvas.height = Math.round(CANVAS_H * pixelRatio * scale);
+  const ctx = canvas.getContext('2d'); if (!ctx) throw new Error('Canvas not supported'); ctx.scale(pixelRatio * scale, pixelRatio * scale);
+  const [noiseImg, logoImg, glyphImg] = await Promise.all([loadImage('/noise.png').catch(() => null), loadBrandLogo().catch(() => null), loadImage(input.glyph.image).catch(() => null)]);
+  const env: SceneEnv = { ctx, input, noiseImg, logoImg, glyphImg };
+  switch (input.id) {
+    case 'ny_08': await drawSceneNY08_Eve(env); break; case 'ny_01': await drawSceneNY01_Spring(env); break; case 'ny_02': await drawSceneNY02_Home(env); break; case 'ny_03': await drawSceneNY03_Quiet(env); break;
+    case 'ny_04': await drawSceneNY04_Stove(env); break; case 'ny_05': await drawSceneNY05_Wealth(env); break; case 'ny_06': await drawSceneNY06_Travel(env); break; case 'ny_07': await drawSceneNY07_Human(env); break;
+    default: await drawSceneNY01_Spring(env); break;
+  }
+  const blob = await canvasToBlob(canvas); return { blob, width: Math.round(CANVAS_W * scale), height: Math.round(CANVAS_H * scale) };
+}
+
+async function drawBrandHeader(ctx: CanvasRenderingContext2D, x: number, y: number, opts: { tag?: string } = {}) {
+  const logo = await loadBrandLogo().catch(() => null);
+  if (logo) drawContainImage(ctx, logo, x, y, 56, 56);
+  ctx.fillStyle = '#111827'; ctx.font = "900 56px 'Noto Serif SC', serif"; ctx.fillText(INKGRID_BRAND_CN, x + 78, y + 52);
+}
+
+async function drawSteleFolio(ctx: CanvasRenderingContext2D, stele: PosterStele) {
+  const padding = 72; ctx.fillStyle = '#111827'; ctx.font = "900 96px 'Noto Serif SC', serif"; ctx.fillText(stele.name, padding, 300);
+}
+async function drawCharFolio(ctx: CanvasRenderingContext2D, data: PosterChar) {
+  const padding = 72; ctx.fillStyle = '#111827'; ctx.font = "900 140px 'Noto Serif SC', serif"; ctx.fillText(data.simplified || '字', padding, 1220);
+}
+async function drawCharWash(ctx: CanvasRenderingContext2D, data: PosterChar) {
+  const padding = 72; ctx.fillStyle = '#111827'; ctx.font = "900 144px 'Noto Serif SC', serif"; ctx.fillText(data.simplified || '字', padding, 1260);
+}
+async function drawSteleWash(ctx: CanvasRenderingContext2D, stele: PosterStele) {
+  const padding = 72; ctx.fillStyle = '#111827'; ctx.font = "900 104px 'Noto Serif SC', serif"; ctx.fillText(stele.name, padding, 300);
+}
+async function drawCharMinimal(ctx: CanvasRenderingContext2D, data: PosterChar) {
+  const padding = 72; ctx.fillStyle = '#111827'; ctx.font = "900 160px 'Noto Serif SC', serif"; ctx.fillText(data.simplified || '字', padding, 540);
+}
+async function drawSteleMinimal(ctx: CanvasRenderingContext2D, stele: PosterStele) {
+  const padding = 72; ctx.fillStyle = '#111827'; ctx.font = "900 96px 'Noto Serif SC', serif"; ctx.fillText(stele.name, padding, 300);
+}
+function drawFolioBase(ctx: CanvasRenderingContext2D, n: any) { ctx.fillStyle = '#F6F1E7'; ctx.fillRect(0,0,CANVAS_W,CANVAS_H); }
+function drawWashBase(ctx: CanvasRenderingContext2D, n: any) { ctx.fillStyle = '#F7F2E9'; ctx.fillRect(0,0,CANVAS_W,CANVAS_H); }
+function drawMinimalBase(ctx: CanvasRenderingContext2D, n: any) { ctx.fillStyle = '#FFF'; ctx.fillRect(0,0,CANVAS_W,CANVAS_H); }
