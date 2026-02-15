@@ -304,7 +304,7 @@ function App() {
                           墨陣 · 墨香千載 · 筆鋒流轉
                         </div>
                         <div className="mt-2 text-center text-[9px] font-mono text-stone-500/70 tracking-[0.12em]">
-                          built with love · e13760@gmail.com
+                          built with love ❤️ · e13760@gmail.com
                         </div>
                       </div>
                     </div>
@@ -444,7 +444,7 @@ function App() {
                </motion.div>
 
                 <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-40 pointer-events-none text-[10px] font-mono text-stone-500/70 tracking-[0.18em]">
-                  built with love · e13760@gmail.com
+                  built with love ❤️ · e13760@gmail.com
                 </div>
                </motion.div>
                 )

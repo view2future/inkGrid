@@ -1144,14 +1144,14 @@ function MobileInkFlowPosterGallery({
 
     const yearLabel = '馬年';
     const specs = [
-      { id: 'ny_01', dayLabel: '初一', caption: '拜歲迎春', glyph: '年', date: '2026-02-17', index: 40, source: '嶧山刻石 · 李斯' },
-      { id: 'ny_02', dayLabel: '初二', caption: '回門團圓', glyph: '家', date: '2026-02-18', index: 114, source: '嶧山刻石 · 李斯' },
-      { id: 'ny_03', dayLabel: '初三', caption: '赤口慎言', glyph: '止', date: '2026-02-19', index: 108, source: '嶧山刻石 · 李斯' },
-      { id: 'ny_04', dayLabel: '初四', caption: '迎灶納福', glyph: '惠', date: '2026-02-20', index: 56, source: '嶧山刻石 · 李斯' },
-      { id: 'ny_05', dayLabel: '初五', caption: '破五迎財', glyph: '利', date: '2026-02-21', index: 129, source: '嶧山刻石 · 李斯' },
-      { id: 'ny_06', dayLabel: '初六', caption: '送窮出行', glyph: '泽', date: '2026-02-22', index: 130, source: '嶧山刻石 · 李斯' },
-      { id: 'ny_07', dayLabel: '初七', caption: '人日安康', glyph: '康', date: '2026-02-23', index: 127, source: '嶧山刻石 · 李斯' },
-      { id: 'ny_08', dayLabel: '大年三十', caption: '守歲迎新', glyph: '久', date: '2026-02-16', index: 32, source: '嶧山刻石 · 李斯' },
+      { id: 'ny_01', dayLabel: '初一', caption: '拜歲迎春', glyph: '年', date: '2026-02-17', lunarDateStr: '丙午年 · 正月 · 初一', index: 40, source: '嶧山刻石' },
+      { id: 'ny_02', dayLabel: '初二', caption: '回門團圓', glyph: '家', date: '2026-02-18', lunarDateStr: '丙午年 · 正月 · 初二', index: 114, source: '嶧山刻石' },
+      { id: 'ny_03', dayLabel: '初三', caption: '赤口慎言', glyph: '止', date: '2026-02-19', lunarDateStr: '丙午年 · 正月 · 初三', index: 108, source: '嶧山刻石' },
+      { id: 'ny_04', dayLabel: '初四', caption: '迎灶納福', glyph: '惠', date: '2026-02-20', lunarDateStr: '丙午年 · 正月 · 初四', index: 56, source: '嶧山刻石' },
+      { id: 'ny_05', dayLabel: '初五', caption: '破五迎財', glyph: '利', date: '2026-02-21', lunarDateStr: '丙午年 · 正月 · 初五', index: 129, source: '嶧山刻石' },
+      { id: 'ny_06', dayLabel: '初六', caption: '送窮出行', glyph: '泽', date: '2026-02-22', lunarDateStr: '丙午年 · 正月 · 初六', index: 130, source: '嶧山刻石' },
+      { id: 'ny_07', dayLabel: '初七', caption: '人日安康', glyph: '康', date: '2026-02-23', lunarDateStr: '丙午年 · 正月 · 初七', index: 127, source: '嶧山刻石' },
+      { id: 'ny_08', dayLabel: '大年三十', caption: '守歲迎新', glyph: '久', date: '2026-02-16', lunarDateStr: '乙巳年 · 腊月 · 二十九', index: 32, source: '嶧山刻石' },
     ];
 
     return specs
@@ -1175,6 +1175,7 @@ function MobileInkFlowPosterGallery({
       dayLabel: string;
       caption: string;
       date?: string;
+      lunarDateStr?: string;
       glyph: { simplified?: string; image: string; index?: number; source?: string };
     }>;
   }, [chars]);
@@ -1222,7 +1223,7 @@ function MobileInkFlowPosterGallery({
       for (const p of newYearPosters) {
         try {
           const res = await renderNewYearPosterPng(
-            { yearLabel: p.yearLabel, dayLabel: p.dayLabel, caption: p.caption, date: p.date, glyph: { simplified: p.glyph.simplified, image: p.glyph.image, index: p.glyph.index, source: p.glyph.source } },
+            { id: p.id, yearLabel: p.yearLabel, dayLabel: p.dayLabel, caption: p.caption, date: p.date, glyph: { simplified: p.glyph.simplified, image: p.glyph.image, index: p.glyph.index, source: p.glyph.source } },
             { scale: 0.42, pixelRatio: 2 }
           );
           if (cancelled) return;
@@ -1621,6 +1622,7 @@ function MobileNewYearPosterModal({
     dayLabel: string;
     caption: string;
     date?: string;
+    lunarDateStr?: string;
     glyph: { simplified?: string; image: string; index?: number; source?: string };
   };
   onClose: () => void;
@@ -1671,6 +1673,7 @@ function MobileNewYearPosterModal({
         dayLabel: poster.dayLabel,
         caption: poster.caption,
         date: poster.date,
+        lunarDateStr: poster.lunarDateStr,
         glyph: { simplified: poster.glyph.simplified, image: poster.glyph.image, index: poster.glyph.index, source: poster.glyph.source },
       }, { pixelRatio: 3 });
       const url = URL.createObjectURL(res.blob);
