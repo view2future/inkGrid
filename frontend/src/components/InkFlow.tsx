@@ -1164,6 +1164,8 @@ function MobileInkFlowPosterGallery({
           glyph: {
             simplified: String(c.simplified || '').trim() || s.glyph,
             image: String(c.image),
+            index: s.index,
+            source: s.source,
           },
         };
       })
