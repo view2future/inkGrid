@@ -1223,7 +1223,7 @@ function MobileInkFlowPosterGallery({
         try {
           const res = await renderNewYearPosterPng(
             { yearLabel: p.yearLabel, dayLabel: p.dayLabel, caption: p.caption, date: p.date, glyph: { simplified: p.glyph.simplified, image: p.glyph.image, index: p.glyph.index, source: p.glyph.source } },
-            { scale: 0.42, pixelRatio: 1 }
+            { scale: 0.42, pixelRatio: 2 }
           );
           if (cancelled) return;
           const url = URL.createObjectURL(res.blob);
@@ -1672,7 +1672,7 @@ function MobileNewYearPosterModal({
         caption: poster.caption,
         date: poster.date,
         glyph: { simplified: poster.glyph.simplified, image: poster.glyph.image, index: poster.glyph.index, source: poster.glyph.source },
-      });
+      }, { pixelRatio: 3 });
       const url = URL.createObjectURL(res.blob);
       const a = document.createElement('a');
       a.href = url;
