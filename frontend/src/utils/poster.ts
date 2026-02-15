@@ -65,6 +65,8 @@ export type NewYearPosterInput = {
   glyph: {
     simplified?: string;
     image: string;
+    index?: number;
+    source?: string;
   };
 };
 
@@ -517,6 +519,35 @@ export async function renderNewYearPosterPng(input: NewYearPosterInput, options:
     ctx.textAlign = 'left';
     ctx.textBaseline = 'alphabetic';
     ctx.fillText(input.date, padding, baseY + 230);
+  }
+
+  if (input.glyph.source || input.glyph.index) {
+    const sourceText = input.glyph.source || '嶧山刻石 · 李斯';
+    const indexText = input.glyph.index ? `第 ${input.glyph.index} 字` : '';
+    ctx.save();
+    ctx.fillStyle = 'rgba(139,0,0,0.08)';
+    const infoW = 380;
+    const infoH = 56;
+    roundRect(ctx, padding, baseY + 280, infoW, infoH, 20);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(139,0,0,0.18)';
+    ctx.lineWidth = 1.5;
+    roundRect(ctx, padding, baseY + 280, infoW, infoH, 20);
+    ctx.stroke();
+    
+    ctx.fillStyle = 'rgba(139,0,0,0.72)';
+    ctx.font = "700 22px 'Noto Serif SC', serif";
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(sourceText, padding + 20, baseY + 280 + infoH/2);
+    
+    if (indexText) {
+      ctx.fillStyle = 'rgba(17,24,39,0.44)';
+      ctx.font = "800 20px 'Fira Code', monospace";
+      ctx.textAlign = 'right';
+      ctx.fillText(indexText, padding + infoW - 20, baseY + 280 + infoH/2);
+    }
+    ctx.restore();
   }
 
   const qrSize = 200;
