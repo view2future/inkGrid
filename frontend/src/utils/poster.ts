@@ -63,6 +63,7 @@ export type NewYearPosterInput = {
   caption: string;
   date?: string;
   lunarDateStr?: string;
+  story?: string;
   glyph: {
     simplified?: string;
     image: string;
@@ -74,7 +75,7 @@ export type NewYearPosterInput = {
 const CANVAS_W = 1080;
 const CANVAS_H = 1920;
 
-// --- UTILS ---
+// --- UTILS (Hoisted) ---
 
 function loadImage(url: string) {
   return new Promise<HTMLImageElement>((resolve, reject) => {
@@ -103,6 +104,21 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
   ctx.arcTo(x + w, y + h, x, y + h, radius); ctx.arcTo(x, y + h, x, y, radius); ctx.arcTo(x, y, x + w, y, radius); ctx.closePath();
 }
 
+function drawLines(ctx: CanvasRenderingContext2D, lines: string[], x: number, y: number, lineHeight: number) {
+  let currentY = y; for (const line of lines) { ctx.fillText(line, x, currentY); currentY += lineHeight; }
+}
+
+function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number) {
+  const t = (text || '').replace(/\s+/g, ' ').trim(); if (!t) return [] as string[];
+  const units = t.includes(' ') ? t.split(' ') : Array.from(t);
+  const lines: string[] = []; let current = '';
+  for (const unit of units) {
+    const next = current ? (t.includes(' ') ? `${current} ${unit}` : `${current}${unit}`) : unit;
+    if (ctx.measureText(next).width <= maxWidth) { current = next; } else { if (current) lines.push(current); current = unit; }
+  }
+  if (current) lines.push(current); return lines;
+}
+
 // --- SHARED DRAWING HELPERS ---
 
 type SceneEnv = { ctx: CanvasRenderingContext2D; input: NewYearPosterInput; noiseImg: HTMLImageElement | null; logoImg: HTMLImageElement | null; glyphImg: HTMLImageElement | null; };
@@ -126,8 +142,7 @@ function drawFloatingInkGlyph(ctx: CanvasRenderingContext2D, img: HTMLImageEleme
 
 function drawRedSeal(ctx: CanvasRenderingContext2D, text: string, centerX: number, centerY: number, size = 100, color = '#C02C38') {
   if (!text) return;
-  ctx.save();
-  ctx.shadowColor = 'rgba(139, 0, 0, 0.3)'; ctx.shadowBlur = 15; ctx.shadowOffsetY = 8;
+  ctx.save(); ctx.shadowColor = 'rgba(139, 0, 0, 0.3)'; ctx.shadowBlur = 15; ctx.shadowOffsetY = 8;
   ctx.fillStyle = color; const r = size / 2; roundRect(ctx, centerX - r, centerY - r, size, size, 16); ctx.fill();
   ctx.shadowColor = 'transparent'; ctx.fillStyle = '#FDF6E3'; ctx.font = `900 ${size * 0.6}px 'Noto Serif SC', serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(text, centerX, centerY + size * 0.05);
   ctx.strokeStyle = 'rgba(255,215,0, 0.4)'; ctx.lineWidth = 2; roundRect(ctx, centerX - r + 6, centerY - r + 6, size - 12, size - 12, 10); ctx.stroke(); ctx.restore();
@@ -140,6 +155,12 @@ async function drawStandardHeader(env: SceneEnv, color = '#1F1F1F') {
   ctx.font = "600 32px 'Noto Serif SC', serif"; ctx.globalAlpha = 0.5; ctx.fillText(INKGRID_SLOGAN_CN, padding + 110, padding + 80); ctx.restore();
 }
 
+function drawGoldSprinkle(ctx: CanvasRenderingContext2D) {
+  ctx.save(); ctx.fillStyle = '#D4AF37'; ctx.globalAlpha = 0.6;
+  for (let i = 0; i < 120; i++) { const x = Math.random() * CANVAS_W; const y = Math.random() * CANVAS_H; const r = Math.random() * 2.5 + 0.5; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); }
+  ctx.restore();
+}
+
 async function drawFooterQR(env: SceneEnv, x: number, y: number, color = '#C02C38') {
   const { ctx } = env; const qrSize = 120;
   const qrCanvas = document.createElement('canvas'); await QRCode.toCanvas(qrCanvas, INKGRID_QR_URL, { width: qrSize, margin: 0, color: { dark: color, light: '#00000000' } });
@@ -147,163 +168,91 @@ async function drawFooterQR(env: SceneEnv, x: number, y: number, color = '#C02C3
   ctx.strokeStyle = color; ctx.lineWidth = 3; ctx.strokeRect(x - 5, y - 5, qrSize + 10, qrSize + 10);
 }
 
-// --- EIGHT DISTINCT SCENES ---
+function drawStandardFooter(env: SceneEnv, yStart: number, color = '#1F1F1F') {
+  const { ctx, input } = env; const padding = 72; let cursorY = yStart;
+  const fullSource = `《${input.glyph.source || '嶧山刻石'}》 · 第${input.glyph.index}字`;
+  ctx.save(); ctx.textAlign = 'center'; ctx.font = "700 36px 'Noto Serif SC', serif"; ctx.fillStyle = color; ctx.globalAlpha = 0.6; ctx.fillText(fullSource, CANVAS_W / 2, cursorY); ctx.restore();
+  
+  cursorY += 120;
+  ctx.save(); ctx.textAlign = 'center'; 
+  // 核心修复：主标题改用更稳健的思源宋体加粗，避免艺术字体导致的渲染错误
+  ctx.font = "900 96px 'Noto Serif SC', serif"; 
+  ctx.fillStyle = color; 
+  ctx.fillText(`${input.dayLabel} · ${input.caption}`, CANVAS_W / 2, cursorY); 
+  ctx.restore();
 
-// 1. 除夕 - 深红聚光灯
+  // --- 核心强化：年俗描述位置上提并加粗 ---
+  if (input.story) {
+    cursorY += 80; // 紧贴主标题
+    ctx.save(); ctx.textAlign = 'center'; 
+    ctx.font = "600 36px 'Noto Serif SC', serif"; 
+    ctx.fillStyle = color; 
+    ctx.fillText(input.story, CANVAS_W / 2, cursorY); ctx.restore();
+  }
+
+  const footerY = CANVAS_H - padding - 60;
+  ctx.save(); ctx.textAlign = 'left'; ctx.textBaseline = 'bottom'; ctx.fillStyle = '#C02C38'; ctx.fillRect(padding, footerY - 50, 4, 54);
+  ctx.font = "600 30px 'Noto Serif SC', serif"; ctx.fillStyle = color;
+  ctx.fillText(input.lunarDateStr || '', padding + 20, footerY - 18); ctx.restore();
+}
+
+// --- SCENES (Collectible Edition) ---
+
 async function drawSceneNY08_Eve(env: SceneEnv) {
-  const { ctx, noiseImg, glyphImg, input } = env;
-  drawTextureBackground(ctx, '#8B1A1A', noiseImg, 0.15);
-  const grad = ctx.createRadialGradient(CANVAS_W/2, 600, 100, CANVAS_W/2, 600, 1000);
-  grad.addColorStop(0, 'rgba(255,100,100,0.15)'); grad.addColorStop(1, 'rgba(0,0,0,0.4)');
-  ctx.fillStyle = grad; ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
-  await drawStandardHeader(env, '#F2E6CE');
-  if (glyphImg) {
-    drawFloatingInkGlyph(ctx, glyphImg, (CANVAS_W-750)/2, 350, 750);
-    drawRedSeal(ctx, input.glyph.simplified || '', (CANVAS_W-750)/2 + 650, 420, 110);
-  }
-  // Custom Footer
-  const y = 1150; ctx.save(); ctx.textAlign = 'center'; ctx.fillStyle = '#F2E6CE';
-  ctx.font = "700 36px 'Noto Serif SC', serif"; ctx.fillText(`《${input.glyph.source}》 · 第${input.glyph.index}字`, CANVAS_W/2, y);
-  ctx.font = "400 100px 'ZCOOL XiaoWei', serif"; ctx.fillText(`${input.dayLabel} · ${input.caption}`, CANVAS_W/2, y + 150);
-  ctx.restore();
-  await drawFooterQR(env, CANVAS_W - 192, CANVAS_H - 180, '#F2E6CE');
+  const { ctx, noiseImg, glyphImg, input } = env; drawTextureBackground(ctx, '#8B1A1A', noiseImg, 0.15);
+  const grad = ctx.createRadialGradient(CANVAS_W/2, 600, 100, CANVAS_W/2, 600, 1000); grad.addColorStop(0, 'rgba(255,100,100,0.15)'); grad.addColorStop(1, 'rgba(0,0,0,0.4)'); ctx.fillStyle = grad; ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+  await drawStandardHeader(env, '#F2E6CE'); if (glyphImg) { drawFloatingInkGlyph(ctx, glyphImg, (CANVAS_W-750)/2, 350, 750); drawRedSeal(ctx, input.glyph.simplified || '', (CANVAS_W-750)/2 + 650, 420, 110); }
+  // 核心修正：除夕出处文字使用更亮的颜色
+  drawStandardFooter(env, 1200, '#FDF6E3'); await drawFooterQR(env, CANVAS_W - 192, CANVAS_H - 180, '#F2E6CE'); drawGoldSprinkle(ctx);
 }
-
-// 2. 初一 - 正红洒金斗方
 async function drawSceneNY01_Spring(env: SceneEnv) {
-  const { ctx, noiseImg, glyphImg, input } = env;
-  drawTextureBackground(ctx, '#C02C38', noiseImg, 0.1);
-  await drawStandardHeader(env, '#FDF6E3');
-  // 斗方
-  ctx.save(); ctx.translate(CANVAS_W/2, 680); ctx.rotate(-Math.PI / 4);
-  ctx.shadowColor = 'rgba(0,0,0,0.3)'; ctx.shadowBlur = 40; ctx.fillStyle = '#F9F4E8'; ctx.fillRect(-350, -350, 700, 700); ctx.restore();
-  if (glyphImg) {
-    drawFloatingInkGlyph(ctx, glyphImg, (CANVAS_W-650)/2, 680 - 325, 650);
-    drawRedSeal(ctx, input.glyph.simplified || '', (CANVAS_W/2) + 240, 480, 100);
-  }
-  const y = 1180; ctx.save(); ctx.textAlign = 'center'; ctx.fillStyle = '#FDF6E3';
-  ctx.font = "700 36px 'Noto Serif SC', serif"; ctx.fillText(`《${input.glyph.source}》 · 第${input.glyph.index}字`, CANVAS_W/2, y);
-  ctx.font = "400 100px 'ZCOOL XiaoWei', serif"; ctx.fillText(`${input.dayLabel} · ${input.caption}`, CANVAS_W/2, y + 150);
-  ctx.restore();
-  await drawFooterQR(env, CANVAS_W - 192, CANVAS_H - 180, '#FDF6E3');
+  const { ctx, noiseImg, glyphImg, input } = env; drawTextureBackground(ctx, '#C02C38', noiseImg, 0.1); drawGoldSprinkle(ctx); await drawStandardHeader(env, '#FDF6E3');
+  ctx.save(); ctx.translate(CANVAS_W/2, 680); ctx.rotate(-Math.PI / 4); ctx.shadowColor = 'rgba(0,0,0,0.3)'; ctx.shadowBlur = 40; ctx.shadowOffsetY = 20; ctx.fillStyle = '#F9F4E8'; ctx.fillRect(-350, -350, 700, 700); ctx.restore();
+  if (glyphImg) { drawFloatingInkGlyph(ctx, glyphImg, (CANVAS_W-650)/2, 680 - 325, 650); drawRedSeal(ctx, input.glyph.simplified || '', (CANVAS_W/2) + 240, 480, 100); }
+  drawStandardFooter(env, 1250, '#FDF6E3'); await drawFooterQR(env, CANVAS_W - 192, CANVAS_H - 180, '#FDF6E3');
 }
-
-// 3. 初二 - 木纹家书薛涛笺
 async function drawSceneNY02_Home(env: SceneEnv) {
-  const { ctx, noiseImg, glyphImg, input } = env;
-  drawTextureBackground(ctx, '#D2B48C', noiseImg, 0.2);
-  // 信笺
-  ctx.save(); ctx.translate(CANVAS_W/2, 800); ctx.rotate(0.01);
-  ctx.shadowColor = 'rgba(0,0,0,0.15)'; ctx.shadowBlur = 30; ctx.fillStyle = '#FFF0E6'; ctx.fillRect(-420, -550, 840, 1100);
-  ctx.strokeStyle = 'rgba(192, 44, 56, 0.12)'; ctx.lineWidth = 2;
-  for(let x = -380; x <= 380; x += 80) { ctx.beginPath(); ctx.moveTo(x, -510); ctx.lineTo(x, 510); ctx.stroke(); }
-  ctx.restore();
-  await drawStandardHeader(env, '#4A3B32');
-  if (glyphImg) {
-    // 位置上移：450 -> 400
-    drawFloatingInkGlyph(ctx, glyphImg, (CANVAS_W-680)/2, 400, 680);
-    drawRedSeal(ctx, input.glyph.simplified || '', (CANVAS_W/2) + 260, 380, 110);
-  }
-  // 标题下移：1220 -> 1320
-  const y = 1320; ctx.save(); ctx.textAlign = 'center'; ctx.fillStyle = '#3E2A1C';
-  ctx.font = "700 36px 'Noto Serif SC', serif"; ctx.fillText(`《${input.glyph.source}》 · 第${input.glyph.index}字`, CANVAS_W/2, y);
-  ctx.font = "400 90px 'ZCOOL XiaoWei', serif"; ctx.fillText(`${input.dayLabel} · ${input.caption}`, CANVAS_W/2, y + 150);
-  ctx.restore();
-  await drawFooterQR(env, CANVAS_W - 192, CANVAS_H - 180, '#C02C38');
+  const { ctx, noiseImg, glyphImg, input } = env; drawTextureBackground(ctx, '#D2B48C', noiseImg, 0.2);
+  ctx.save(); ctx.translate(CANVAS_W/2 + 20, 800); ctx.rotate(0.01); ctx.shadowColor = 'rgba(0,0,0,0.15)'; ctx.shadowBlur = 30; ctx.shadowOffsetY = 10; ctx.fillStyle = '#FFF0E6'; ctx.fillRect(-420, -550, 840, 1100);
+  ctx.strokeStyle = 'rgba(192, 44, 56, 0.12)'; ctx.lineWidth = 2; for(let x = -380; x <= 380; x += 80) { ctx.beginPath(); ctx.moveTo(x, -510); ctx.lineTo(x, 510); ctx.stroke(); } ctx.restore();
+  await drawStandardHeader(env, '#4A3B32'); if (glyphImg) { drawFloatingInkGlyph(ctx, glyphImg, (CANVAS_W-700)/2, 400, 700); drawRedSeal(ctx, input.glyph.simplified || '', (CANVAS_W/2) + 280, 380, 110); }
+  drawStandardFooter(env, 1320, '#3E2A1C'); await drawFooterQR(env, CANVAS_W - 192, CANVAS_H - 180, '#C02C38');
 }
-
-// 4. 初三 - 天青宋锦立轴 (保持现状或微调)
 async function drawSceneNY03_Quiet(env: SceneEnv) {
-  const { ctx, noiseImg, glyphImg, input } = env;
-  drawTextureBackground(ctx, '#E0E5E5', noiseImg, 0.12);
-  const sW = 600, sH = 1200, sX = (CANVAS_W - sW) / 2, sY = 300; // 上移
-  ctx.save(); ctx.fillStyle = '#C0C8C8'; ctx.shadowColor = 'rgba(0,0,0,0.2)'; ctx.fillRect(sX - 30, sY - 30, sW + 60, sH + 60);
-  ctx.fillStyle = '#F7F9FA'; ctx.fillRect(sX, sY, sW, sH); ctx.restore();
-  await drawStandardHeader(env, '#2F4F4F');
-  if (glyphImg) {
-    drawFloatingInkGlyph(ctx, glyphImg, (CANVAS_W-520)/2, sY + 60, 520);
-    drawRedSeal(ctx, input.glyph.simplified || '', sX + sW - 80, sY + 100, 90);
-  }
-  ctx.save(); ctx.textAlign = 'center'; ctx.fillStyle = '#2F2F2F';
-  ctx.font = "500 28px 'Noto Serif SC', serif"; ctx.fillText(`《${input.glyph.source}》 · 第${input.glyph.index}字`, CANVAS_W/2, sY + 680);
-  ctx.font = "400 90px 'ZCOOL XiaoWei', serif"; ctx.fillText(input.dayLabel, CANVAS_W/2, sY + 810);
-  ctx.font = "400 60px 'ZCOOL XiaoWei', serif"; ctx.fillText(input.caption, CANVAS_W/2, sY + 930);
-  ctx.restore();
+  const { ctx, noiseImg, glyphImg, input } = env; drawTextureBackground(ctx, '#E0E5E5', noiseImg, 0.12);
+  const sW = 600, sH = 1200, sX = (CANVAS_W - sW) / 2, sY = 320;
+  ctx.save(); ctx.fillStyle = '#C0C8C8'; ctx.shadowColor = 'rgba(0,0,0,0.2)'; ctx.fillRect(sX - 30, sY - 30, sW + 60, sH + 60); ctx.fillStyle = '#F7F9FA'; ctx.fillRect(sX, sY, sW, sH); ctx.restore();
+  await drawStandardHeader(env, '#2F4F4F'); if (glyphImg) { drawFloatingInkGlyph(ctx, glyphImg, (CANVAS_W-520)/2, sY + 60, 520); drawRedSeal(ctx, input.glyph.simplified || '', sX + sW - 80, sY + 100, 90); }
+  drawStandardFooter(env, sY + 680, '#2F2F2F');
+  ctx.save(); ctx.font = "600 28px 'Noto Serif SC', serif"; ctx.fillStyle = '#2F4F4F'; ctx.fillText(input.lunarDateStr || '', 72, CANVAS_H - 100); ctx.restore();
   await drawFooterQR(env, CANVAS_W - 192, CANVAS_H - 180, '#2F4F4F');
 }
-
-// 5. 初四 - 杏黄泥金扇面
 async function drawSceneNY04_Stove(env: SceneEnv) {
-  const { ctx, noiseImg, glyphImg, input } = env;
-  drawTextureBackground(ctx, '#FAD6A5', noiseImg, 0.15);
-  ctx.save(); const fY = 400, fR = 950, fA = Math.PI / 1.6; ctx.translate(CANVAS_W/2, fY + fR);
-  ctx.beginPath(); ctx.arc(0, 0, fR, -Math.PI/2 - fA/2, -Math.PI/2 + fA/2);
-  ctx.arc(0, 0, fR * 0.45, -Math.PI/2 + fA/2, -Math.PI/2 - fA/2, true); ctx.closePath();
-  ctx.fillStyle = '#FFF8F0'; ctx.shadowColor = 'rgba(0,0,0,0.1)'; ctx.fill(); ctx.clip(); ctx.restore();
-  await drawStandardHeader(env, '#5D4037');
-  if (glyphImg) {
-    drawFloatingInkGlyph(ctx, glyphImg, (CANVAS_W-500)/2, fY + 100, 500);
-    drawRedSeal(ctx, input.glyph.simplified || '', CANVAS_W/2 + 180, fY + 160, 90);
-  }
-  const y = 1250; ctx.save(); ctx.textAlign = 'center'; ctx.fillStyle = '#5D4037';
-  ctx.font = "700 36px 'Noto Serif SC', serif"; ctx.fillText(`《${input.glyph.source}》 · 第${input.glyph.index}字`, CANVAS_W/2, y);
-  ctx.font = "400 100px 'ZCOOL XiaoWei', serif"; ctx.fillText(`${input.dayLabel} · ${input.caption}`, CANVAS_W/2, y + 150); ctx.restore();
-  await drawFooterQR(env, CANVAS_W - 192, CANVAS_H - 180, '#C02C38');
+  const { ctx, noiseImg, glyphImg, input } = env; drawTextureBackground(ctx, '#FAD6A5', noiseImg, 0.15);
+  ctx.save(); const fY = 400, fR = 950, fA = Math.PI / 1.6; ctx.translate(CANVAS_W/2, fY + fR); ctx.beginPath(); ctx.arc(0, 0, fR, -Math.PI/2 - fA/2, -Math.PI/2 + fA/2); ctx.arc(0, 0, fR * 0.45, -Math.PI/2 + fA/2, -Math.PI/2 - fA/2, true); ctx.closePath(); ctx.fillStyle = '#FFF8F0'; ctx.shadowColor = 'rgba(0,0,0,0.1)'; ctx.fill(); ctx.clip(); ctx.restore();
+  await drawStandardHeader(env, '#5D4037'); if (glyphImg) { drawFloatingInkGlyph(ctx, glyphImg, (CANVAS_W-500)/2, fY + 100, 500); drawRedSeal(ctx, input.glyph.simplified || '', CANVAS_W/2 + 180, fY + 160, 90); }
+  drawStandardFooter(env, 1250, '#5D4037'); await drawFooterQR(env, CANVAS_W - 192, CANVAS_H - 180, '#C02C38');
 }
-
-// 6. 初五 - 黑金拓片金石感
 async function drawSceneNY05_Wealth(env: SceneEnv) {
-  const { ctx, noiseImg, glyphImg, input } = env;
-  drawTextureBackground(ctx, '#C7A252', noiseImg, 0.2);
-  // 拓片上移：320 -> 280
+  const { ctx, noiseImg, glyphImg, input } = env; drawTextureBackground(ctx, '#C7A252', noiseImg, 0.2); drawGoldSprinkle(ctx);
   const rW = 780, rH = 950, rY = 280; ctx.save(); ctx.fillStyle = '#1A1A1A'; ctx.shadowColor = 'rgba(0,0,0,0.4)'; ctx.fillRect((CANVAS_W-rW)/2, rY, rW, rH); ctx.restore();
-  await drawStandardHeader(env, '#1A1A1A');
-  if (glyphImg) {
-    ctx.save(); ctx.filter = 'invert(1) brightness(1.6)'; ctx.globalAlpha = 0.9;
-    drawContainImage(ctx, glyphImg, (CANVAS_W-650)/2, rY + 80, 650, 650); ctx.restore();
-    drawRedSeal(ctx, input.glyph.simplified || '', CANVAS_W/2 + 250, rY + 120, 110, '#FF3333');
-  }
-  // 文字下移：1380 -> 1420
-  const y = 1420; ctx.save(); ctx.textAlign = 'center'; ctx.fillStyle = '#B22222';
-  ctx.font = "400 100px 'ZCOOL XiaoWei', serif"; ctx.fillText(`${input.dayLabel} · ${input.caption}`, CANVAS_W/2, y);
-  ctx.font = "500 36px 'Noto Serif SC', serif"; ctx.fillStyle = '#1A1A1A'; ctx.fillText(`《${input.glyph.source}》 · 第${input.glyph.index}字`, CANVAS_W/2, y + 120); ctx.restore();
-  await drawFooterQR(env, CANVAS_W - 192, CANVAS_H - 180, '#1A1A1A');
+  await drawStandardHeader(env, '#1A1A1A'); if (glyphImg) { ctx.save(); ctx.filter = 'invert(1) brightness(1.6) contrast(1.2)'; ctx.globalAlpha = 0.9; drawContainImage(ctx, glyphImg, (CANVAS_W-650)/2, rY + 80, 650, 650); ctx.restore(); drawRedSeal(ctx, input.glyph.simplified || '', CANVAS_W/2 + 250, rY + 120, 110, '#FF3333'); }
+  drawStandardFooter(env, 1420, '#1A1A1A'); await drawFooterQR(env, CANVAS_W - 192, CANVAS_H - 180, '#1A1A1A');
 }
-
-// 7. 初六 - 茶色绢本送穷行
 async function drawSceneNY06_Travel(env: SceneEnv) {
-  const { ctx, noiseImg, glyphImg, input } = env;
-  drawTextureBackground(ctx, '#D8C8B0', noiseImg, 0.2);
+  const { ctx, noiseImg, glyphImg, input } = env; drawTextureBackground(ctx, '#D8C8B0', noiseImg, 0.2);
   ctx.save(); ctx.strokeStyle = 'rgba(0,0,0,0.04)'; ctx.lineWidth = 1; for(let i=0; i<CANVAS_H; i+=5) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(CANVAS_W, i); ctx.stroke(); } ctx.restore();
-  await drawStandardHeader(env, '#3E3E3E');
-  if (glyphImg) {
-    drawFloatingInkGlyph(ctx, glyphImg, 80, 280, 750);
-    drawRedSeal(ctx, input.glyph.simplified || '', 80 + 750 - 60, 280 + 750 - 120, 100);
-  }
-  const y = 1200; ctx.save(); ctx.textAlign = 'center'; ctx.fillStyle = '#3E3E3E';
-  ctx.font = "700 36px 'Noto Serif SC', serif"; ctx.fillText(`《${input.glyph.source}》 · 第${input.glyph.index}字`, CANVAS_W/2, y);
-  ctx.font = "400 100px 'ZCOOL XiaoWei', serif"; ctx.fillText(`${input.dayLabel} · ${input.caption}`, CANVAS_W/2, y + 150); ctx.restore();
-  await drawFooterQR(env, CANVAS_W - 192, CANVAS_H - 180, '#8B0000');
+  await drawStandardHeader(env, '#3E3E3E'); if (glyphImg) { drawFloatingInkGlyph(ctx, glyphImg, 80, 280, 750); drawRedSeal(ctx, input.glyph.simplified || '', 80 + 750 - 60, 280 + 750 - 120, 100); }
+  drawStandardFooter(env, 1250, '#3E3E3E'); await drawFooterQR(env, CANVAS_W - 192, CANVAS_H - 180, '#8B0000');
 }
-
-// 8. 初七 - 竹纸人日禅意
 async function drawSceneNY07_Human(env: SceneEnv) {
-  const { ctx, noiseImg, glyphImg, input } = env;
-  drawTextureBackground(ctx, '#F7F9F5', noiseImg, 0.1);
+  const { ctx, noiseImg, glyphImg, input } = env; drawTextureBackground(ctx, '#F7F9F5', noiseImg, 0.1);
   ctx.save(); ctx.fillStyle = 'rgba(50, 80, 50, 0.04)'; ctx.beginPath(); ctx.moveTo(CANVAS_W, 100); ctx.lineTo(CANVAS_W - 300, 400); ctx.lineTo(CANVAS_W, 700); ctx.fill(); ctx.restore();
-  await drawStandardHeader(env, '#555');
-  if (glyphImg) {
-    ctx.save(); ctx.strokeStyle = 'rgba(0,0,0,0.08)'; ctx.beginPath(); ctx.arc(CANVAS_W/2, 650, 450, 0, Math.PI*2); ctx.stroke(); ctx.restore();
-    drawFloatingInkGlyph(ctx, glyphImg, (CANVAS_W-650)/2, 325, 650);
-    drawRedSeal(ctx, input.glyph.simplified || '', CANVAS_W/2 + 220, 850, 90, '#C02C38');
-  }
-  const y = 1300; ctx.save(); ctx.textAlign = 'center'; ctx.fillStyle = '#333';
-  ctx.font = "700 36px 'Noto Serif SC', serif"; ctx.fillText(`《${input.glyph.source}》 · 第${input.glyph.index}字`, CANVAS_W/2, y);
-  ctx.font = "400 100px 'ZCOOL XiaoWei', serif"; ctx.fillText(`${input.dayLabel} · ${input.caption}`, CANVAS_W/2, y + 150); ctx.restore();
-  await drawFooterQR(env, CANVAS_W - 192, CANVAS_H - 180, '#333');
+  await drawStandardHeader(env, '#555'); if (glyphImg) { ctx.save(); ctx.strokeStyle = 'rgba(0,0,0,0.08)'; ctx.beginPath(); ctx.arc(CANVAS_W/2, 650, 450, 0, Math.PI*2); ctx.stroke(); ctx.restore(); drawFloatingInkGlyph(ctx, glyphImg, (CANVAS_W-650)/2, 325, 650); drawRedSeal(ctx, input.glyph.simplified || '', CANVAS_W/2 + 220, 850, 90, '#C02C38'); }
+  drawStandardFooter(env, 1320, '#333'); await drawFooterQR(env, CANVAS_W - 192, CANVAS_H - 180, '#333');
 }
 
-// --- MAIN EXPORTS ---
+// --- MAIN ENTRYPOINT & EXPORTS ---
 
 export async function renderPosterPng(input: PosterInput, options: RenderPosterOptions = {}) {
   const canvas = document.createElement('canvas');
@@ -382,14 +331,23 @@ export async function renderNewYearConceptPng(id: string, options: RenderPosterO
   ctx.font = "400 64px 'Ma Shan Zheng', cursive"; const titleChars = Array.from(info.title); let curY = padding + 20; for (const char of titleChars) { ctx.fillText(char, SIZE - padding - 40, curY); curY += 70; }
   ctx.font = "400 36px 'Ma Shan Zheng', cursive"; const textChars = Array.from(info.text); let textX = SIZE - padding - 140, textY = padding + 20;
   for (const char of textChars) { if (textY + 40 > SIZE - padding - 60) { textX -= 80; textY = padding + 20; } ctx.fillText(char, textX, textY); textY += 48; }
+
+  // --- 手札落款：双列竖排 ---
+  ctx.globalAlpha = 1;
+  const footerX = padding + 20;
   const logoImg_concept = await loadBrandLogo().catch(() => null);
-  if (logoImg_concept) { ctx.save(); ctx.globalAlpha = 0.8; drawContainImage(ctx, logoImg_concept, padding + 20, SIZE - padding - 100, 64, 64); ctx.restore(); }
-  ctx.save(); ctx.textAlign = 'left'; ctx.fillStyle = '#1A1A1A'; ctx.font = "900 32px 'Noto Serif SC', serif"; ctx.fillText(INKGRID_BRAND_CN, padding + 100, SIZE - padding - 75);
-  ctx.font = "600 20px 'Noto Serif SC', serif"; ctx.fillStyle = '#666'; ctx.fillText(INKGRID_SLOGAN_CN, padding + 100, SIZE - padding - 40); ctx.restore();
+  if (logoImg_concept) { ctx.save(); ctx.globalAlpha = 0.8; drawContainImage(ctx, logoImg_concept, footerX, SIZE - padding - 100, 64, 64); ctx.restore(); }
+  ctx.save(); ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  ctx.font = "900 36px 'Noto Serif SC', serif"; let brandY = SIZE - padding - 220;
+  for (const c of INKGRID_BRAND_CN) { ctx.fillText(c, footerX + 32, brandY); brandY += 45; }
+  ctx.font = "600 36px 'Noto Serif SC', serif"; ctx.fillStyle = '#666'; let sloganY = padding + 20;
+  for (const c of INKGRID_SLOGAN_CN) { ctx.fillText(c, footerX - 20, sloganY); sloganY += 45; }
+  ctx.restore();
+
   const blob = await canvasToBlob(canvas); return { blob, width: SIZE, height: SIZE };
 }
 
-// --- LEGACY UTILS ---
+// --- LEGACY ---
 function drawFolioBase(ctx: any, n: any) { ctx.fillStyle = '#F6F1E7'; ctx.fillRect(0,0,CANVAS_W,CANVAS_H); }
 function drawWashBase(ctx: any, n: any) { ctx.fillStyle = '#F7F2E9'; ctx.fillRect(0,0,CANVAS_W,CANVAS_H); }
 function drawMinimalBase(ctx: any, n: any) { ctx.fillStyle = '#FFF'; ctx.fillRect(0,0,CANVAS_W,CANVAS_H); }
@@ -399,4 +357,3 @@ async function drawCharWash(ctx: any, data: any) { ctx.font="900 144px serif"; c
 async function drawSteleWash(ctx: any, stele: any) { ctx.font="900 104px serif"; ctx.fillText(stele.name,72,300); }
 async function drawCharMinimal(ctx: any, data: any) { ctx.font="900 160px serif"; ctx.fillText(data.simplified||'',72,540); }
 async function drawSteleMinimal(ctx: any, stele: any) { ctx.font="900 96px serif"; ctx.fillText(stele.name,72,300); }
-async function drawBrandHeaderLegacy(ctx: any, x: number, y: number) { ctx.font="900 56px serif"; ctx.fillText(INKGRID_BRAND_CN,x+78,y+52); }
