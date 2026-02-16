@@ -1143,16 +1143,16 @@ function MobileInkFlowPosterGallery({
     }
 
     const yearLabel = '馬年';
-    const specs = [
-      { id: 'ny_01', dayLabel: '初一', caption: '拜歲迎春', glyph: '年', date: '2026-02-17', lunarDateStr: '丙午年 · 正月 · 初一', story: '开门见年，万象更新。秦篆古意，共贺新禧。', index: 40, source: '嶧山刻石' },
-      { id: 'ny_02', dayLabel: '初二', caption: '回門團圓', glyph: '家', date: '2026-02-18', lunarDateStr: '丙午年 · 正月 · 初二', story: '归宁省亲，心系一家。信笔家书，纸短情长。', index: 114, source: '嶧山刻石' },
-      { id: 'ny_03', dayLabel: '初三', caption: '赤口慎言', glyph: '止', date: '2026-02-19', lunarDateStr: '丙午年 · 正月 · 初三', story: '赤口安坐，知止守静。读帖品墨，神游金石。', index: 108, source: '嶧山刻石' },
-      { id: 'ny_04', dayLabel: '初四', caption: '迎灶納福', glyph: '惠', date: '2026-02-20', lunarDateStr: '丙午年 · 正月 · 初四', story: '迎灶接福，天降恩惠。烟火人间，岁岁平安。', index: 56, source: '嶧山刻石' },
-      { id: 'ny_05', dayLabel: '初五', caption: '破五迎財', glyph: '利', date: '2026-02-21', lunarDateStr: '丙午年 · 正月 · 初五', story: '破五迎财，万事顺利。金石拓片，刻录吉祥。', index: 129, source: '嶧山刻石' },
-      { id: 'ny_06', dayLabel: '初六', caption: '送窮出行', glyph: '泽', date: '2026-02-22', lunarDateStr: '丙午年 · 正月 · 初六', story: '送穷出行，广施润泽。行云流水，万路皆宽。', index: 130, source: '嶧山刻石' },
-      { id: 'ny_07', dayLabel: '初七', caption: '人日安康', glyph: '康', date: '2026-02-23', lunarDateStr: '丙午年 · 正月 · 初七', story: '人日安康，万物共生。竹影筛月，气清神和。', index: 127, source: '嶧山刻石' },
-      { id: 'ny_08', dayLabel: '大年三十', caption: '守歲迎新', glyph: '久', date: '2026-02-16', lunarDateStr: '乙巳年 · 腊月 · 二十九', story: '岁暮守夜，祈愿长久。墨迹如火，映照新岁。', index: 32, source: '嶧山刻石' },
-    ];
+        const specs = [
+          { id: 'ny_08', dayLabel: '除夕', caption: '守歲迎新', glyph: '久', date: '2026-02-16', lunarDateStr: '乙巳年 · 腊月 · 二十九', story: '岁暮守夜，祈愿长久。墨迹如火，映照新岁。', index: 32, source: '嶧山刻石' },
+          { id: 'ny_01', dayLabel: '初一', caption: '拜歲迎春', glyph: '年', date: '2026-02-17', lunarDateStr: '丙午年 · 正月 · 初一', story: '开门见年，万象更新。秦篆古意，共贺新禧。', index: 40, source: '嶧山刻石' },
+          { id: 'ny_02', dayLabel: '初二', caption: '回門團圓', glyph: '家', date: '2026-02-18', lunarDateStr: '丙午年 · 正月 · 初二', story: '归宁省亲，心系一家。信笔家书，纸短情长。', index: 114, source: '嶧山刻石' },
+          { id: 'ny_03', dayLabel: '初三', caption: '赤口慎言', glyph: '止', date: '2026-02-19', lunarDateStr: '丙午年 · 正月 · 初三', story: '赤口安坐，知止守静。读帖品墨，神游金石。', index: 108, source: '嶧山刻石' },
+          { id: 'ny_04', dayLabel: '初四', caption: '迎灶納福', glyph: '惠', date: '2026-02-20', lunarDateStr: '丙午年 · 正月 · 初四', story: '迎灶接福，天降恩惠。烟火人间，岁岁平安。', index: 56, source: '嶧山刻石' },
+          { id: 'ny_05', dayLabel: '初五', caption: '破五迎財', glyph: '利', date: '2026-02-21', lunarDateStr: '丙午年 · 正月 · 初五', story: '破五迎财，万事顺利。金石拓片，刻录吉祥。', index: 129, source: '嶧山刻石' },
+          { id: 'ny_06', dayLabel: '初六', caption: '送窮出行', glyph: '泽', date: '2026-02-22', lunarDateStr: '丙午年 · 正月 · 初六', story: '送穷出行，广施润泽。行云流水，万路皆宽。', index: 130, source: '嶧山刻石' },
+          { id: 'ny_07', dayLabel: '初七', caption: '人日安康', glyph: '康', date: '2026-02-23', lunarDateStr: '丙午年 · 正月 · 初七', story: '人日安康，万物共生。竹影筛月，气清神和。', index: 127, source: '嶧山刻石' },
+        ];
 
     return specs
       .map((s) => {
