@@ -340,10 +340,11 @@ async function drawSceneNY02_Home(env: SceneEnv) {
 }
 async function drawSceneNY03_Quiet(env: SceneEnv) {
   const { ctx, noiseImg, glyphImg, input } = env; drawTextureBackground(ctx, '#E0E5E5', noiseImg, 0.12);
-  const sW = 600, sH = 1200, sX = (CANVAS_W - sW) / 2, sY = 320;
+  // Reduce scroll height so footer text doesn't overlap.
+  const sW = 600, sH = 880, sX = (CANVAS_W - sW) / 2, sY = 320;
   ctx.save(); ctx.fillStyle = '#C0C8C8'; ctx.shadowColor = 'rgba(0,0,0,0.2)'; ctx.fillRect(sX - 30, sY - 30, sW + 60, sH + 60); ctx.fillStyle = '#F7F9FA'; ctx.fillRect(sX, sY, sW, sH); ctx.restore();
   await drawStandardHeader(env, '#2F4F4F'); if (glyphImg) { drawFloatingInkGlyph(ctx, glyphImg, (CANVAS_W-520)/2, sY + 60, 520); drawRedSeal(ctx, input.glyph.simplified || '', sX + sW - 80, sY + 100, 90); }
-  drawStandardFooter(env, sY + 680, '#2F2F2F');
+  drawStandardFooter(env, sY + sH + 90, '#2F2F2F');
   ctx.save(); ctx.font = "600 28px 'Noto Serif SC', serif"; ctx.fillStyle = '#2F4F4F'; ctx.fillText(input.lunarDateStr || '', 72, CANVAS_H - 100); ctx.restore();
   await drawFooterQR(env, CANVAS_W - 192, CANVAS_H - 180, '#2F4F4F');
 }
@@ -491,6 +492,192 @@ export async function renderNewYearConceptPng(id: string, options: RenderPosterO
   ctx.restore();
 
   const blob = await canvasToBlob(canvas); return { blob, width: SIZE, height: SIZE };
+}
+
+/**
+ * New Year Story Card (1:1) - Folklore story under the concept note.
+ */
+export async function renderNewYearStoryPng(input: NewYearPosterInput, options: RenderPosterOptions = {}) {
+  const SIZE = 1080;
+  const scale = normalizeScale(options.scale);
+  const requestedPixelRatio = normalizePixelRatio(options.pixelRatio);
+
+  const tones: Record<string, string> = {
+    ny_08: '#F9F4E8',
+    ny_01: '#FDF6E3',
+    ny_02: '#FFF0E6',
+    ny_03: '#F5F5F0',
+    ny_04: '#F9F4E8',
+    ny_05: '#FDF6E3',
+    ny_06: '#FFF0E6',
+    ny_07: '#F5F5F0',
+  };
+  const tone = tones[String(input.id || '')] || tones.ny_01;
+
+  const glyphChar = String(input.glyph?.simplified || '').trim().slice(0, 1);
+  const caption = String(input.caption || '').trim();
+  const dayLabel = String(input.dayLabel || '').trim();
+  const story = String(input.story || '').replace(/\s+/g, '').trim() || '字里有年俗，年俗里有字。';
+  const title = `${glyphChar}${caption}`.trim() || caption || '字与年俗';
+
+  const [noiseImg, logoImg, glyphImg] = await Promise.all([
+    loadImage('/noise.png').catch(() => null),
+    loadBrandLogo().catch(() => null),
+    input.glyph?.image ? loadImage(input.glyph.image).catch(() => null) : Promise.resolve(null),
+  ]);
+
+  let lastErr: unknown = null;
+  for (const pixelRatio of pixelRatiosToTry(requestedPixelRatio)) {
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(SIZE * pixelRatio * scale);
+      canvas.height = Math.round(SIZE * pixelRatio * scale);
+
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('Failed to get 2D context');
+      ctx.scale(pixelRatio * scale, pixelRatio * scale);
+
+      ctx.fillStyle = tone; ctx.fillRect(0, 0, SIZE, SIZE);
+      if (noiseImg) {
+        const p = ctx.createPattern(noiseImg, 'repeat');
+        if (p) {
+          ctx.save();
+          ctx.globalAlpha = 0.12;
+          ctx.globalCompositeOperation = 'multiply';
+          ctx.fillStyle = p;
+          ctx.fillRect(0, 0, SIZE, SIZE);
+          ctx.restore();
+        }
+      }
+
+      const padding = 100;
+      ctx.save();
+      ctx.strokeStyle = 'rgba(192, 44, 56, 0.12)';
+      ctx.lineWidth = 1.5;
+      for (let x = padding; x <= SIZE - padding; x += 80) {
+        ctx.beginPath();
+        ctx.moveTo(x, padding);
+        ctx.lineTo(x, SIZE - padding);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // Watermark glyph (prefer actual seal glyph image)
+      if (glyphImg) {
+        ctx.save();
+        ctx.globalAlpha = 0.08;
+        ctx.translate(SIZE / 2, SIZE / 2 + 30);
+        ctx.rotate(-0.08);
+        ctx.filter = 'contrast(1.15) brightness(0.95)';
+        drawContainImage(ctx, glyphImg, -360, -360, 720, 720);
+        ctx.restore();
+      } else if (glyphChar) {
+        ctx.save();
+        ctx.globalAlpha = 0.06;
+        ctx.fillStyle = '#1A1A1A';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = "900 520px 'Noto Serif SC', serif";
+        ctx.fillText(glyphChar, SIZE / 2, SIZE / 2 + 40);
+        ctx.restore();
+      }
+
+      const header = [String(input.yearLabel || '').trim(), dayLabel].filter(Boolean).join(' · ');
+      if (header) {
+        ctx.save();
+        ctx.fillStyle = '#1A1A1A';
+        ctx.globalAlpha = 0.55;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+        ctx.font = "700 26px 'Noto Serif SC', serif";
+        ctx.fillText(header, padding, 56);
+        ctx.restore();
+      }
+
+      if (glyphChar) drawRedSeal(ctx, glyphChar, padding + 60, padding + 150, 96, '#C02C38');
+
+      try { await document.fonts.load("400 40px 'Ma Shan Zheng'"); } catch (e) {}
+      try { await document.fonts.load("600 36px 'Noto Serif SC'"); } catch (e) {}
+
+      // Title (vertical)
+      ctx.save();
+      ctx.fillStyle = '#1A1A1A';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.font = "400 64px 'Ma Shan Zheng', cursive";
+      let titleY = padding + 20;
+      for (const ch of Array.from(title)) {
+        ctx.fillText(ch, SIZE - padding - 40, titleY);
+        titleY += 70;
+      }
+      ctx.restore();
+
+      // Story (vertical)
+      ctx.save();
+      ctx.fillStyle = '#1A1A1A';
+      ctx.globalAlpha = 0.9;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.font = "600 36px 'Noto Serif SC', serif";
+      const storyChars = Array.from(story);
+      let textX = SIZE - padding - 140;
+      let textY = padding + 20;
+      for (const ch of storyChars) {
+        if (textY + 42 > SIZE - padding - 60) {
+          textX -= 80;
+          textY = padding + 20;
+        }
+        ctx.fillText(ch, textX, textY);
+        textY += 50;
+      }
+      ctx.restore();
+
+      // Signature (left)
+      const footerX = padding + 20;
+      if (logoImg) {
+        ctx.save();
+        ctx.globalAlpha = 0.8;
+        drawContainImage(ctx, logoImg, footerX, SIZE - padding - 100, 64, 64);
+        ctx.restore();
+      }
+      ctx.save();
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillStyle = '#1A1A1A';
+      ctx.font = "900 36px 'Noto Serif SC', serif";
+      let brandY = SIZE - padding - 220;
+      for (const c of INKGRID_BRAND_CN) {
+        ctx.fillText(c, footerX + 32, brandY);
+        brandY += 45;
+      }
+      ctx.font = "600 36px 'Noto Serif SC', serif";
+      ctx.fillStyle = '#666';
+      let tagY = padding + 20;
+      for (const c of '字与年俗') {
+        ctx.fillText(c, footerX - 20, tagY);
+        tagY += 45;
+      }
+      ctx.restore();
+
+      const lunar = String(input.lunarDateStr || '').trim();
+      if (lunar) {
+        ctx.save();
+        ctx.fillStyle = '#666';
+        ctx.globalAlpha = 0.65;
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'bottom';
+        ctx.font = "600 26px 'Noto Serif SC', serif";
+        ctx.fillText(lunar, SIZE - padding, SIZE - padding + 6);
+        ctx.restore();
+      }
+
+      const blob = await canvasToBlob(canvas);
+      return { blob, width: SIZE, height: SIZE };
+    } catch (err) {
+      lastErr = err;
+    }
+  }
+  throw lastErr || new Error('Failed to render New Year story card');
 }
 
 // --- BASIC POSTERS ---

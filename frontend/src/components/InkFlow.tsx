@@ -4,7 +4,7 @@ import { X, BookOpen, Info, Share2, Scroll, Sparkles, MapPin, Download, ChevronL
 import Logo from './Logo';
 import { useMediaQuery } from '../utils/useMediaQuery';
 import MobilePosterModal from './MobilePosterModal';
-import { renderCuratedCollagePng, renderNewYearPosterPng, renderNewYearConceptPng } from '../utils/poster';
+import { renderCuratedCollagePng, renderNewYearPosterPng, renderNewYearConceptPng, renderNewYearStoryPng } from '../utils/poster';
 
 
 interface SteleKnowledge {
@@ -1224,10 +1224,10 @@ function MobileInkFlowPosterGallery({
       for (const p of newYearPosters) {
         try {
           console.log('[InkFlow] Rendering preview for:', p.id);
-          const res = await renderNewYearPosterPng(
-            { id: p.id, yearLabel: p.yearLabel, dayLabel: p.dayLabel, caption: p.caption, date: p.date, lunarDateStr: p.lunarDateStr, glyph: { simplified: p.glyph.simplified, image: p.glyph.image, index: p.glyph.index, source: p.glyph.source } },
-            { scale: 0.42, pixelRatio: 2 }
-          );
+           const res = await renderNewYearPosterPng(
+            { id: p.id, yearLabel: p.yearLabel, dayLabel: p.dayLabel, caption: p.caption, date: p.date, lunarDateStr: p.lunarDateStr, story: p.story, glyph: { simplified: p.glyph.simplified, image: p.glyph.image, index: p.glyph.index, source: p.glyph.source } },
+             { scale: 0.42, pixelRatio: 2 }
+           );
           if (cancelled) {
             console.log('[InkFlow] Render cancelled for:', p.id);
             return;
@@ -1629,6 +1629,7 @@ function MobileNewYearPosterModal({
     caption: string;
     date?: string;
     lunarDateStr?: string;
+    story?: string;
     glyph: { simplified?: string; image: string; index?: number; source?: string };
   };
   onClose: () => void;
@@ -1637,6 +1638,7 @@ function MobileNewYearPosterModal({
   const [tip, setTip] = useState<string | null>(null);
   const [loadingIndex, setLoadingIndex] = useState(0);
   const [conceptUrl, setConceptUrl] = useState<string | null>(null);
+  const [storyUrl, setStoryUrl] = useState<string | null>(null);
 
   const loadingNotes = useMemo(
     () =>
@@ -1661,21 +1663,66 @@ function MobileNewYearPosterModal({
     setLoadingIndex(Math.floor(Math.random() * loadingNotes.length));
     
     let cancelled = false;
-    const runConcept = async () => {
+    const urls: string[] = [];
+    setConceptUrl(null);
+    setStoryUrl(null);
+
+    const runNotes = async () => {
       try {
-        const res = await renderNewYearConceptPng(poster.id, { pixelRatio: 2 });
+        const [conceptRes, storyRes] = await Promise.all([
+          renderNewYearConceptPng(poster.id, { pixelRatio: 2 }),
+          renderNewYearStoryPng(
+            {
+              id: poster.id,
+              yearLabel: poster.yearLabel,
+              dayLabel: poster.dayLabel,
+              caption: poster.caption,
+              date: poster.date,
+              lunarDateStr: poster.lunarDateStr,
+              story: poster.story,
+              glyph: {
+                simplified: poster.glyph.simplified,
+                image: poster.glyph.image,
+                index: poster.glyph.index,
+                source: poster.glyph.source,
+              },
+            },
+            { pixelRatio: 2 }
+          ),
+        ]);
         if (cancelled) return;
-        setConceptUrl(URL.createObjectURL(res.blob));
+
+        const conceptObjectUrl = URL.createObjectURL(conceptRes.blob);
+        urls.push(conceptObjectUrl);
+        setConceptUrl(conceptObjectUrl);
+
+        const storyObjectUrl = URL.createObjectURL(storyRes.blob);
+        urls.push(storyObjectUrl);
+        setStoryUrl(storyObjectUrl);
       } catch (err) {
-        console.error('Failed to generate concept card', err);
+        console.error('Failed to generate note cards', err);
       }
     };
-    void runConcept();
+    void runNotes();
 
     return () => {
       cancelled = true;
+      for (const u of urls) URL.revokeObjectURL(u);
     };
-  }, [isOpen, poster.id]);
+  }, [
+    isOpen,
+    poster.caption,
+    poster.date,
+    poster.dayLabel,
+    poster.glyph.image,
+    poster.glyph.index,
+    poster.glyph.simplified,
+    poster.glyph.source,
+    poster.id,
+    poster.lunarDateStr,
+    poster.story,
+    poster.yearLabel,
+  ]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -1687,26 +1734,37 @@ function MobileNewYearPosterModal({
     return () => window.clearInterval(timer);
   }, [isOpen, isBusy, loadingNotes.length]);
 
-  const handleDownload = async (kind: 'poster' | 'concept') => {
+  const handleDownload = async (kind: 'poster' | 'concept' | 'story') => {
     setIsBusy(true);
     setTip(null);
     try {
-      const res = kind === 'poster' 
-        ? await renderNewYearPosterPng({
-            id: poster.id, // 核心修复：必须传入 ID
-            yearLabel: poster.yearLabel,
-            dayLabel: poster.dayLabel,
-            caption: poster.caption,
-            date: poster.date,
-            lunarDateStr: poster.lunarDateStr,
-            glyph: { simplified: poster.glyph.simplified, image: poster.glyph.image, index: poster.glyph.index, source: poster.glyph.source },
-          }, { pixelRatio: 3 })
-        : await renderNewYearConceptPng(poster.id, { pixelRatio: 3 });
+      const baseInput = {
+        id: poster.id,
+        yearLabel: poster.yearLabel,
+        dayLabel: poster.dayLabel,
+        caption: poster.caption,
+        date: poster.date,
+        lunarDateStr: poster.lunarDateStr,
+        story: poster.story,
+        glyph: {
+          simplified: poster.glyph.simplified,
+          image: poster.glyph.image,
+          index: poster.glyph.index,
+          source: poster.glyph.source,
+        },
+      };
+
+      const res =
+        kind === 'poster'
+          ? await renderNewYearPosterPng(baseInput, { pixelRatio: 3 })
+          : kind === 'story'
+            ? await renderNewYearStoryPng(baseInput, { pixelRatio: 3 })
+            : await renderNewYearConceptPng(poster.id, { pixelRatio: 3 });
 
       const url = URL.createObjectURL(res.blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = kind === 'poster' ? filename : `note_${filename}`;
+      a.download = kind === 'poster' ? filename : kind === 'story' ? `story_${filename}` : `note_${filename}`;
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -1802,8 +1860,29 @@ function MobileNewYearPosterModal({
                   </button>
                 </div>
 
+                {/* 年俗故事预览 */}
+                <div className="space-y-4">
+                  <div className="text-[10px] font-black tracking-[0.4em] text-stone-500 uppercase px-1">年俗故事</div>
+                  <div className="rounded-[1.5rem] bg-white/5 border border-white/10 shadow-2xl overflow-hidden">
+                    <div className="relative w-full aspect-square bg-black/20">
+                      {storyUrl ? (
+                        <img src={storyUrl} alt="story" className="absolute inset-0 w-full h-full object-cover" />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center text-stone-500 text-xs font-serif">正在写年俗故事…</div>
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleDownload('story')}
+                    disabled={isBusy || !storyUrl}
+                    className="w-full flex items-center justify-center gap-3 px-4 py-4 rounded-[1.25rem] bg-white/10 border border-white/10 text-stone-100 text-[12px] font-black tracking-[0.25em] active:scale-95 transition disabled:opacity-40"
+                  >
+                    <Download size={16} /> 保存年俗故事
+                  </button>
+                </div>
+
                 {tip ? <div className="text-center text-[12px] font-serif text-stone-300">{tip}</div> : null}
-                <div className="text-center text-[11px] font-serif text-stone-300 opacity-40 pb-10">一张为墨，一张为记。两份珍藏，共贺新岁。</div>
+                <div className="text-center text-[11px] font-serif text-stone-300 opacity-40 pb-10">一张为墨，一张为记，一张为俗。三份珍藏，共贺新岁。</div>
               </div>
             </div>
           </motion.div>
