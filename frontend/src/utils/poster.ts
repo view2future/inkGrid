@@ -77,18 +77,138 @@ const CANVAS_H = 1920;
 
 // --- UTILS (Hoisted) ---
 
-function loadImage(url: string) {
+function loadImage(url: string, timeoutMs = 15000) {
   return new Promise<HTMLImageElement>((resolve, reject) => {
-    const img = new Image(); img.decoding = 'async'; img.crossOrigin = 'anonymous';
-    img.onload = () => resolve(img); img.onerror = () => reject(new Error(`Failed to load image: ${url}`));
+    const img = new Image();
+    img.decoding = 'async';
+    img.crossOrigin = 'anonymous';
+
+    let settled = false;
+    let timer: number | null = null;
+
+    const clear = () => {
+      if (timer !== null) window.clearTimeout(timer);
+      timer = null;
+      img.onload = null;
+      img.onerror = null;
+    };
+
+    const resolveOnce = (value: HTMLImageElement) => {
+      if (settled) return;
+      settled = true;
+      clear();
+      resolve(value);
+    };
+
+    const rejectOnce = (err: unknown) => {
+      if (settled) return;
+      settled = true;
+      clear();
+      reject(err);
+    };
+
+    img.onload = () => resolveOnce(img);
+    img.onerror = () => rejectOnce(new Error(`Failed to load image: ${url}`));
+
+    if (typeof timeoutMs === 'number' && Number.isFinite(timeoutMs) && timeoutMs > 0) {
+      timer = window.setTimeout(() => {
+        rejectOnce(new Error(`Timed out loading image: ${url}`));
+      }, Math.floor(timeoutMs));
+    }
+
     img.src = url;
   });
 }
 
+function dataUrlToBlob(dataUrl: string) {
+  const comma = dataUrl.indexOf(',');
+  const header = comma >= 0 ? dataUrl.slice(0, comma) : '';
+  const body = comma >= 0 ? dataUrl.slice(comma + 1) : dataUrl;
+  const mimeMatch = header.match(/^data:([^;]+)/i);
+  const mime = mimeMatch?.[1] || 'application/octet-stream';
+  const isBase64 = /;base64/i.test(header);
+  const binary = isBase64 ? atob(body) : decodeURIComponent(body);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return new Blob([bytes], { type: mime });
+}
+
 function canvasToBlob(canvas: HTMLCanvasElement) {
   return new Promise<Blob>((resolve, reject) => {
-    canvas.toBlob((blob) => { if (!blob) { reject(new Error('Failed to create blob')); return; } resolve(blob); }, 'image/png');
+    const toBlob = (canvas as any)?.toBlob as undefined | ((cb: (b: Blob | null) => void, type?: string) => void);
+    let settled = false;
+    let timer: number | null = null;
+
+    const clear = () => {
+      if (timer !== null) window.clearTimeout(timer);
+      timer = null;
+    };
+
+    const resolveOnce = (blob: Blob) => {
+      if (settled) return;
+      settled = true;
+      clear();
+      resolve(blob);
+    };
+
+    const rejectOnce = (err: unknown) => {
+      if (settled) return;
+      settled = true;
+      clear();
+      reject(err);
+    };
+
+    const fallback = (primaryErr?: unknown) => {
+      try {
+        resolveOnce(dataUrlToBlob(canvas.toDataURL('image/png')));
+      } catch (fallbackErr) {
+        rejectOnce(primaryErr || fallbackErr);
+      }
+    };
+
+    if (typeof toBlob !== 'function') {
+      fallback(new Error('canvas.toBlob is not available'));
+      return;
+    }
+
+    timer = window.setTimeout(() => {
+      fallback(new Error('canvas.toBlob timeout'));
+    }, 8000);
+
+    try {
+      toBlob.call(
+        canvas,
+        (blob) => {
+          if (blob) resolveOnce(blob);
+          else fallback(new Error('canvas.toBlob returned null'));
+        },
+        'image/png'
+      );
+    } catch (err) {
+      fallback(err);
+    }
   });
+}
+
+function normalizeScale(scale: number | undefined) {
+  if (typeof scale !== 'number' || !Number.isFinite(scale) || scale <= 0) return 1;
+  return Math.max(0.25, Math.min(1, scale));
+}
+
+function normalizePixelRatio(pixelRatio: number | undefined) {
+  if (typeof pixelRatio !== 'number' || !Number.isFinite(pixelRatio) || pixelRatio <= 0) return 2;
+  return Math.max(0.5, Math.min(4, pixelRatio));
+}
+
+function pixelRatiosToTry(requestedPixelRatio: number) {
+  const r = normalizePixelRatio(requestedPixelRatio);
+  const list = [r];
+  if (r > 2) list.push(2);
+  if (r > 1.5) list.push(1.5);
+  if (r > 1) list.push(1);
+  list.push(0.75);
+  list.push(0.5);
+  return Array.from(new Set(list));
 }
 
 function drawContainImage(ctx: CanvasRenderingContext2D, img: HTMLImageElement, x: number, y: number, w: number, h: number) {
@@ -255,16 +375,29 @@ async function drawSceneNY07_Human(env: SceneEnv) {
 // --- MAIN ENTRYPOINT & EXPORTS ---
 
 export async function renderPosterPng(input: PosterInput, options: RenderPosterOptions = {}) {
-  const canvas = document.createElement('canvas');
-  const scale = typeof options.scale === 'number' ? Math.max(0.25, Math.min(1, options.scale)) : 1;
-  const pixelRatio = options.pixelRatio || 2;
-  canvas.width = Math.round(CANVAS_W * pixelRatio * scale); canvas.height = Math.round(CANVAS_H * pixelRatio * scale);
-  const ctx = canvas.getContext('2d')!; ctx.scale(pixelRatio * scale, pixelRatio * scale);
+  const scale = normalizeScale(options.scale);
+  const requestedPixelRatio = normalizePixelRatio(options.pixelRatio);
   const noiseImg = await loadImage('/noise.png').catch(() => null);
-  if (input.template === 'folio') { drawFolioBase(ctx, noiseImg); if (input.kind === 'char') await drawCharFolio(ctx, input.data); else await drawSteleFolio(ctx, input.data); }
-  else if (input.template === 'wash') { drawWashBase(ctx, noiseImg); if (input.kind === 'char') await drawCharWash(ctx, input.data); else await drawSteleWash(ctx, input.data); }
-  else if (input.template === 'minimal') { drawMinimalBase(ctx, noiseImg); if (input.kind === 'char') await drawCharMinimal(ctx, input.data); else await drawSteleMinimal(ctx, input.data); }
-  const blob = await canvasToBlob(canvas); return { blob, width: CANVAS_W, height: CANVAS_H };
+
+  let lastErr: unknown = null;
+  for (const pixelRatio of pixelRatiosToTry(requestedPixelRatio)) {
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(CANVAS_W * pixelRatio * scale); canvas.height = Math.round(CANVAS_H * pixelRatio * scale);
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('Failed to get 2D context');
+      ctx.scale(pixelRatio * scale, pixelRatio * scale);
+
+      if (input.template === 'folio') { drawFolioBase(ctx, noiseImg); if (input.kind === 'char') await drawCharFolio(ctx, input.data); else await drawSteleFolio(ctx, input.data); }
+      else if (input.template === 'wash') { drawWashBase(ctx, noiseImg); if (input.kind === 'char') await drawCharWash(ctx, input.data); else await drawSteleWash(ctx, input.data); }
+      else if (input.template === 'minimal') { drawMinimalBase(ctx, noiseImg); if (input.kind === 'char') await drawCharMinimal(ctx, input.data); else await drawSteleMinimal(ctx, input.data); }
+
+      const blob = await canvasToBlob(canvas); return { blob, width: CANVAS_W, height: CANVAS_H };
+    } catch (err) {
+      lastErr = err;
+    }
+  }
+  throw lastErr || new Error('Failed to render poster');
 }
 
 export async function renderCuratedCollagePng(input: CuratedCollageInput, options: RenderPosterOptions = {}) {
@@ -286,18 +419,31 @@ export async function renderCuratedCollagePng(input: CuratedCollageInput, option
 
 export async function renderNewYearPosterPng(input: NewYearPosterInput, options: RenderPosterOptions = {}) {
   try { await document.fonts.load("900 120px 'ZCOOL XiaoWei'"); } catch(e) {}
-  const canvas = document.createElement('canvas');
-  const scale = options.scale || 1; const pixelRatio = options.pixelRatio || 2;
-  canvas.width = Math.round(CANVAS_W * pixelRatio * scale); canvas.height = Math.round(CANVAS_H * pixelRatio * scale);
-  const ctx = canvas.getContext('2d')!; ctx.scale(pixelRatio * scale, pixelRatio * scale);
+  const scale = normalizeScale(options.scale);
+  const requestedPixelRatio = normalizePixelRatio(options.pixelRatio);
   const [noiseImg, logoImg, glyphImg] = await Promise.all([loadImage('/noise.png').catch(() => null), loadBrandLogo().catch(() => null), loadImage(input.glyph.image).catch(() => null)]);
-  const env: SceneEnv = { ctx, input, noiseImg, logoImg, glyphImg };
-  switch (input.id) {
-    case 'ny_08': await drawSceneNY08_Eve(env); break; case 'ny_01': await drawSceneNY01_Spring(env); break; case 'ny_02': await drawSceneNY02_Home(env); break; case 'ny_03': await drawSceneNY03_Quiet(env); break;
-    case 'ny_04': await drawSceneNY04_Stove(env); break; case 'ny_05': await drawSceneNY05_Wealth(env); break; case 'ny_06': await drawSceneNY06_Travel(env); break; case 'ny_07': await drawSceneNY07_Human(env); break;
-    default: await drawSceneNY01_Spring(env); break;
+
+  let lastErr: unknown = null;
+  for (const pixelRatio of pixelRatiosToTry(requestedPixelRatio)) {
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(CANVAS_W * pixelRatio * scale); canvas.height = Math.round(CANVAS_H * pixelRatio * scale);
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('Failed to get 2D context');
+      ctx.scale(pixelRatio * scale, pixelRatio * scale);
+
+      const env: SceneEnv = { ctx, input, noiseImg, logoImg, glyphImg };
+      switch (input.id) {
+        case 'ny_08': await drawSceneNY08_Eve(env); break; case 'ny_01': await drawSceneNY01_Spring(env); break; case 'ny_02': await drawSceneNY02_Home(env); break; case 'ny_03': await drawSceneNY03_Quiet(env); break;
+        case 'ny_04': await drawSceneNY04_Stove(env); break; case 'ny_05': await drawSceneNY05_Wealth(env); break; case 'ny_06': await drawSceneNY06_Travel(env); break; case 'ny_07': await drawSceneNY07_Human(env); break;
+        default: await drawSceneNY01_Spring(env); break;
+      }
+      const blob = await canvasToBlob(canvas); return { blob, width: CANVAS_W, height: CANVAS_H };
+    } catch (err) {
+      lastErr = err;
+    }
   }
-  const blob = await canvasToBlob(canvas); return { blob, width: CANVAS_W, height: CANVAS_H };
+  throw lastErr || new Error('Failed to render New Year poster');
 }
 
 /**
@@ -347,13 +493,187 @@ export async function renderNewYearConceptPng(id: string, options: RenderPosterO
   const blob = await canvasToBlob(canvas); return { blob, width: SIZE, height: SIZE };
 }
 
-// --- LEGACY ---
-function drawFolioBase(ctx: any, n: any) { ctx.fillStyle = '#F6F1E7'; ctx.fillRect(0,0,CANVAS_W,CANVAS_H); }
-function drawWashBase(ctx: any, n: any) { ctx.fillStyle = '#F7F2E9'; ctx.fillRect(0,0,CANVAS_W,CANVAS_H); }
-function drawMinimalBase(ctx: any, n: any) { ctx.fillStyle = '#FFF'; ctx.fillRect(0,0,CANVAS_W,CANVAS_H); }
-async function drawCharFolio(ctx: any, data: any) { ctx.font="900 140px serif"; ctx.fillText(data.simplified||'',72,1220); }
-async function drawSteleFolio(ctx: any, stele: any) { ctx.font="900 96px serif"; ctx.fillText(stele.name,72,300); }
-async function drawCharWash(ctx: any, data: any) { ctx.font="900 144px serif"; ctx.fillText(data.simplified||'',72,1260); }
-async function drawSteleWash(ctx: any, stele: any) { ctx.font="900 104px serif"; ctx.fillText(stele.name,72,300); }
-async function drawCharMinimal(ctx: any, data: any) { ctx.font="900 160px serif"; ctx.fillText(data.simplified||'',72,540); }
-async function drawSteleMinimal(ctx: any, stele: any) { ctx.font="900 96px serif"; ctx.fillText(stele.name,72,300); }
+// --- BASIC POSTERS ---
+function drawFolioBase(ctx: CanvasRenderingContext2D, noiseImg: HTMLImageElement | null) {
+  drawTextureBackground(ctx, '#F6F1E7', noiseImg, 0.12);
+}
+function drawWashBase(ctx: CanvasRenderingContext2D, noiseImg: HTMLImageElement | null) {
+  drawTextureBackground(ctx, '#F7F2E9', noiseImg, 0.12);
+}
+function drawMinimalBase(ctx: CanvasRenderingContext2D, noiseImg: HTMLImageElement | null) {
+  drawTextureBackground(ctx, '#FFFFFF', noiseImg, 0.06);
+}
+
+type PosterTheme = { text: string; muted: string; accent: string };
+const THEME_DEFAULT: PosterTheme = { text: '#1A1A1A', muted: '#666666', accent: '#8B0000' };
+
+async function drawCharPoster(ctx: CanvasRenderingContext2D, data: PosterChar, theme: PosterTheme) {
+  const padding = 72;
+  const cardX = padding;
+  const cardY = 220;
+  const cardW = CANVAS_W - padding * 2;
+  const cardH = 980;
+
+  // Header
+  ctx.save();
+  ctx.fillStyle = theme.text; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+  ctx.font = "900 44px 'Noto Serif SC', serif";
+  ctx.fillText(INKGRID_BRAND_CN, padding, padding + 4);
+  ctx.globalAlpha = 0.6;
+  ctx.font = "600 24px 'Noto Serif SC', serif";
+  ctx.fillText(INKGRID_SLOGAN_CN, padding, padding + 58);
+  ctx.restore();
+
+  // Card background
+  ctx.save();
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.12)'; ctx.shadowBlur = 30; ctx.shadowOffsetY = 14;
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
+  roundRect(ctx, cardX, cardY, cardW, cardH, 54); ctx.fill();
+  ctx.restore();
+
+  // Glyph image
+  const glyphImg = await loadImage(data.image, 12000).catch(() => null);
+  if (glyphImg) {
+    const innerPad = 92;
+    const gx = cardX + innerPad;
+    const gy = cardY + innerPad;
+    const gw = cardW - innerPad * 2;
+    const gh = cardH - innerPad * 2;
+    ctx.save();
+    roundRect(ctx, gx, gy, gw, gh, 44); ctx.clip();
+    ctx.globalAlpha = 0.95;
+    drawContainImage(ctx, glyphImg, gx, gy, gw, gh);
+    ctx.restore();
+  }
+
+  // Seal mark
+  const sealChar = String(data.simplified || '').trim().slice(0, 1);
+  if (sealChar) {
+    drawRedSeal(ctx, sealChar, cardX + cardW - 92, cardY + 92, 120, theme.accent);
+  }
+
+  // Text block
+  let cursorY = cardY + cardH + 48;
+  const simplified = String(data.simplified || '').trim();
+  const pinyin = String(data.pinyin || '').trim();
+  const meaning = String(data.meaning || '').trim();
+
+  ctx.save();
+  ctx.fillStyle = theme.text; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+
+  if (simplified) {
+    ctx.font = "900 120px 'Noto Serif SC', serif";
+    ctx.fillText(simplified, padding, cursorY);
+  }
+  if (pinyin) {
+    ctx.globalAlpha = 0.7;
+    ctx.font = "600 34px 'Noto Serif SC', serif";
+    ctx.fillText(pinyin, padding + 170, cursorY + 56);
+    ctx.globalAlpha = 1;
+  }
+
+  cursorY += 160;
+  if (meaning) {
+    ctx.globalAlpha = 0.9;
+    ctx.font = "600 34px 'Noto Serif SC', serif";
+    const lines = wrapText(ctx, meaning, CANVAS_W - padding * 2);
+    drawLines(ctx, lines.slice(0, 3), padding, cursorY, 52);
+    ctx.globalAlpha = 1;
+  }
+  ctx.restore();
+
+  // Footer source
+  const footerBits = [
+    data.sourceTitle ? `《${data.sourceTitle}》` : '',
+    data.dynasty || '',
+    data.author || '',
+  ].filter(Boolean);
+  const footer = footerBits.join(' · ');
+  if (footer) {
+    ctx.save();
+    ctx.fillStyle = theme.muted; ctx.globalAlpha = 0.75;
+    ctx.font = "600 28px 'Noto Serif SC', serif";
+    ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+    ctx.fillText(footer, padding, CANVAS_H - padding);
+    ctx.restore();
+  }
+}
+
+async function drawStelePoster(ctx: CanvasRenderingContext2D, stele: PosterStele, theme: PosterTheme) {
+  const padding = 72;
+  const cardX = padding;
+  const cardY = 240;
+  const cardW = CANVAS_W - padding * 2;
+  const cardH = 1080;
+
+  // Header
+  ctx.save();
+  ctx.fillStyle = theme.text; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+  ctx.font = "900 44px 'Noto Serif SC', serif";
+  ctx.fillText(INKGRID_BRAND_CN, padding, padding + 4);
+  ctx.globalAlpha = 0.6;
+  ctx.font = "600 24px 'Noto Serif SC', serif";
+  ctx.fillText(INKGRID_SLOGAN_CN, padding, padding + 58);
+  ctx.restore();
+
+  // Card
+  ctx.save();
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.12)'; ctx.shadowBlur = 30; ctx.shadowOffsetY = 14;
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.70)';
+  roundRect(ctx, cardX, cardY, cardW, cardH, 54); ctx.fill();
+  ctx.restore();
+
+  const title = String(stele.name || '').trim();
+  const meta = [stele.dynasty, stele.author, stele.script_type].filter(Boolean).join(' · ');
+  const excerpt = String(stele.description || stele.content || '').replace(/\s+/g, ' ').trim();
+
+  ctx.save();
+  ctx.fillStyle = theme.text; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+
+  let cursorY = cardY + 72;
+  if (title) {
+    ctx.font = "900 72px 'Noto Serif SC', serif";
+    const lines = wrapText(ctx, title, cardW - 144);
+    drawLines(ctx, lines.slice(0, 2), cardX + 72, cursorY, 90);
+    cursorY += Math.min(2, lines.length) * 90 + 24;
+  }
+
+  if (meta) {
+    ctx.globalAlpha = 0.7;
+    ctx.font = "600 32px 'Noto Serif SC', serif";
+    ctx.fillText(meta, cardX + 72, cursorY);
+    ctx.globalAlpha = 1;
+    cursorY += 70;
+  }
+
+  if (excerpt) {
+    ctx.globalAlpha = 0.85;
+    ctx.font = "600 32px 'Noto Serif SC', serif";
+    const lines = wrapText(ctx, excerpt, cardW - 144);
+    drawLines(ctx, lines.slice(0, 10), cardX + 72, cursorY, 52);
+    ctx.globalAlpha = 1;
+  }
+  ctx.restore();
+
+  // Footer info
+  const footerBits = [
+    stele.location ? `现藏：${stele.location}` : '',
+    typeof stele.total_chars === 'number' ? `${stele.total_chars} 字` : '',
+  ].filter(Boolean);
+  const footer = footerBits.join(' · ');
+  if (footer) {
+    ctx.save();
+    ctx.fillStyle = theme.muted; ctx.globalAlpha = 0.75;
+    ctx.font = "600 28px 'Noto Serif SC', serif";
+    ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+    ctx.fillText(footer, padding, CANVAS_H - padding);
+    ctx.restore();
+  }
+}
+
+async function drawCharFolio(ctx: CanvasRenderingContext2D, data: PosterChar) { await drawCharPoster(ctx, data, THEME_DEFAULT); }
+async function drawCharWash(ctx: CanvasRenderingContext2D, data: PosterChar) { await drawCharPoster(ctx, data, THEME_DEFAULT); }
+async function drawCharMinimal(ctx: CanvasRenderingContext2D, data: PosterChar) { await drawCharPoster(ctx, data, THEME_DEFAULT); }
+async function drawSteleFolio(ctx: CanvasRenderingContext2D, stele: PosterStele) { await drawStelePoster(ctx, stele, THEME_DEFAULT); }
+async function drawSteleWash(ctx: CanvasRenderingContext2D, stele: PosterStele) { await drawStelePoster(ctx, stele, THEME_DEFAULT); }
+async function drawSteleMinimal(ctx: CanvasRenderingContext2D, stele: PosterStele) { await drawStelePoster(ctx, stele, THEME_DEFAULT); }

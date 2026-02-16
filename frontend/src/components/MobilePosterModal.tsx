@@ -104,16 +104,23 @@ export default function MobilePosterModal({
     if (!isOpen) return;
 
     let cancelled = false;
+    let watchdog: number | null = null;
     setIsBusy(true);
     setErrorText(null);
     setTip(null);
 
     const run = async () => {
+      watchdog = window.setTimeout(() => {
+        cancelled = true;
+        setErrorText('生成海报超时，请重试。');
+        setIsBusy(false);
+      }, 12000);
+
       try {
         const res =
           target.kind === 'char'
-            ? await renderPosterPng({ kind: 'char', template, data: target.data })
-            : await renderPosterPng({ kind: 'stele', template, data: target.data });
+            ? await renderPosterPng({ kind: 'char', template, data: target.data }, { pixelRatio: 1 })
+            : await renderPosterPng({ kind: 'stele', template, data: target.data }, { pixelRatio: 1 });
         if (cancelled) return;
 
         if (previewUrl) URL.revokeObjectURL(previewUrl);
@@ -122,8 +129,11 @@ export default function MobilePosterModal({
         setPreviewBlob(res.blob);
       } catch (err) {
         if (cancelled) return;
+        console.error('[MobilePosterModal] Failed to generate poster', err);
         setErrorText('生成海报失败，请稍后重试。');
       } finally {
+        if (watchdog !== null) window.clearTimeout(watchdog);
+        watchdog = null;
         if (!cancelled) setIsBusy(false);
       }
     };
@@ -131,6 +141,7 @@ export default function MobilePosterModal({
     run();
     return () => {
       cancelled = true;
+      if (watchdog !== null) window.clearTimeout(watchdog);
     };
   }, [isOpen, template, targetKey]);
 
