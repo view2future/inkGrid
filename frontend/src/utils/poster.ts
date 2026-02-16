@@ -518,7 +518,7 @@ export async function renderNewYearStoryPng(input: NewYearPosterInput, options: 
   const caption = String(input.caption || '').trim();
   const dayLabel = String(input.dayLabel || '').trim();
   const story = String(input.story || '').replace(/\s+/g, '').trim() || '字里有年俗，年俗里有字。';
-  const title = `${glyphChar}${caption}`.trim() || caption || '字与年俗';
+  const title = caption || '字与年俗';
 
   const [noiseImg, logoImg, glyphImg] = await Promise.all([
     loadImage('/noise.png').catch(() => null),
@@ -594,7 +594,8 @@ export async function renderNewYearStoryPng(input: NewYearPosterInput, options: 
         ctx.restore();
       }
 
-      if (glyphChar) drawRedSeal(ctx, glyphChar, padding + 60, padding + 150, 96, '#C02C38');
+      // Place seal away from the left-side vertical label.
+      if (glyphChar) drawRedSeal(ctx, glyphChar, padding + 220, padding + 150, 96, '#C02C38');
 
       try { await document.fonts.load("400 40px 'Ma Shan Zheng'"); } catch (e) {}
       try { await document.fonts.load("600 36px 'Noto Serif SC'"); } catch (e) {}
