@@ -1,6 +1,6 @@
 import QRCode from 'qrcode';
 
-export type PosterTemplate = 'folio' | 'wash' | 'minimal';
+export type PosterTemplate = 'folio' | 'minimal' | 'night';
 export type PosterKind = 'char' | 'stele';
 
 export type RenderPosterOptions = {
@@ -37,6 +37,8 @@ type PosterStele = {
   author: string;
   dynasty: string;
   script_type: string;
+  year?: string;
+  type?: string;
   location: string;
   total_chars: number;
   description?: string;
@@ -389,9 +391,20 @@ export async function renderPosterPng(input: PosterInput, options: RenderPosterO
       if (!ctx) throw new Error('Failed to get 2D context');
       ctx.scale(pixelRatio * scale, pixelRatio * scale);
 
-      if (input.template === 'folio') { drawFolioBase(ctx, noiseImg); if (input.kind === 'char') await drawCharFolio(ctx, input.data); else await drawSteleFolio(ctx, input.data); }
-      else if (input.template === 'wash') { drawWashBase(ctx, noiseImg); if (input.kind === 'char') await drawCharWash(ctx, input.data); else await drawSteleWash(ctx, input.data); }
-      else if (input.template === 'minimal') { drawMinimalBase(ctx, noiseImg); if (input.kind === 'char') await drawCharMinimal(ctx, input.data); else await drawSteleMinimal(ctx, input.data); }
+      if (input.template === 'folio') {
+        drawFolioBase(ctx, noiseImg);
+        if (input.kind === 'char') await drawCharFolio(ctx, input.data);
+        else await drawSteleFolio(ctx, input.data);
+      } else if (input.template === 'minimal') {
+        drawMinimalBase(ctx, noiseImg);
+        if (input.kind === 'char') await drawCharMinimal(ctx, input.data);
+        else await drawSteleMinimal(ctx, input.data);
+      } else {
+        // night
+        drawNightBase(ctx, noiseImg);
+        if (input.kind === 'char') await drawCharNight(ctx, input.data);
+        else await drawSteleNight(ctx, input.data);
+      }
 
       const blob = await canvasToBlob(canvas); return { blob, width: CANVAS_W, height: CANVAS_H };
     } catch (err) {
@@ -683,13 +696,169 @@ export async function renderNewYearStoryPng(input: NewYearPosterInput, options: 
 
 // --- BASIC POSTERS ---
 function drawFolioBase(ctx: CanvasRenderingContext2D, noiseImg: HTMLImageElement | null) {
-  drawTextureBackground(ctx, '#F6F1E7', noiseImg, 0.12);
+  drawTextureBackground(ctx, '#F6F1E7', noiseImg, 0.14);
+  const g = ctx.createLinearGradient(0, 0, 0, CANVAS_H);
+  g.addColorStop(0, 'rgba(255, 255, 255, 0.55)');
+  g.addColorStop(1, 'rgba(0, 0, 0, 0.035)');
+  ctx.save();
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+  ctx.strokeStyle = 'rgba(0,0,0,0.05)';
+  ctx.lineWidth = 2;
+  roundRect(ctx, 54, 74, CANVAS_W - 108, CANVAS_H - 148, 44);
+  ctx.stroke();
+  ctx.restore();
 }
 function drawWashBase(ctx: CanvasRenderingContext2D, noiseImg: HTMLImageElement | null) {
   drawTextureBackground(ctx, '#F7F2E9', noiseImg, 0.12);
+  // Ink wash backdrop.
+  const blot = (cx: number, cy: number, r: number, a: number, tint = '0,0,0') => {
+    const grad = ctx.createRadialGradient(cx, cy, Math.max(10, r * 0.08), cx, cy, r);
+    grad.addColorStop(0, `rgba(${tint}, ${a})`);
+    grad.addColorStop(1, `rgba(${tint}, 0)`);
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
+  };
+  ctx.save();
+  ctx.globalCompositeOperation = 'multiply';
+  blot(CANVAS_W * 0.55, 680, 560, 0.16, '35,55,55');
+  blot(CANVAS_W * 0.42, 760, 420, 0.12, '10,10,10');
+  blot(CANVAS_W * 0.62, 520, 360, 0.10, '10,10,10');
+  ctx.restore();
 }
 function drawMinimalBase(ctx: CanvasRenderingContext2D, noiseImg: HTMLImageElement | null) {
-  drawTextureBackground(ctx, '#FFFFFF', noiseImg, 0.06);
+  drawTextureBackground(ctx, '#F8F8F4', noiseImg, 0.06);
+  // Museum label grid.
+  ctx.save();
+  ctx.strokeStyle = 'rgba(0,0,0,0.04)';
+  ctx.lineWidth = 1;
+  const pad = 72;
+  for (let x = pad; x <= CANVAS_W - pad; x += 90) {
+    ctx.beginPath();
+    ctx.moveTo(x, pad);
+    ctx.lineTo(x, CANVAS_H - pad);
+    ctx.stroke();
+  }
+  for (let y = pad; y <= CANVAS_H - pad; y += 90) {
+    ctx.beginPath();
+    ctx.moveTo(pad, y);
+    ctx.lineTo(CANVAS_W - pad, y);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawBrocadeBase(ctx: CanvasRenderingContext2D, noiseImg: HTMLImageElement | null) {
+  const bg = ctx.createLinearGradient(0, 0, 0, CANVAS_H);
+  bg.addColorStop(0, '#7A1E1E');
+  bg.addColorStop(1, '#4C0F12');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+  // Brocade pattern.
+  ctx.save();
+  ctx.globalAlpha = 0.14;
+  ctx.strokeStyle = 'rgba(212,175,55,0.9)';
+  ctx.lineWidth = 2;
+  const step = 160;
+  for (let y = -step; y < CANVAS_H + step; y += step) {
+    for (let x = -step; x < CANVAS_W + step; x += step) {
+      const cx = x + step / 2;
+      const cy = y + step / 2;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - 44);
+      ctx.lineTo(cx + 44, cy);
+      ctx.lineTo(cx, cy + 44);
+      ctx.lineTo(cx - 44, cy);
+      ctx.closePath();
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - 22);
+      ctx.lineTo(cx + 22, cy);
+      ctx.lineTo(cx, cy + 22);
+      ctx.lineTo(cx - 22, cy);
+      ctx.closePath();
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
+
+  // Gold frame.
+  ctx.save();
+  ctx.strokeStyle = 'rgba(212,175,55,0.55)';
+  ctx.lineWidth = 3;
+  roundRect(ctx, 52, 72, CANVAS_W - 104, CANVAS_H - 144, 46);
+  ctx.stroke();
+  ctx.strokeStyle = 'rgba(212,175,55,0.22)';
+  ctx.lineWidth = 1.5;
+  roundRect(ctx, 78, 98, CANVAS_W - 156, CANVAS_H - 196, 40);
+  ctx.stroke();
+  ctx.restore();
+
+  if (noiseImg) {
+    const p = ctx.createPattern(noiseImg, 'repeat');
+    if (p) {
+      ctx.save();
+      ctx.globalAlpha = 0.10;
+      ctx.globalCompositeOperation = 'soft-light';
+      ctx.fillStyle = p;
+      ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+      ctx.restore();
+    }
+  }
+}
+
+function drawSealBase(ctx: CanvasRenderingContext2D, noiseImg: HTMLImageElement | null) {
+  drawTextureBackground(ctx, '#FCFAF4', noiseImg, 0.08);
+  ctx.save();
+  ctx.strokeStyle = 'rgba(192, 44, 56, 0.10)';
+  ctx.lineWidth = 1.2;
+  const pad = 66;
+  for (let x = pad; x <= CANVAS_W - pad; x += 96) {
+    ctx.beginPath();
+    ctx.moveTo(x, pad);
+    ctx.lineTo(x, CANVAS_H - pad);
+    ctx.stroke();
+  }
+  for (let y = pad; y <= CANVAS_H - pad; y += 96) {
+    ctx.beginPath();
+    ctx.moveTo(pad, y);
+    ctx.lineTo(CANVAS_W - pad, y);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawNightBase(ctx: CanvasRenderingContext2D, noiseImg: HTMLImageElement | null) {
+  ctx.fillStyle = '#0B0B0E';
+  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+  const glow = ctx.createRadialGradient(CANVAS_W / 2, 620, 80, CANVAS_W / 2, 620, 1100);
+  glow.addColorStop(0, 'rgba(212,175,55,0.10)');
+  glow.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+  if (noiseImg) {
+    const p = ctx.createPattern(noiseImg, 'repeat');
+    if (p) {
+      ctx.save();
+      ctx.globalAlpha = 0.16;
+      ctx.globalCompositeOperation = 'soft-light';
+      ctx.fillStyle = p;
+      ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+      ctx.restore();
+    }
+  }
+
+  const vignette = ctx.createRadialGradient(CANVAS_W / 2, CANVAS_H / 2, 200, CANVAS_W / 2, CANVAS_H / 2, 1300);
+  vignette.addColorStop(0, 'rgba(0,0,0,0)');
+  vignette.addColorStop(1, 'rgba(0,0,0,0.55)');
+  ctx.fillStyle = vignette;
+  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
 }
 
 type PosterTheme = { text: string; muted: string; accent: string };
@@ -859,9 +1028,1526 @@ async function drawStelePoster(ctx: CanvasRenderingContext2D, stele: PosterStele
   }
 }
 
-async function drawCharFolio(ctx: CanvasRenderingContext2D, data: PosterChar) { await drawCharPoster(ctx, data, THEME_DEFAULT); }
-async function drawCharWash(ctx: CanvasRenderingContext2D, data: PosterChar) { await drawCharPoster(ctx, data, THEME_DEFAULT); }
-async function drawCharMinimal(ctx: CanvasRenderingContext2D, data: PosterChar) { await drawCharPoster(ctx, data, THEME_DEFAULT); }
-async function drawSteleFolio(ctx: CanvasRenderingContext2D, stele: PosterStele) { await drawStelePoster(ctx, stele, THEME_DEFAULT); }
-async function drawSteleWash(ctx: CanvasRenderingContext2D, stele: PosterStele) { await drawStelePoster(ctx, stele, THEME_DEFAULT); }
-async function drawSteleMinimal(ctx: CanvasRenderingContext2D, stele: PosterStele) { await drawStelePoster(ctx, stele, THEME_DEFAULT); }
+function drawVerticalText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, step: number) {
+  let cursor = y;
+  for (const ch of Array.from(text)) {
+    ctx.fillText(ch, x, cursor);
+    cursor += step;
+  }
+}
+
+function hashString32(input: string) {
+  let h = 2166136261;
+  for (let i = 0; i < input.length; i++) {
+    h ^= input.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+function mulberry32(seed: number) {
+  let a = seed >>> 0;
+  return () => {
+    a |= 0;
+    a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function drawNightDust(ctx: CanvasRenderingContext2D, seedKey: string) {
+  const rand = mulberry32(hashString32(seedKey));
+  ctx.save();
+  ctx.globalAlpha = 0.22;
+  ctx.fillStyle = '#D4AF37';
+  for (let i = 0; i < 140; i++) {
+    const x = rand() * CANVAS_W;
+    const y = rand() * CANVAS_H;
+    const r = rand() * 2.4 + 0.4;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function formatCharFooter(data: PosterChar) {
+  const bits = [data.sourceTitle ? `《${data.sourceTitle}》` : '', data.dynasty || '', data.author || ''].filter(Boolean);
+  return bits.join(' · ');
+}
+
+function drawFolioBinding(ctx: CanvasRenderingContext2D, x: number, y: number, h: number) {
+  const w = 122;
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,0.03)';
+  ctx.fillRect(x, y, w, h);
+  ctx.strokeStyle = 'rgba(0,0,0,0.10)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(x + w, y + 14);
+  ctx.lineTo(x + w, y + h - 14);
+  ctx.stroke();
+
+  const holes = 5;
+  ctx.strokeStyle = 'rgba(0,0,0,0.18)';
+  ctx.lineWidth = 2;
+  for (let i = 0; i < holes; i++) {
+    const hy = y + (h * (0.16 + (i * 0.68) / (holes - 1)));
+    ctx.beginPath();
+    ctx.arc(x + w / 2, hy, 10, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+async function drawCharFolio(ctx: CanvasRenderingContext2D, data: PosterChar) {
+  const pageX = 54;
+  const pageY = 74;
+  const pageW = CANVAS_W - 108;
+  const pageH = CANVAS_H - 148;
+
+  // Binding & slip
+  drawFolioBinding(ctx, pageX + 18, pageY + 30, pageH - 60);
+  const slipW = 78;
+  const slipX = pageX + pageW - slipW - 22;
+  const slipY = pageY + 210;
+  const slipH = 520;
+  ctx.save();
+  ctx.fillStyle = 'rgba(139, 0, 0, 0.86)';
+  roundRect(ctx, slipX, slipY, slipW, slipH, 26);
+  ctx.fill();
+  ctx.fillStyle = '#F2E6CE';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  ctx.font = "900 26px 'Noto Serif SC', serif";
+  drawVerticalText(ctx, '篆字研习', slipX + slipW / 2, slipY + 52, 46);
+  ctx.restore();
+
+  const contentX = pageX + 18 + 122 + 44;
+  const contentRight = slipX - 26;
+  const contentW = Math.max(520, contentRight - contentX);
+  const paddingTop = pageY + 44;
+
+  // Header
+  ctx.save();
+  ctx.fillStyle = '#1A1A1A';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.font = "900 44px 'Noto Serif SC', serif";
+  ctx.fillText(INKGRID_BRAND_CN, contentX, paddingTop);
+  ctx.globalAlpha = 0.6;
+  ctx.font = "600 24px 'Noto Serif SC', serif";
+  ctx.fillText(INKGRID_SLOGAN_CN, contentX, paddingTop + 56);
+  ctx.restore();
+
+  // Mount
+  const mountX = contentX;
+  const mountY = pageY + 210;
+  const mountW = contentW;
+  const mountH = 940;
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,0,0,0.12)';
+  ctx.shadowBlur = 34;
+  ctx.shadowOffsetY = 16;
+  ctx.fillStyle = 'rgba(255,255,255,0.78)';
+  roundRect(ctx, mountX, mountY, mountW, mountH, 56);
+  ctx.fill();
+  ctx.restore();
+
+  ctx.save();
+  ctx.strokeStyle = 'rgba(0,0,0,0.08)';
+  ctx.lineWidth = 2;
+  roundRect(ctx, mountX + 18, mountY + 18, mountW - 36, mountH - 36, 48);
+  ctx.stroke();
+  ctx.restore();
+
+  const glyphImg = await loadImage(data.image, 12000).catch(() => null);
+  if (glyphImg) {
+    const innerPad = 88;
+    const gx = mountX + innerPad;
+    const gy = mountY + innerPad;
+    const gw = mountW - innerPad * 2;
+    const gh = mountH - innerPad * 2;
+    ctx.save();
+    roundRect(ctx, gx, gy, gw, gh, 44);
+    ctx.clip();
+    ctx.globalCompositeOperation = 'multiply';
+    ctx.globalAlpha = 0.95;
+    drawContainImage(ctx, glyphImg, gx, gy, gw, gh);
+    ctx.restore();
+  }
+
+  const simplified = String(data.simplified || '').trim();
+  if (simplified) {
+    drawRedSeal(ctx, simplified.slice(0, 1), mountX + mountW - 92, mountY + 92, 120, '#C02C38');
+  }
+
+  // Text
+  const pinyin = String(data.pinyin || '').trim();
+  const meaning = String(data.meaning || '').trim();
+  let cursorY = mountY + mountH + 52;
+  ctx.save();
+  ctx.fillStyle = '#1A1A1A';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+
+  if (simplified) {
+    ctx.font = "900 112px 'Noto Serif SC', serif";
+    ctx.fillText(simplified, contentX, cursorY);
+  }
+  if (pinyin) {
+    ctx.globalAlpha = 0.7;
+    ctx.font = "600 32px 'Noto Serif SC', serif";
+    ctx.fillText(pinyin, contentX + 160, cursorY + 56);
+    ctx.globalAlpha = 1;
+  }
+  cursorY += 150;
+  if (meaning) {
+    ctx.globalAlpha = 0.92;
+    ctx.font = "600 34px 'Noto Serif SC', serif";
+    const lines = wrapText(ctx, meaning, contentW);
+    drawLines(ctx, lines.slice(0, 3), contentX, cursorY, 52);
+    ctx.globalAlpha = 1;
+  }
+  ctx.restore();
+
+  const footer = formatCharFooter(data);
+  if (footer) {
+    ctx.save();
+    ctx.fillStyle = '#666';
+    ctx.globalAlpha = 0.75;
+    ctx.font = "600 26px 'Noto Serif SC', serif";
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(footer, contentX, pageY + pageH - 56);
+    ctx.restore();
+  }
+}
+
+async function drawCharWash(ctx: CanvasRenderingContext2D, data: PosterChar) {
+  const padding = 80;
+  const glyphImg = await loadImage(data.image, 12000).catch(() => null);
+
+  // Header
+  ctx.save();
+  ctx.fillStyle = '#1A1A1A';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.font = "900 42px 'Noto Serif SC', serif";
+  ctx.fillText(INKGRID_BRAND_CN, padding, 64);
+  ctx.globalAlpha = 0.55;
+  ctx.font = "600 24px 'Noto Serif SC', serif";
+  ctx.fillText('水墨 · 篆字研习', padding, 118);
+  ctx.restore();
+
+  // Brush stroke
+  ctx.save();
+  ctx.globalAlpha = 0.16;
+  ctx.strokeStyle = '#2F4F4F';
+  ctx.lineWidth = 14;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(padding, 200);
+  ctx.lineTo(CANVAS_W - padding - 140, 236);
+  ctx.stroke();
+  ctx.restore();
+
+  if (glyphImg) {
+    drawFloatingInkGlyph(ctx, glyphImg, (CANVAS_W - 820) / 2, 280, 820, 55);
+  }
+
+  // Bottom panel
+  const panelX = 80;
+  const panelY = 1260;
+  const panelW = CANVAS_W - 160;
+  const panelH = 600;
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,0,0,0.10)';
+  ctx.shadowBlur = 44;
+  ctx.shadowOffsetY = 18;
+  ctx.fillStyle = 'rgba(255,255,255,0.56)';
+  roundRect(ctx, panelX, panelY, panelW, panelH, 58);
+  ctx.fill();
+  ctx.restore();
+
+  ctx.save();
+  ctx.strokeStyle = 'rgba(47,79,79,0.18)';
+  ctx.lineWidth = 2;
+  roundRect(ctx, panelX + 16, panelY + 16, panelW - 32, panelH - 32, 50);
+  ctx.stroke();
+  ctx.restore();
+
+  const simplified = String(data.simplified || '').trim();
+  const pinyin = String(data.pinyin || '').trim();
+  const meaning = String(data.meaning || '').trim();
+  const footer = formatCharFooter(data);
+
+  ctx.save();
+  ctx.fillStyle = '#1A1A1A';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  if (simplified) {
+    ctx.font = "900 96px 'Noto Serif SC', serif";
+    ctx.fillText(simplified, panelX + 54, panelY + 44);
+  }
+  if (pinyin) {
+    ctx.globalAlpha = 0.65;
+    ctx.font = "600 30px 'Noto Serif SC', serif";
+    ctx.fillText(pinyin, panelX + 54, panelY + 152);
+    ctx.globalAlpha = 1;
+  }
+  if (meaning) {
+    ctx.globalAlpha = 0.9;
+    ctx.font = "600 32px 'Noto Serif SC', serif";
+    const lines = wrapText(ctx, meaning, panelW - 108);
+    drawLines(ctx, lines.slice(0, 4), panelX + 54, panelY + 214, 50);
+    ctx.globalAlpha = 1;
+  }
+  if (footer) {
+    ctx.globalAlpha = 0.72;
+    ctx.fillStyle = '#2F4F4F';
+    ctx.font = "600 26px 'Noto Serif SC', serif";
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(footer, panelX + 54, panelY + panelH - 46);
+  }
+  ctx.restore();
+
+  if (simplified) {
+    drawRedSeal(ctx, simplified.slice(0, 1), panelX + panelW - 92, panelY + panelH - 98, 96, '#8B0000');
+  }
+}
+
+async function drawCharMinimal(ctx: CanvasRenderingContext2D, data: PosterChar) {
+  const pad = 72;
+  const glyphImg = await loadImage(data.image, 12000).catch(() => null);
+  const simplified = String(data.simplified || '').trim();
+  const pinyin = String(data.pinyin || '').trim();
+  const meaning = String(data.meaning || '').trim();
+  const footer = formatCharFooter(data);
+
+  // Header line
+  ctx.save();
+  ctx.fillStyle = '#111';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.font = "900 34px 'Noto Serif SC', serif";
+  ctx.fillText(INKGRID_BRAND_CN, pad, pad);
+  ctx.globalAlpha = 0.55;
+  ctx.font = "600 22px 'Noto Serif SC', serif";
+  ctx.fillText('馆藏展签 · 篆字', pad, pad + 44);
+  ctx.globalAlpha = 0.45;
+  ctx.textAlign = 'right';
+  ctx.font = "600 22px 'Noto Serif SC', serif";
+  ctx.fillText(simplified ? `NO. ${simplified}` : 'NO.', CANVAS_W - pad, pad + 6);
+  ctx.restore();
+
+  ctx.save();
+  ctx.strokeStyle = 'rgba(0,0,0,0.12)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(pad, pad + 96);
+  ctx.lineTo(CANVAS_W - pad, pad + 96);
+  ctx.stroke();
+  ctx.restore();
+
+  // Glyph frame
+  const box = 720;
+  const boxX = (CANVAS_W - box) / 2;
+  const boxY = 250;
+  ctx.save();
+  ctx.fillStyle = 'rgba(255,255,255,0.62)';
+  roundRect(ctx, boxX, boxY, box, box, 44);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,0.10)';
+  ctx.lineWidth = 2;
+  roundRect(ctx, boxX, boxY, box, box, 44);
+  ctx.stroke();
+  ctx.restore();
+
+  if (glyphImg) {
+    ctx.save();
+    roundRect(ctx, boxX + 34, boxY + 34, box - 68, box - 68, 38);
+    ctx.clip();
+    ctx.globalCompositeOperation = 'multiply';
+    ctx.globalAlpha = 0.95;
+    drawContainImage(ctx, glyphImg, boxX + 34, boxY + 34, box - 68, box - 68);
+    ctx.restore();
+  }
+
+  // Info block
+  const infoY = boxY + box + 86;
+  ctx.save();
+  ctx.fillStyle = '#1A1A1A';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+
+  if (simplified) {
+    ctx.font = "900 118px 'Noto Serif SC', serif";
+    ctx.fillText(simplified, pad, infoY);
+  }
+  if (pinyin) {
+    ctx.globalAlpha = 0.65;
+    ctx.font = "600 30px 'Noto Serif SC', serif";
+    ctx.fillText(pinyin, pad + 170, infoY + 64);
+    ctx.globalAlpha = 1;
+  }
+
+  if (meaning) {
+    ctx.globalAlpha = 0.9;
+    ctx.font = "600 32px 'Noto Serif SC', serif";
+    const lines = wrapText(ctx, meaning, CANVAS_W - pad * 2);
+    drawLines(ctx, lines.slice(0, 4), pad, infoY + 150, 50);
+    ctx.globalAlpha = 1;
+  }
+
+  if (footer) {
+    ctx.globalAlpha = 0.65;
+    ctx.fillStyle = '#666';
+    ctx.font = "600 26px 'Noto Serif SC', serif";
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(footer, pad, CANVAS_H - pad);
+  }
+  ctx.restore();
+
+  // Accent mark
+  ctx.save();
+  ctx.fillStyle = '#C02C38';
+  ctx.globalAlpha = 0.75;
+  ctx.fillRect(pad, infoY + 146, 4, 54);
+  ctx.restore();
+}
+
+async function drawCharBrocade(ctx: CanvasRenderingContext2D, data: PosterChar) {
+  const pad = 72;
+  const glyphImg = await loadImage(data.image, 12000).catch(() => null);
+  const simplified = String(data.simplified || '').trim();
+  const pinyin = String(data.pinyin || '').trim();
+  const meaning = String(data.meaning || '').trim();
+  const footer = formatCharFooter(data);
+
+  // Gold header
+  ctx.save();
+  ctx.fillStyle = '#D4AF37';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  ctx.font = "900 44px 'Noto Serif SC', serif";
+  ctx.fillText(INKGRID_BRAND_CN, CANVAS_W / 2, 74);
+  ctx.globalAlpha = 0.75;
+  ctx.font = "600 24px 'Noto Serif SC', serif";
+  ctx.fillText('锦纹 · 轻奢典藏', CANVAS_W / 2, 130);
+  ctx.restore();
+
+  // Parchment panel
+  const panelX = 84;
+  const panelY = 210;
+  const panelW = CANVAS_W - 168;
+  const panelH = CANVAS_H - 360;
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,0,0,0.28)';
+  ctx.shadowBlur = 70;
+  ctx.shadowOffsetY = 26;
+  ctx.fillStyle = 'rgba(247,242,233,0.94)';
+  roundRect(ctx, panelX, panelY, panelW, panelH, 66);
+  ctx.fill();
+  ctx.restore();
+
+  ctx.save();
+  ctx.strokeStyle = 'rgba(212,175,55,0.45)';
+  ctx.lineWidth = 3;
+  roundRect(ctx, panelX + 22, panelY + 22, panelW - 44, panelH - 44, 54);
+  ctx.stroke();
+  ctx.restore();
+
+  // Glyph mount
+  const box = 680;
+  const boxX = (CANVAS_W - box) / 2;
+  const boxY = panelY + 148;
+  ctx.save();
+  ctx.fillStyle = 'rgba(255,255,255,0.70)';
+  ctx.shadowColor = 'rgba(0,0,0,0.12)';
+  ctx.shadowBlur = 34;
+  ctx.shadowOffsetY = 16;
+  roundRect(ctx, boxX, boxY, box, box, 54);
+  ctx.fill();
+  ctx.restore();
+
+  ctx.save();
+  ctx.strokeStyle = 'rgba(212,175,55,0.35)';
+  ctx.lineWidth = 2.5;
+  roundRect(ctx, boxX + 18, boxY + 18, box - 36, box - 36, 48);
+  ctx.stroke();
+  ctx.restore();
+
+  // Corner ornaments
+  const ornament = (x: number, y: number, dirX: number, dirY: number) => {
+    ctx.save();
+    ctx.strokeStyle = 'rgba(212,175,55,0.55)';
+    ctx.lineWidth = 4;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + dirX * 44, y);
+    ctx.lineTo(x + dirX * 44, y + dirY * 44);
+    ctx.stroke();
+    ctx.restore();
+  };
+  ornament(boxX + 26, boxY + 26, 1, 1);
+  ornament(boxX + box - 26, boxY + 26, -1, 1);
+  ornament(boxX + 26, boxY + box - 26, 1, -1);
+  ornament(boxX + box - 26, boxY + box - 26, -1, -1);
+
+  if (glyphImg) {
+    ctx.save();
+    roundRect(ctx, boxX + 58, boxY + 58, box - 116, box - 116, 44);
+    ctx.clip();
+    ctx.globalCompositeOperation = 'multiply';
+    ctx.globalAlpha = 0.95;
+    drawContainImage(ctx, glyphImg, boxX + 58, boxY + 58, box - 116, box - 116);
+    ctx.restore();
+  }
+
+  // Text
+  const infoY = boxY + box + 70;
+  ctx.save();
+  ctx.fillStyle = '#1A1A1A';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  if (simplified) {
+    ctx.font = "900 112px 'Noto Serif SC', serif";
+    ctx.fillText(simplified, panelX + 66, infoY);
+  }
+  if (pinyin) {
+    ctx.globalAlpha = 0.65;
+    ctx.font = "600 30px 'Noto Serif SC', serif";
+    ctx.fillText(pinyin, panelX + 220, infoY + 66);
+    ctx.globalAlpha = 1;
+  }
+  if (meaning) {
+    ctx.globalAlpha = 0.88;
+    ctx.font = "600 32px 'Noto Serif SC', serif";
+    const lines = wrapText(ctx, meaning, panelW - 132);
+    drawLines(ctx, lines.slice(0, 3), panelX + 66, infoY + 156, 50);
+    ctx.globalAlpha = 1;
+  }
+  if (footer) {
+    ctx.globalAlpha = 0.68;
+    ctx.fillStyle = '#6A574B';
+    ctx.font = "600 26px 'Noto Serif SC', serif";
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(footer, panelX + 66, panelY + panelH - 58);
+  }
+  ctx.restore();
+
+  if (simplified) drawRedSeal(ctx, simplified.slice(0, 1), panelX + panelW - 98, panelY + panelH - 96, 104, '#C02C38');
+}
+
+async function drawCharSeal(ctx: CanvasRenderingContext2D, data: PosterChar) {
+  const pad = 72;
+  const glyphImg = await loadImage(data.image, 12000).catch(() => null);
+  const simplified = String(data.simplified || '').trim();
+  const pinyin = String(data.pinyin || '').trim();
+  const meaning = String(data.meaning || '').trim();
+  const footer = formatCharFooter(data);
+
+  // Header
+  ctx.save();
+  ctx.fillStyle = '#1A1A1A';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.font = "900 42px 'Noto Serif SC', serif";
+  ctx.fillText('印谱', pad, 64);
+  ctx.globalAlpha = 0.55;
+  ctx.font = "600 24px 'Noto Serif SC', serif";
+  ctx.fillText(`${INKGRID_BRAND_CN} · 篆字研习`, pad, 118);
+  ctx.restore();
+
+  // Big seal
+  if (simplified) {
+    drawRedSeal(ctx, simplified.slice(0, 1), pad + 190, 380, 300, '#C02C38');
+  }
+
+  // Glyph frame
+  const frameX = pad + 380;
+  const frameY = 230;
+  const frameS = 560;
+  ctx.save();
+  ctx.fillStyle = 'rgba(255,255,255,0.70)';
+  roundRect(ctx, frameX, frameY, frameS, frameS, 46);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(192,44,56,0.35)';
+  ctx.lineWidth = 3;
+  roundRect(ctx, frameX, frameY, frameS, frameS, 46);
+  ctx.stroke();
+  ctx.restore();
+
+  if (glyphImg) {
+    ctx.save();
+    roundRect(ctx, frameX + 46, frameY + 46, frameS - 92, frameS - 92, 40);
+    ctx.clip();
+    ctx.globalCompositeOperation = 'multiply';
+    ctx.globalAlpha = 0.95;
+    drawContainImage(ctx, glyphImg, frameX + 46, frameY + 46, frameS - 92, frameS - 92);
+    ctx.restore();
+  }
+
+  // Extra seals
+  drawRedSeal(ctx, '墨', pad + 154, 930, 120, '#C02C38');
+  drawRedSeal(ctx, '阵', pad + 294, 930, 120, '#C02C38');
+
+  // Text
+  const textX = pad;
+  const textY = 1040;
+  ctx.save();
+  ctx.fillStyle = '#1A1A1A';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  if (simplified) {
+    ctx.font = "900 108px 'Noto Serif SC', serif";
+    ctx.fillText(simplified, textX, textY);
+  }
+  if (pinyin) {
+    ctx.globalAlpha = 0.65;
+    ctx.font = "600 30px 'Noto Serif SC', serif";
+    ctx.fillText(pinyin, textX + 170, textY + 64);
+    ctx.globalAlpha = 1;
+  }
+  if (meaning) {
+    ctx.globalAlpha = 0.9;
+    ctx.font = "600 32px 'Noto Serif SC', serif";
+    const lines = wrapText(ctx, meaning, CANVAS_W - pad * 2);
+    drawLines(ctx, lines.slice(0, 4), textX, textY + 150, 50);
+    ctx.globalAlpha = 1;
+  }
+  if (footer) {
+    ctx.globalAlpha = 0.7;
+    ctx.fillStyle = '#666';
+    ctx.font = "600 26px 'Noto Serif SC', serif";
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(footer, textX, CANVAS_H - pad);
+  }
+  ctx.restore();
+
+  // Side label
+  ctx.save();
+  ctx.fillStyle = 'rgba(192,44,56,0.88)';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  ctx.font = "900 24px 'Noto Serif SC', serif";
+  drawVerticalText(ctx, '朱砂印谱', CANVAS_W - pad + 18, 260, 44);
+  ctx.restore();
+}
+
+async function drawCharNight(ctx: CanvasRenderingContext2D, data: PosterChar) {
+  const pad = 72;
+  const glyphImg = await loadImage(data.image, 12000).catch(() => null);
+  const simplified = String(data.simplified || '').trim();
+  const pinyin = String(data.pinyin || '').trim();
+  const meaning = String(data.meaning || '').trim();
+  const footer = formatCharFooter(data);
+
+  drawNightDust(ctx, `${simplified}|${data.image}`);
+
+  // Header
+  ctx.save();
+  ctx.fillStyle = '#D4AF37';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.font = "900 44px 'Noto Serif SC', serif";
+  ctx.fillText(INKGRID_BRAND_CN, pad, 64);
+  ctx.globalAlpha = 0.7;
+  ctx.font = "600 24px 'Noto Serif SC', serif";
+  ctx.fillText('乌金 · 夜墨', pad, 122);
+  ctx.restore();
+
+  // Glyph
+  if (glyphImg) {
+    const size = 860;
+    const x = (CANVAS_W - size) / 2;
+    const y = 220;
+    ctx.save();
+    ctx.shadowColor = 'rgba(212,175,55,0.18)';
+    ctx.shadowBlur = 80;
+    ctx.shadowOffsetY = 22;
+    ctx.filter = 'invert(1) brightness(1.55) contrast(1.25)';
+    ctx.globalAlpha = 0.95;
+    drawContainImage(ctx, glyphImg, x, y, size, size);
+    ctx.restore();
+  }
+
+  const panelX = pad;
+  const panelY = 1250;
+  const panelW = CANVAS_W - pad * 2;
+  const panelH = 620;
+  ctx.save();
+  ctx.fillStyle = 'rgba(255,255,255,0.06)';
+  roundRect(ctx, panelX, panelY, panelW, panelH, 62);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(212,175,55,0.26)';
+  ctx.lineWidth = 2.2;
+  roundRect(ctx, panelX + 16, panelY + 16, panelW - 32, panelH - 32, 54);
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.save();
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  if (simplified) {
+    ctx.fillStyle = '#D4AF37';
+    ctx.font = "900 108px 'Noto Serif SC', serif";
+    ctx.fillText(simplified, panelX + 50, panelY + 44);
+  }
+  if (pinyin) {
+    ctx.globalAlpha = 0.75;
+    ctx.fillStyle = '#F2E6CE';
+    ctx.font = "600 30px 'Noto Serif SC', serif";
+    ctx.fillText(pinyin, panelX + 50, panelY + 162);
+    ctx.globalAlpha = 1;
+  }
+  if (meaning) {
+    ctx.globalAlpha = 0.9;
+    ctx.fillStyle = '#F2E6CE';
+    ctx.font = "600 32px 'Noto Serif SC', serif";
+    const lines = wrapText(ctx, meaning, panelW - 100);
+    drawLines(ctx, lines.slice(0, 4), panelX + 50, panelY + 224, 50);
+    ctx.globalAlpha = 1;
+  }
+  if (footer) {
+    ctx.globalAlpha = 0.72;
+    ctx.fillStyle = '#D4AF37';
+    ctx.font = "600 26px 'Noto Serif SC', serif";
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(footer, panelX + 50, panelY + panelH - 46);
+  }
+  ctx.restore();
+
+  if (simplified) drawRedSeal(ctx, simplified.slice(0, 1), panelX + panelW - 92, panelY + panelH - 96, 96, '#C02C38');
+}
+
+function formatSteleFooter(stele: PosterStele) {
+  const bits = [stele.location ? `现藏：${stele.location}` : '', typeof stele.total_chars === 'number' ? `${stele.total_chars} 字` : ''].filter(Boolean);
+  return bits.join(' · ');
+}
+
+function normalizeSteleText(text: unknown) {
+  return String(text || '').replace(/\s+/g, ' ').trim();
+}
+
+function normalizeSteleTextTight(text: unknown) {
+  return String(text || '').replace(/\s+/g, '').trim();
+}
+
+function formatSteleMeta(stele: PosterStele) {
+  const bits = [stele.dynasty, stele.author, stele.script_type].filter(Boolean);
+  const year = normalizeSteleText(stele.year);
+  if (year) bits.push(year);
+  return bits.join(' · ');
+}
+
+function formatSteleFacts(stele: PosterStele) {
+  const bits: string[] = [];
+  const t = normalizeSteleText(stele.type);
+  if (t) bits.push(t);
+  if (typeof stele.total_chars === 'number' && Number.isFinite(stele.total_chars)) bits.push(`${stele.total_chars} 字`);
+  const loc = normalizeSteleText(stele.location);
+  if (loc) bits.push(loc);
+  return bits.join(' · ');
+}
+
+function pickSteleQuote(text: string, maxLen = 48) {
+  const t = normalizeSteleTextTight(text);
+  if (!t) return '';
+  const stops = ['。', '；', '！', '？'];
+  let end = -1;
+  for (const s of stops) {
+    const idx = t.indexOf(s);
+    if (idx >= 12 && (end === -1 || idx < end)) end = idx;
+  }
+  const raw = end >= 0 ? t.slice(0, Math.min(end + 1, maxLen + 1)) : t.slice(0, maxLen);
+  return raw;
+}
+
+function steleExcerpt(stele: PosterStele, maxChars: number) {
+  const content = normalizeSteleText(stele.content);
+  if (!content) return '';
+  if (content.length <= maxChars) return content;
+  const slice = content.slice(0, maxChars);
+  const punct = Math.max(slice.lastIndexOf('。'), slice.lastIndexOf('；'));
+  if (punct > Math.floor(maxChars * 0.55)) return slice.slice(0, punct + 1);
+  return slice;
+}
+
+async function drawSteleFolio(ctx: CanvasRenderingContext2D, stele: PosterStele) {
+  const pageX = 54;
+  const pageY = 74;
+  const pageW = CANVAS_W - 108;
+  const pageH = CANVAS_H - 148;
+  drawFolioBinding(ctx, pageX + 18, pageY + 30, pageH - 60);
+
+  const slipW = 78;
+  const slipX = pageX + pageW - slipW - 22;
+  const slipY = pageY + 210;
+  const slipH = 520;
+  ctx.save();
+  ctx.fillStyle = 'rgba(139, 0, 0, 0.86)';
+  roundRect(ctx, slipX, slipY, slipW, slipH, 26);
+  ctx.fill();
+  ctx.fillStyle = '#F2E6CE';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  ctx.font = "900 26px 'Noto Serif SC', serif";
+  drawVerticalText(ctx, '名帖赏析', slipX + slipW / 2, slipY + 52, 46);
+  ctx.restore();
+
+  const contentX = pageX + 18 + 122 + 44;
+  const contentRight = slipX - 26;
+  const contentW = Math.max(520, contentRight - contentX);
+  const paddingTop = pageY + 44;
+
+  // Header
+  ctx.save();
+  ctx.fillStyle = '#1A1A1A';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.font = "900 44px 'Noto Serif SC', serif";
+  ctx.fillText(INKGRID_BRAND_CN, contentX, paddingTop);
+  ctx.globalAlpha = 0.6;
+  ctx.font = "600 24px 'Noto Serif SC', serif";
+  ctx.fillText(INKGRID_SLOGAN_CN, contentX, paddingTop + 56);
+  ctx.restore();
+
+  const cardX = contentX;
+  const cardY = pageY + 210;
+  const cardW = contentW;
+  const cardH = 1320;
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,0,0,0.12)';
+  ctx.shadowBlur = 34;
+  ctx.shadowOffsetY = 16;
+  ctx.fillStyle = 'rgba(255,255,255,0.78)';
+  roundRect(ctx, cardX, cardY, cardW, cardH, 56);
+  ctx.fill();
+  ctx.restore();
+
+  ctx.save();
+  ctx.strokeStyle = 'rgba(0,0,0,0.08)';
+  ctx.lineWidth = 2;
+  roundRect(ctx, cardX + 18, cardY + 18, cardW - 36, cardH - 36, 48);
+  ctx.stroke();
+  ctx.restore();
+
+  const title = normalizeSteleText(stele.name);
+  const meta = formatSteleMeta(stele);
+  const facts = formatSteleFacts(stele);
+  const desc = normalizeSteleText(stele.description);
+  const excerptText = steleExcerpt(stele, 1800);
+  const quote = pickSteleQuote(excerptText || desc, 54);
+
+  ctx.save();
+  ctx.fillStyle = '#1A1A1A';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+
+  const innerX = cardX + 72;
+  const innerW = cardW - 144;
+  const cardBottom = cardY + cardH - 72;
+  let cursorY = cardY + 72;
+  if (title) {
+    ctx.font = "900 72px 'Noto Serif SC', serif";
+    const lines = wrapText(ctx, title, innerW);
+    drawLines(ctx, lines.slice(0, 2), innerX, cursorY, 90);
+    cursorY += Math.min(2, lines.length) * 90 + 18;
+  }
+  if (meta) {
+    ctx.globalAlpha = 0.7;
+    ctx.font = "600 32px 'Noto Serif SC', serif";
+    ctx.fillText(meta, innerX, cursorY);
+    ctx.globalAlpha = 1;
+    cursorY += 62;
+  }
+
+  if (facts) {
+    ctx.globalAlpha = 0.55;
+    ctx.fillStyle = '#444';
+    ctx.font = "600 26px 'Noto Serif SC', serif";
+    ctx.fillText(facts, innerX, cursorY);
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = '#1A1A1A';
+    cursorY += 58;
+  } else {
+    cursorY += 18;
+  }
+
+  // Divider
+  ctx.save();
+  ctx.strokeStyle = 'rgba(0,0,0,0.08)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(innerX, cursorY);
+  ctx.lineTo(innerX + innerW, cursorY);
+  ctx.stroke();
+  ctx.restore();
+  cursorY += 34;
+
+  // Compact lead-in (description or quote)
+  const leadText = desc || quote;
+  if (leadText) {
+    const leadLabel = desc ? '导读' : '摘句';
+    const boxX = innerX;
+    const boxY = cursorY;
+    const boxW = innerW;
+    const boxPad = 26;
+
+    ctx.save();
+    ctx.font = "900 22px 'Noto Serif SC', serif";
+    const labelW = ctx.measureText(leadLabel).width;
+    ctx.restore();
+
+    ctx.save();
+    ctx.font = "600 30px 'Noto Serif SC', serif";
+    const leadLines = wrapText(ctx, leadText, boxW - boxPad * 2);
+    const textLines = leadLines.slice(0, 3);
+    const boxH = 22 + 14 + textLines.length * 44 + boxPad * 2;
+    ctx.restore();
+
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.03)';
+    roundRect(ctx, boxX, boxY, boxW, boxH, 32);
+    ctx.fill();
+
+    // Accent
+    ctx.fillStyle = 'rgba(192,44,56,0.75)';
+    ctx.fillRect(boxX + 18, boxY + 22, 4, boxH - 44);
+
+    // Label
+    ctx.fillStyle = '#666';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.font = "900 22px 'Noto Serif SC', serif";
+    ctx.fillText(leadLabel, boxX + boxPad, boxY + boxPad - 2);
+
+    // Text
+    ctx.fillStyle = '#1A1A1A';
+    ctx.globalAlpha = 0.88;
+    ctx.font = "600 30px 'Noto Serif SC', serif";
+    drawLines(ctx, textLines, boxX + boxPad, boxY + boxPad + 36, 44);
+    ctx.restore();
+
+    cursorY = boxY + boxH + 34;
+  }
+
+  const body = excerptText || desc;
+  if (body) {
+    const bodyLabel = excerptText ? '原文节选' : '简介';
+    ctx.save();
+    ctx.fillStyle = '#666';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.font = "900 22px 'Noto Serif SC', serif";
+    ctx.fillText(bodyLabel, innerX, cursorY);
+    ctx.restore();
+
+    const bodyY = cursorY + 40;
+    const lineHeight = 46;
+    const maxLines = Math.max(0, Math.floor((cardBottom - bodyY) / lineHeight));
+
+    ctx.save();
+    ctx.fillStyle = '#1A1A1A';
+    ctx.globalAlpha = 0.86;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.font = "600 30px 'Noto Serif SC', serif";
+    const lines = wrapText(ctx, body, innerW);
+    drawLines(ctx, lines.slice(0, maxLines), innerX, bodyY, lineHeight);
+    ctx.restore();
+  }
+  ctx.restore();
+
+  const footer = formatSteleFooter(stele);
+  if (footer) {
+    ctx.save();
+    ctx.fillStyle = '#666';
+    ctx.globalAlpha = 0.75;
+    ctx.font = "600 26px 'Noto Serif SC', serif";
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(footer, contentX, pageY + pageH - 56);
+    ctx.restore();
+  }
+}
+
+async function drawSteleWash(ctx: CanvasRenderingContext2D, stele: PosterStele) {
+  const pad = 80;
+  const title = String(stele.name || '').trim();
+  const meta = [stele.dynasty, stele.author, stele.script_type].filter(Boolean).join(' · ');
+  const excerpt = String(stele.description || stele.content || '').replace(/\s+/g, ' ').trim();
+  const footer = formatSteleFooter(stele);
+
+  // Header
+  ctx.save();
+  ctx.fillStyle = '#1A1A1A';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.font = "900 42px 'Noto Serif SC', serif";
+  ctx.fillText(INKGRID_BRAND_CN, pad, 64);
+  ctx.globalAlpha = 0.55;
+  ctx.font = "600 24px 'Noto Serif SC', serif";
+  ctx.fillText('水墨 · 名帖赏析', pad, 118);
+  ctx.restore();
+
+  // Brush stroke banner
+  ctx.save();
+  ctx.globalAlpha = 0.14;
+  ctx.strokeStyle = '#2F4F4F';
+  ctx.lineWidth = 26;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(pad, 280);
+  ctx.lineTo(CANVAS_W - pad, 312);
+  ctx.stroke();
+  ctx.restore();
+
+  // Title
+  ctx.save();
+  ctx.fillStyle = '#1A1A1A';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.font = "900 84px 'Noto Serif SC', serif";
+  const titleLines = wrapText(ctx, title, CANVAS_W - pad * 2);
+  drawLines(ctx, titleLines.slice(0, 2), pad, 330, 100);
+  let cursorY = 330 + Math.min(2, titleLines.length) * 100 + 18;
+  if (meta) {
+    ctx.globalAlpha = 0.7;
+    ctx.font = "600 32px 'Noto Serif SC', serif";
+    ctx.fillText(meta, pad, cursorY);
+    ctx.globalAlpha = 1;
+    cursorY += 66;
+  }
+
+  // Excerpt panel
+  const panelX = pad;
+  const panelY = 560;
+  const panelW = CANVAS_W - pad * 2;
+  const panelH = 1180;
+  ctx.restore();
+
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,0,0,0.10)';
+  ctx.shadowBlur = 44;
+  ctx.shadowOffsetY = 18;
+  ctx.fillStyle = 'rgba(255,255,255,0.56)';
+  roundRect(ctx, panelX, panelY, panelW, panelH, 60);
+  ctx.fill();
+  ctx.restore();
+
+  ctx.save();
+  ctx.fillStyle = '#1A1A1A';
+  ctx.globalAlpha = 0.86;
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.font = "600 32px 'Noto Serif SC', serif";
+  const lines = wrapText(ctx, excerpt, panelW - 108);
+  drawLines(ctx, lines.slice(0, 16), panelX + 54, panelY + 54, 52);
+  ctx.restore();
+
+  if (footer) {
+    ctx.save();
+    ctx.fillStyle = '#2F4F4F';
+    ctx.globalAlpha = 0.72;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'bottom';
+    ctx.font = "600 26px 'Noto Serif SC', serif";
+    ctx.fillText(footer, panelX + 54, panelY + panelH - 46);
+    ctx.restore();
+  }
+}
+
+async function drawSteleMinimal(ctx: CanvasRenderingContext2D, stele: PosterStele) {
+  const pad = 72;
+  const title = normalizeSteleText(stele.name);
+  const meta = formatSteleMeta(stele);
+  const facts = formatSteleFacts(stele);
+  const desc = normalizeSteleText(stele.description);
+  const excerptText = steleExcerpt(stele, 2600);
+  const quote = pickSteleQuote(excerptText || desc, 66);
+  const footer = formatSteleFooter(stele);
+
+  // Header
+  ctx.save();
+  ctx.fillStyle = '#111';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.font = "900 34px 'Noto Serif SC', serif";
+  ctx.fillText(INKGRID_BRAND_CN, pad, pad);
+  ctx.globalAlpha = 0.55;
+  ctx.font = "600 22px 'Noto Serif SC', serif";
+  ctx.fillText('馆藏展签 · 名帖', pad, pad + 44);
+  ctx.restore();
+
+  ctx.save();
+  ctx.strokeStyle = 'rgba(0,0,0,0.12)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(pad, pad + 96);
+  ctx.lineTo(CANVAS_W - pad, pad + 96);
+  ctx.stroke();
+  ctx.restore();
+
+  const cardX = pad;
+  const cardY = 240;
+  const cardW = CANVAS_W - pad * 2;
+  const cardH = CANVAS_H - cardY - pad;
+
+  ctx.save();
+  ctx.fillStyle = 'rgba(255,255,255,0.62)';
+  roundRect(ctx, cardX, cardY, cardW, cardH, 56);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,0.10)';
+  ctx.lineWidth = 2;
+  roundRect(ctx, cardX, cardY, cardW, cardH, 56);
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.save();
+  ctx.fillStyle = '#1A1A1A';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.font = "900 78px 'Noto Serif SC', serif";
+  const titleLines = wrapText(ctx, title, cardW - 120);
+  drawLines(ctx, titleLines.slice(0, 2), cardX + 60, cardY + 60, 96);
+  let cursorY = cardY + 60 + Math.min(2, titleLines.length) * 96 + 18;
+  if (meta) {
+    ctx.globalAlpha = 0.7;
+    ctx.font = "600 32px 'Noto Serif SC', serif";
+    ctx.fillText(meta, cardX + 60, cursorY);
+    ctx.globalAlpha = 1;
+    cursorY += 60;
+  }
+
+  if (facts) {
+    ctx.globalAlpha = 0.55;
+    ctx.fillStyle = '#444';
+    ctx.font = "600 26px 'Noto Serif SC', serif";
+    ctx.fillText(facts, cardX + 60, cursorY);
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = '#1A1A1A';
+    cursorY += 54;
+  } else {
+    cursorY += 18;
+  }
+
+  // Lead-in (description or quote)
+  const leadText = desc || quote;
+  if (leadText) {
+    const boxX = cardX + 60;
+    const boxY = cursorY;
+    const boxW = cardW - 120;
+    const boxPad = 26;
+
+    ctx.save();
+    ctx.font = "600 30px 'Noto Serif SC', serif";
+    const leadLines = wrapText(ctx, leadText, boxW - boxPad * 2);
+    const textLines = leadLines.slice(0, 3);
+    const boxH = textLines.length * 44 + boxPad * 2 + 40;
+    ctx.restore();
+
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.03)';
+    roundRect(ctx, boxX, boxY, boxW, boxH, 34);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(192,44,56,0.75)';
+    ctx.fillRect(boxX + 18, boxY + 24, 4, boxH - 48);
+
+    ctx.fillStyle = '#666';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.font = "900 22px 'Noto Serif SC', serif";
+    ctx.fillText(desc ? '导读' : '摘句', boxX + boxPad, boxY + boxPad - 2);
+
+    ctx.fillStyle = '#1A1A1A';
+    ctx.globalAlpha = 0.88;
+    ctx.font = "600 30px 'Noto Serif SC', serif";
+    drawLines(ctx, textLines, boxX + boxPad, boxY + boxPad + 36, 44);
+    ctx.restore();
+
+    cursorY = boxY + boxH + 34;
+  }
+
+  const body = excerptText || desc;
+  if (body) {
+    ctx.save();
+    ctx.fillStyle = '#666';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.font = "900 22px 'Noto Serif SC', serif";
+    ctx.fillText(excerptText ? '原文节选' : '简介', cardX + 60, cursorY);
+    ctx.restore();
+
+    const startY = cursorY + 40;
+    const bottomY = cardY + cardH - 90;
+    const gap = 56;
+    const colW = Math.floor((cardW - 120 - gap) / 2);
+    const col1X = cardX + 60;
+    const col2X = col1X + colW + gap;
+    const lineHeight = 46;
+    const maxLinesPerCol = Math.max(0, Math.floor((bottomY - startY) / lineHeight));
+
+    ctx.save();
+    ctx.fillStyle = '#1A1A1A';
+    ctx.globalAlpha = 0.86;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.font = "600 28px 'Noto Serif SC', serif";
+    const lines = wrapText(ctx, body, colW);
+    const col1 = lines.slice(0, maxLinesPerCol);
+    const col2 = lines.slice(maxLinesPerCol, maxLinesPerCol * 2);
+    drawLines(ctx, col1, col1X, startY, lineHeight);
+    drawLines(ctx, col2, col2X, startY, lineHeight);
+    ctx.restore();
+
+    // Column divider
+    ctx.save();
+    ctx.strokeStyle = 'rgba(0,0,0,0.06)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(col2X - gap / 2, startY - 6);
+    ctx.lineTo(col2X - gap / 2, bottomY + 6);
+    ctx.stroke();
+    ctx.restore();
+  }
+  if (footer) {
+    ctx.globalAlpha = 0.65;
+    ctx.fillStyle = '#666';
+    ctx.font = "600 26px 'Noto Serif SC', serif";
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(footer, cardX + 60, cardY + cardH - 54);
+  }
+  ctx.restore();
+
+  ctx.save();
+  ctx.fillStyle = '#C02C38';
+  ctx.globalAlpha = 0.72;
+  ctx.fillRect(cardX + 44, cardY + 300, 4, 54);
+  ctx.restore();
+}
+
+async function drawSteleBrocade(ctx: CanvasRenderingContext2D, stele: PosterStele) {
+  const pad = 72;
+  const title = String(stele.name || '').trim();
+  const meta = [stele.dynasty, stele.author, stele.script_type].filter(Boolean).join(' · ');
+  const excerpt = String(stele.description || stele.content || '').replace(/\s+/g, ' ').trim();
+  const footer = formatSteleFooter(stele);
+
+  ctx.save();
+  ctx.fillStyle = '#D4AF37';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  ctx.font = "900 44px 'Noto Serif SC', serif";
+  ctx.fillText(INKGRID_BRAND_CN, CANVAS_W / 2, 74);
+  ctx.globalAlpha = 0.75;
+  ctx.font = "600 24px 'Noto Serif SC', serif";
+  ctx.fillText('锦纹 · 名帖', CANVAS_W / 2, 130);
+  ctx.restore();
+
+  const panelX = 84;
+  const panelY = 210;
+  const panelW = CANVAS_W - 168;
+  const panelH = CANVAS_H - 360;
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,0,0,0.28)';
+  ctx.shadowBlur = 70;
+  ctx.shadowOffsetY = 26;
+  ctx.fillStyle = 'rgba(247,242,233,0.94)';
+  roundRect(ctx, panelX, panelY, panelW, panelH, 66);
+  ctx.fill();
+  ctx.restore();
+
+  ctx.save();
+  ctx.strokeStyle = 'rgba(212,175,55,0.45)';
+  ctx.lineWidth = 3;
+  roundRect(ctx, panelX + 22, panelY + 22, panelW - 44, panelH - 44, 54);
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.save();
+  ctx.fillStyle = '#1A1A1A';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.font = "900 78px 'Noto Serif SC', serif";
+  const titleLines = wrapText(ctx, title, panelW - 132);
+  drawLines(ctx, titleLines.slice(0, 2), panelX + 66, panelY + 90, 96);
+  let cursorY = panelY + 90 + Math.min(2, titleLines.length) * 96 + 16;
+  if (meta) {
+    ctx.globalAlpha = 0.7;
+    ctx.font = "600 32px 'Noto Serif SC', serif";
+    ctx.fillText(meta, panelX + 66, cursorY);
+    ctx.globalAlpha = 1;
+    cursorY += 70;
+  }
+  if (excerpt) {
+    ctx.globalAlpha = 0.86;
+    ctx.font = "600 32px 'Noto Serif SC', serif";
+    const lines = wrapText(ctx, excerpt, panelW - 132);
+    drawLines(ctx, lines.slice(0, 18), panelX + 66, cursorY, 52);
+    ctx.globalAlpha = 1;
+  }
+  if (footer) {
+    ctx.globalAlpha = 0.68;
+    ctx.fillStyle = '#6A574B';
+    ctx.font = "600 26px 'Noto Serif SC', serif";
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(footer, panelX + 66, panelY + panelH - 58);
+  }
+  ctx.restore();
+
+  drawRedSeal(ctx, '帖', panelX + panelW - 98, panelY + panelH - 96, 104, '#C02C38');
+}
+
+async function drawSteleSeal(ctx: CanvasRenderingContext2D, stele: PosterStele) {
+  const pad = 72;
+  const title = String(stele.name || '').trim();
+  const meta = [stele.dynasty, stele.author, stele.script_type].filter(Boolean).join(' · ');
+  const excerpt = String(stele.description || stele.content || '').replace(/\s+/g, ' ').trim();
+  const footer = formatSteleFooter(stele);
+
+  ctx.save();
+  ctx.fillStyle = '#1A1A1A';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.font = "900 42px 'Noto Serif SC', serif";
+  ctx.fillText('印谱', pad, 64);
+  ctx.globalAlpha = 0.55;
+  ctx.font = "600 24px 'Noto Serif SC', serif";
+  ctx.fillText(`${INKGRID_BRAND_CN} · 名帖`, pad, 118);
+  ctx.restore();
+
+  drawRedSeal(ctx, '帖', pad + 190, 380, 300, '#C02C38');
+  drawRedSeal(ctx, '墨', pad + 154, 930, 120, '#C02C38');
+  drawRedSeal(ctx, '阵', pad + 294, 930, 120, '#C02C38');
+
+  const cardX = pad + 380;
+  const cardY = 230;
+  const cardW = CANVAS_W - cardX - pad;
+  const cardH = 840;
+  ctx.save();
+  ctx.fillStyle = 'rgba(255,255,255,0.70)';
+  roundRect(ctx, cardX, cardY, cardW, cardH, 46);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(192,44,56,0.35)';
+  ctx.lineWidth = 3;
+  roundRect(ctx, cardX, cardY, cardW, cardH, 46);
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.save();
+  ctx.fillStyle = '#1A1A1A';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.font = "900 64px 'Noto Serif SC', serif";
+  const titleLines = wrapText(ctx, title, cardW - 96);
+  drawLines(ctx, titleLines.slice(0, 2), cardX + 48, cardY + 56, 82);
+  let cursorY = cardY + 56 + Math.min(2, titleLines.length) * 82 + 14;
+  if (meta) {
+    ctx.globalAlpha = 0.7;
+    ctx.font = "600 30px 'Noto Serif SC', serif";
+    ctx.fillText(meta, cardX + 48, cursorY);
+    ctx.globalAlpha = 1;
+    cursorY += 64;
+  }
+  if (excerpt) {
+    ctx.globalAlpha = 0.86;
+    ctx.font = "600 30px 'Noto Serif SC', serif";
+    const lines = wrapText(ctx, excerpt, cardW - 96);
+    drawLines(ctx, lines.slice(0, 12), cardX + 48, cursorY, 48);
+    ctx.globalAlpha = 1;
+  }
+  ctx.restore();
+
+  // Footer
+  if (footer) {
+    ctx.save();
+    ctx.fillStyle = '#666';
+    ctx.globalAlpha = 0.7;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'bottom';
+    ctx.font = "600 26px 'Noto Serif SC', serif";
+    ctx.fillText(footer, pad, CANVAS_H - pad);
+    ctx.restore();
+  }
+
+  ctx.save();
+  ctx.fillStyle = 'rgba(192,44,56,0.88)';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  ctx.font = "900 24px 'Noto Serif SC', serif";
+  drawVerticalText(ctx, '朱砂印谱', CANVAS_W - pad + 18, 260, 44);
+  ctx.restore();
+}
+
+async function drawSteleNight(ctx: CanvasRenderingContext2D, stele: PosterStele) {
+  const pad = 72;
+  const title = normalizeSteleText(stele.name);
+  const meta = formatSteleMeta(stele);
+  const facts = formatSteleFacts(stele);
+  const desc = normalizeSteleText(stele.description);
+  const excerptText = steleExcerpt(stele, 3200);
+  const quote = pickSteleQuote(excerptText || desc, 72);
+  const footer = formatSteleFooter(stele);
+
+  drawNightDust(ctx, `${title}|${meta}`);
+
+  ctx.save();
+  ctx.fillStyle = '#D4AF37';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.font = "900 44px 'Noto Serif SC', serif";
+  ctx.fillText(INKGRID_BRAND_CN, pad, 64);
+  ctx.globalAlpha = 0.7;
+  ctx.font = "600 24px 'Noto Serif SC', serif";
+  ctx.fillText('乌金 · 名帖', pad, 122);
+  ctx.restore();
+
+  const panelX = pad;
+  const panelY = 240;
+  const panelW = CANVAS_W - pad * 2;
+  const panelH = CANVAS_H - panelY - pad;
+  ctx.save();
+  ctx.fillStyle = 'rgba(255,255,255,0.06)';
+  roundRect(ctx, panelX, panelY, panelW, panelH, 62);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(212,175,55,0.26)';
+  ctx.lineWidth = 2.2;
+  roundRect(ctx, panelX + 16, panelY + 16, panelW - 32, panelH - 32, 54);
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.save();
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.fillStyle = '#F2E6CE';
+  ctx.font = "900 84px 'Noto Serif SC', serif";
+  const titleLines = wrapText(ctx, title, panelW - 100);
+  drawLines(ctx, titleLines.slice(0, 2), panelX + 50, panelY + 60, 98);
+  let cursorY = panelY + 60 + Math.min(2, titleLines.length) * 98 + 12;
+  if (meta) {
+    ctx.globalAlpha = 0.75;
+    ctx.font = "600 30px 'Noto Serif SC', serif";
+    ctx.fillText(meta, panelX + 50, cursorY);
+    ctx.globalAlpha = 1;
+    cursorY += 64;
+  }
+
+  if (facts) {
+    ctx.globalAlpha = 0.72;
+    ctx.fillStyle = '#D4AF37';
+    ctx.font = "600 26px 'Noto Serif SC', serif";
+    ctx.fillText(facts, panelX + 50, cursorY);
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = '#F2E6CE';
+    cursorY += 56;
+  } else {
+    cursorY += 18;
+  }
+
+  // Divider
+  ctx.save();
+  ctx.strokeStyle = 'rgba(212,175,55,0.18)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(panelX + 50, cursorY);
+  ctx.lineTo(panelX + panelW - 50, cursorY);
+  ctx.stroke();
+  ctx.restore();
+  cursorY += 34;
+
+  const leadText = desc || quote;
+  if (leadText) {
+    const boxX = panelX + 50;
+    const boxY = cursorY;
+    const boxW = panelW - 100;
+    const boxPad = 26;
+
+    ctx.save();
+    ctx.font = "600 30px 'Noto Serif SC', serif";
+    const leadLines = wrapText(ctx, leadText, boxW - boxPad * 2);
+    const textLines = leadLines.slice(0, 3);
+    const boxH = textLines.length * 44 + boxPad * 2 + 40;
+    ctx.restore();
+
+    ctx.save();
+    ctx.fillStyle = 'rgba(255,255,255,0.06)';
+    roundRect(ctx, boxX, boxY, boxW, boxH, 34);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(212,175,55,0.22)';
+    ctx.lineWidth = 2;
+    roundRect(ctx, boxX + 14, boxY + 14, boxW - 28, boxH - 28, 28);
+    ctx.stroke();
+
+    ctx.fillStyle = '#D4AF37';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.font = "900 22px 'Noto Serif SC', serif";
+    ctx.fillText(desc ? '导读' : '摘句', boxX + boxPad, boxY + boxPad - 2);
+
+    ctx.fillStyle = '#F2E6CE';
+    ctx.globalAlpha = 0.9;
+    ctx.font = "600 30px 'Noto Serif SC', serif";
+    drawLines(ctx, textLines, boxX + boxPad, boxY + boxPad + 36, 44);
+    ctx.restore();
+
+    cursorY = boxY + boxH + 34;
+  }
+
+  const body = excerptText || desc;
+  if (body) {
+    ctx.save();
+    ctx.fillStyle = '#D4AF37';
+    ctx.globalAlpha = 0.9;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.font = "900 22px 'Noto Serif SC', serif";
+    ctx.fillText(excerptText ? '原文节选' : '简介', panelX + 50, cursorY);
+    ctx.restore();
+
+    const startY = cursorY + 40;
+    const bottomY = panelY + panelH - 170;
+    const gap = 64;
+    const colW = Math.floor((panelW - 100 - gap) / 2);
+    const col1X = panelX + 50;
+    const col2X = col1X + colW + gap;
+    const lineHeight = 46;
+    const maxLinesPerCol = Math.max(0, Math.floor((bottomY - startY) / lineHeight));
+
+    ctx.save();
+    ctx.fillStyle = '#F2E6CE';
+    ctx.globalAlpha = 0.9;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.font = "600 28px 'Noto Serif SC', serif";
+    const lines = wrapText(ctx, body, colW);
+    const col1 = lines.slice(0, maxLinesPerCol);
+    const col2 = lines.slice(maxLinesPerCol, maxLinesPerCol * 2);
+    drawLines(ctx, col1, col1X, startY, lineHeight);
+    drawLines(ctx, col2, col2X, startY, lineHeight);
+    ctx.restore();
+
+    ctx.save();
+    ctx.strokeStyle = 'rgba(212,175,55,0.14)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(col2X - gap / 2, startY - 6);
+    ctx.lineTo(col2X - gap / 2, bottomY + 6);
+    ctx.stroke();
+    ctx.restore();
+  }
+  if (footer) {
+    ctx.globalAlpha = 0.72;
+    ctx.fillStyle = '#D4AF37';
+    ctx.font = "600 26px 'Noto Serif SC', serif";
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(footer, panelX + 50, panelY + panelH - 46);
+  }
+  ctx.restore();
+
+  drawRedSeal(ctx, '帖', panelX + panelW - 92, panelY + panelH - 96, 96, '#C02C38');
+}

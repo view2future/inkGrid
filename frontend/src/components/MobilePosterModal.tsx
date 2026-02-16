@@ -27,6 +27,8 @@ type PosterTarget =
         author: string;
         dynasty: string;
         script_type: string;
+        year?: string;
+        type?: string;
         location: string;
         total_chars: number;
         description?: string;
@@ -66,9 +68,9 @@ export default function MobilePosterModal({
   const templates = useMemo(
     () =>
       [
-        { id: 'folio' as const, label: '册页' },
-        { id: 'wash' as const, label: '水墨' },
-        { id: 'minimal' as const, label: '素白' },
+        { id: 'folio' as const, label: '册页', hint: '装帧', swatch: '#C9A46A' },
+        { id: 'minimal' as const, label: '展签', hint: '留白', swatch: '#F8F8F4' },
+        { id: 'night' as const, label: '乌金', hint: '夜墨', swatch: '#0B0B0E' },
       ],
     []
   );
@@ -255,18 +257,33 @@ export default function MobilePosterModal({
             </div>
 
             <div className="px-5 pb-4">
-              <div className="flex bg-white/10 border border-white/10 rounded-full p-1">
-                {templates.map((t) => (
-                  <button
-                    key={t.id}
-                    onClick={() => setTemplate(t.id)}
-                    className={`flex-1 inline-flex items-center justify-center text-center px-4 py-2 rounded-full text-[11px] font-black tracking-[0.22em] transition ${
-                      template === t.id ? 'bg-[#8B0000] text-[#F2E6CE]' : 'text-stone-300'
-                    }`}
-                  >
-                    {t.label}
-                  </button>
-                ))}
+              <div className="grid grid-cols-3 gap-2 bg-white/10 border border-white/10 rounded-[1.25rem] p-2">
+                {templates.map((t) => {
+                  const active = template === t.id;
+                  return (
+                    <button
+                      key={t.id}
+                      onClick={() => setTemplate(t.id)}
+                      className={`flex items-center justify-center text-center px-3 py-2.5 rounded-[1.05rem] transition active:scale-[0.99] ${
+                        active
+                          ? 'bg-[#8B0000] text-[#F2E6CE] shadow-[0_14px_40px_rgba(139,0,0,0.28)]'
+                          : 'bg-white/5 text-stone-200 hover:bg-white/10'
+                      }`}
+                    >
+                      <div className="flex flex-col items-center leading-tight">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`w-2 h-2 rounded-full ${active ? 'ring-1 ring-[#F2E6CE]/60' : 'ring-1 ring-white/20'}`}
+                            style={{ backgroundColor: t.swatch }}
+                            aria-hidden
+                          />
+                          <span className="text-[11px] font-black tracking-[0.18em]">{t.label}</span>
+                        </div>
+                        <span className={`mt-1 text-[9px] font-serif tracking-[0.2em] ${active ? 'text-[#F2E6CE]/90' : 'text-stone-400'}`}>{t.hint}</span>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
