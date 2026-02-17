@@ -20,6 +20,8 @@ function coercePage(value: string | null): InkFlowMobilePage {
   if (v === 'characters' || v === 'chars' || v === 'char') return 'characters';
   if (v === 'steles' || v === 'stele') return 'steles';
   if (v === 'posters' || v === 'poster') return 'posters';
+  if (v === 'study' || v === 'learn') return 'study';
+  if (v === 'study_deck' || v === 'deck') return 'study_deck';
   return DEFAULT_PAGE;
 }
 

@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { BookOpen, ChevronLeft, ChevronRight, Search } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
+
+const IS_NATIVE_ANDROID = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
+const IMG_LOADING: 'eager' | 'lazy' = IS_NATIVE_ANDROID ? 'eager' : 'lazy';
+const IMG_DECODING: 'async' | 'auto' = IS_NATIVE_ANDROID ? 'auto' : 'async';
 
 export type CharSliceIndexFile = {
   index: number;
@@ -48,6 +53,12 @@ function splitIntoColumns<T>(items: T[], rowsPerCol: number) {
   const cols: T[][] = [];
   for (let i = 0; i < items.length; i += rows) cols.push(items.slice(i, i + rows));
   return cols;
+}
+
+function chunkWithHighlight(chunk: string, index: number) {
+  const chars = Array.from(String(chunk || ''));
+  if (!chars.length) return [] as Array<{ ch: string; active: boolean }>;
+  return chars.map((ch, i) => ({ ch, active: i === index }));
 }
 
 export function MasterpieceCharAtlasCard({
@@ -154,9 +165,30 @@ export function MasterpieceCharAtlasCard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [occIdx]);
 
-  const columns = useMemo(() => {
-    const list = data?.files || [];
-    return splitIntoColumns(list, 18);
+  const pages = useMemo(() => {
+    const map = new Map<number, CharSliceIndexFile[]>();
+    for (const f of data?.files || []) {
+      const idx = Number(f?.source?.image_index || 0);
+      if (!Number.isFinite(idx) || idx <= 0) continue;
+      const list = map.get(idx);
+      if (list) list.push(f);
+      else map.set(idx, [f]);
+    }
+    const ordered = Array.from(map.entries())
+      .sort((a, b) => a[0] - b[0])
+      .map(([pageIndex, files]) => {
+        const grid: Array<Array<CharSliceIndexFile | null>> = Array.from({ length: 6 }, () => [null, null, null]);
+        for (const f of files) {
+          const col = Number(f?.source?.grid?.col);
+          const row = Number(f?.source?.grid?.row);
+          if (!Number.isFinite(col) || !Number.isFinite(row)) continue;
+          if (row < 0 || row > 5) continue;
+          if (col < 0 || col > 2) continue;
+          grid[row][col] = f;
+        }
+        return { pageIndex, files, grid };
+      });
+    return ordered;
   }, [data]);
 
   const openInPage = (f: CharSliceIndexFile) => {
@@ -185,8 +217,8 @@ export function MasterpieceCharAtlasCard({
           src={src}
           alt={f.char}
           className="absolute inset-0 w-full h-full object-contain grayscale contrast-150"
-          loading="lazy"
-          decoding="async"
+          loading={IMG_LOADING}
+          decoding={IMG_DECODING}
         />
         <div className="absolute inset-0 ring-1 ring-black/5" />
       </button>
@@ -334,8 +366,8 @@ export function MasterpieceCharAtlasCard({
                             src={baseDir + selected.file}
                             alt={selected.char}
                             className="w-full h-full object-contain grayscale contrast-150"
-                            loading="lazy"
-                            decoding="async"
+                            loading={IMG_LOADING}
+                            decoding={IMG_DECODING}
                           />
                         </div>
                         <button
@@ -360,6 +392,27 @@ export function MasterpieceCharAtlasCard({
                         ) : null}
                       </div>
                     </div>
+
+                    {selected.source?.chunk ? (
+                      <div className="mt-5 rounded-[1.25rem] bg-white/60 border border-stone-200/70 p-4">
+                        <div className="text-[11px] font-black tracking-[0.35em] text-stone-500 underline decoration-[#8B0000]/25 underline-offset-4">语境（18字）</div>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {chunkWithHighlight(String(selected.source.chunk), Number(selected.source.pos_in_chunk || 0)).map((x, i) => (
+                            <span
+                              key={i}
+                              className={`w-8 h-8 rounded-xl flex items-center justify-center text-[16px] font-serif font-black border transition ${
+                                x.active
+                                  ? 'bg-[#8B0000] text-[#F2E6CE] border-[#8B0000]/60 shadow-[0_14px_40px_rgba(139,0,0,0.22)]'
+                                  : 'bg-white/70 text-stone-900 border-stone-200/70'
+                              }`}
+                            >
+                              {x.ch}
+                            </span>
+                          ))}
+                        </div>
+                        <div className="mt-3 text-[11px] font-sans text-stone-600">提示：这 18 字对应同一张原拓的 3×6 网格。</div>
+                      </div>
+                    ) : null}
 
                     {data?.skipped_chunk?.text ? (
                       <div className="mt-5 rounded-[1.25rem] bg-stone-900/5 border border-stone-200/70 p-4">
@@ -387,34 +440,59 @@ export function MasterpieceCharAtlasCard({
             </div>
 
             <div ref={scrollRef} className="flex-1 min-h-0 overflow-x-auto overflow-y-hidden px-5 py-5">
-              <div className="flex gap-3 min-w-max">
-                {columns.map((col, colIdx) => (
-                  <div key={colIdx} className="shrink-0 rounded-[1.25rem] bg-white/55 border border-stone-200/70 p-3">
-                    <div className="flex flex-col gap-2">
-                      {col.map((f) => {
-                        const active = selected?.index === f.index;
-                        return (
-                          <button
-                            key={f.index}
-                            onClick={() => {
-                              setSelectedChar(String(f.char || '').trim());
-                              const list = byChar.get(String(f.char || '').trim()) || [];
-                              const nextIdx = list.findIndex((x) => x.index === f.index);
-                              setSelectedOccIdx(nextIdx >= 0 ? nextIdx : 0);
-                              openInPage(f);
-                            }}
-                            className={`w-8 h-8 rounded-xl flex items-center justify-center text-[18px] font-serif font-black transition ${
-                              active
-                                ? 'bg-[#8B0000] text-[#F2E6CE] shadow-[0_14px_40px_rgba(139,0,0,0.25)]'
-                                : 'bg-white/70 text-stone-900 border border-stone-200/70'
-                            }`}
-                            aria-label={`Go to ${f.char} ${f.index}`}
-                          >
-                            {f.char}
-                          </button>
-                        );
-                      })}
+              <div className="flex gap-4 min-w-max">
+                {pages.map((p) => (
+                  <div
+                    key={p.pageIndex}
+                    className="shrink-0 rounded-[1.5rem] bg-white/55 border border-stone-200/70 p-3 shadow-sm"
+                  >
+                    <div className="flex items-center justify-between px-1">
+                      <div className="text-[10px] font-mono text-stone-500 tracking-widest">
+                        第 {String(p.pageIndex).padStart(3, '0')} 张
+                      </div>
+                      <div className="text-[9px] font-mono text-stone-400 tracking-widest">{p.files.length}/18</div>
                     </div>
+
+                    <div className="mt-3 grid grid-cols-3 gap-2">
+                      {[0, 1, 2].map((col) => (
+                        <div key={col} className="flex flex-col gap-2">
+                          {[0, 1, 2, 3, 4, 5].map((row) => {
+                            const f = p.grid[row]?.[col] || null;
+                            if (!f) {
+                              return (
+                                <div
+                                  key={`${col}_${row}`}
+                                  className="w-10 h-10 rounded-xl bg-stone-900/5 border border-stone-200/60"
+                                />
+                              );
+                            }
+                            const active = selected?.index === f.index;
+                            return (
+                              <button
+                                key={f.index}
+                                onClick={() => {
+                                  setSelectedChar(String(f.char || '').trim());
+                                  const list = byChar.get(String(f.char || '').trim()) || [];
+                                  const nextIdx = list.findIndex((x) => x.index === f.index);
+                                  setSelectedOccIdx(nextIdx >= 0 ? nextIdx : 0);
+                                  openInPage(f);
+                                }}
+                                className={`w-10 h-10 rounded-xl flex items-center justify-center text-[18px] font-serif font-black border transition active:scale-[0.99] ${
+                                  active
+                                    ? 'bg-[#8B0000] text-[#F2E6CE] border-[#8B0000]/60 shadow-[0_14px_40px_rgba(139,0,0,0.22)]'
+                                    : 'bg-white/70 text-stone-900 border-stone-200/70'
+                                }`}
+                                aria-label={`Go to ${f.char} ${f.index}`}
+                              >
+                                {f.char}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="mt-3 text-[10px] font-sans text-stone-600">从右列开始读（右→左）。</div>
                   </div>
                 ))}
               </div>

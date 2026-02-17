@@ -1,5 +1,8 @@
-import { defineConfig } from 'vitest/config'
-import react from '@vitejs/plugin-react'
+import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
+
+import { defineConfig } from 'vitest/config';
+import react from '@vitejs/plugin-react';
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -7,7 +10,16 @@ export default defineConfig({
   server: {
     proxy: {
       // In dev, serve large stele assets via FastAPI.
-      '/steles': 'http://localhost:8000',
+      '/steles': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        bypass: (req) => {
+          const url = req.url || '';
+          if (!url.startsWith('/steles/')) return null;
+          const localPath = resolve(__dirname, 'public', url.slice(1));
+          return existsSync(localPath) ? url : null;
+        },
+      },
       '/api': 'http://localhost:8000',
     },
   },

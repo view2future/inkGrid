@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Search, SlidersHorizontal, Star, X } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
 import { TransformComponent, TransformWrapper } from 'react-zoom-pan-pinch';
+
+const IS_NATIVE_ANDROID = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
+const IMG_LOADING: 'eager' | 'lazy' = IS_NATIVE_ANDROID ? 'eager' : 'lazy';
+const IMG_DECODING: 'async' | 'auto' = IS_NATIVE_ANDROID ? 'auto' : 'async';
 import { MasterpieceCharAtlasCard } from './MasterpieceCharAtlas';
 
 export type MasterpieceStele = {
@@ -401,10 +406,12 @@ function useSteleKnowledge() {
 
 export function MobileMasterpieceStudyHub({
   steles,
+  onOpenYishanAppreciation,
   onSelect,
 }: {
   steles: MasterpieceStele[];
-  onSelect: (stele: MasterpieceStele) => void;
+  onOpenYishanAppreciation?: () => void;
+  onSelect: (stele: MasterpieceStele, opts?: { initialCardId?: string; restoreLastPosition?: boolean }) => void;
 }) {
   const level8 = useLevel8Path();
   const [progressStore, setProgressStore] = useState<StudyProgressStore>({});
@@ -575,6 +582,12 @@ export function MobileMasterpieceStudyHub({
     return ordered;
   }, [steles, level8.list]);
 
+  const flagships = useMemo(() => {
+    const yishan = steles.find((s) => String(s.id) === 'zhuan_003' || s.name.includes('峄山')) || null;
+    const caoquan = steles.find((s) => String(s.id) === 'li_001' || s.name.includes('曹全')) || null;
+    return { yishan, caoquan };
+  }, [steles]);
+
   const pathStats = useMemo(() => {
     const total = mustLearn.length;
     let done = 0;
@@ -659,7 +672,7 @@ export function MobileMasterpieceStudyHub({
     return authorOptions.filter((opt) => normalizeNameKey(opt.label).includes(q));
   }, [authorOptions, authorQuery]);
 
-  const renderRow = (s: MasterpieceStele, variant: 'must' | 'list') => {
+  const renderRow = (s: MasterpieceStele, variant: 'must' | 'list' | 'continue') => {
     const cover = getSteleCover(s);
     const isMust = variant === 'must' || level8.set.has(String(s.id));
     const ready = hasSteleAssets(s);
@@ -668,10 +681,10 @@ export function MobileMasterpieceStudyHub({
     return (
       <button
         key={s.id}
-        onClick={() => onSelect(s)}
+        onClick={() => onSelect(s, { restoreLastPosition: variant === 'continue' })}
         className="w-full text-left rounded-[1.75rem] bg-white/60 backdrop-blur-md border border-stone-200/70 shadow-[0_22px_70px_rgba(0,0,0,0.10)] overflow-hidden active:scale-[0.995] transition"
       >
-        <div className="relative p-5 flex items-center gap-4">
+        <div className="relative p-5 flex items-start gap-4">
           <div className="absolute inset-0 opacity-[0.10] bg-[url('https://www.transparenttextures.com/patterns/handmade-paper.png')]" />
           <div className="relative shrink-0 w-14 h-14 rounded-2xl overflow-hidden border border-stone-200/80 bg-stone-100">
             {cover ? (
@@ -681,8 +694,8 @@ export function MobileMasterpieceStudyHub({
             )}
           </div>
           <div className="relative min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <div className="min-w-0 text-[14px] font-serif font-black tracking-wide text-stone-900 truncate">{s.name}</div>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="text-[14px] font-serif font-black tracking-wide text-stone-900 leading-snug break-words">{s.name}</div>
               {isMust ? (
                 <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-[#8B0000]/10 text-[#8B0000] border border-[#8B0000]/20 px-2 py-0.5 text-[9px] font-black tracking-[0.2em]">
                   <Star size={10} />
@@ -735,6 +748,47 @@ export function MobileMasterpieceStudyHub({
           <h2 className="text-3xl font-serif font-black tracking-[0.35em] pl-[0.35em] text-stone-900">名帖学习卡</h2>
           <p className="text-sm font-serif text-stone-600 leading-relaxed tracking-wide">把一帖拆成一组卡片：看懂背景、抓住技法、带着任务去临。</p>
         </div>
+
+        {flagships.yishan || flagships.caoquan ? (
+          <div className="mt-6 rounded-[2rem] bg-white/55 border border-stone-200/70 shadow-[0_22px_70px_rgba(0,0,0,0.10)] overflow-hidden">
+            <div className="relative p-6">
+              <div className="absolute inset-0 opacity-[0.10] bg-[url('https://www.transparenttextures.com/patterns/handmade-paper.png')]" />
+              <div className="relative">
+                <div className="flex items-center justify-between">
+                  <div className="text-[10px] font-black tracking-[0.4em] text-stone-500 uppercase">标杆体验</div>
+                  <div className="text-[10px] font-mono text-stone-500 tracking-widest">2 入口</div>
+                </div>
+                <div className="mt-4 grid grid-cols-1 gap-3">
+                  {flagships.yishan ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (onOpenYishanAppreciation) onOpenYishanAppreciation();
+                        else onSelect(flagships.yishan!);
+                      }}
+                      className="h-12 rounded-[1.25rem] bg-white/70 border border-stone-200/80 text-stone-800 font-black tracking-[0.18em] shadow-sm active:scale-[0.99] transition flex items-center justify-between px-5"
+                    >
+                      <span>嶧山刻石 · 长卷观赏</span>
+                      <span className="text-[10px] font-mono text-stone-500 tracking-widest">鉴赏</span>
+                    </button>
+                  ) : null}
+
+                  {flagships.caoquan ? (
+                    <button
+                      type="button"
+                      onClick={() => onSelect(flagships.caoquan!, { initialCardId: 'atlas' })}
+                      className="h-12 rounded-[1.25rem] bg-[#8B0000] border border-[#8B0000]/60 text-[#F2E6CE] font-black tracking-[0.16em] shadow-[0_18px_45px_rgba(139,0,0,0.22)] active:scale-[0.99] transition flex items-center justify-between px-5"
+                    >
+                      <span>曹全碑 · 字库与定位</span>
+                      <span className="text-[10px] font-mono text-[#F2E6CE]/85 tracking-widest">原拓</span>
+                    </button>
+                  ) : null}
+                </div>
+                <div className="mt-4 text-[11px] font-serif text-stone-600 leading-relaxed">推荐从「曹全碑」开始：同字多例 → 原拓定位 → 看语境。</div>
+              </div>
+            </div>
+          </div>
+        ) : null}
 
         {pathStats.total ? (
           <div className="mt-6 rounded-[2rem] bg-white/55 border border-stone-200/70 shadow-[0_22px_70px_rgba(0,0,0,0.10)] overflow-hidden">
@@ -949,7 +1003,7 @@ export function MobileMasterpieceStudyHub({
                 刷新
               </button>
             </div>
-            <div className="space-y-3">{continues.map((x) => renderRow(x.stele, 'list'))}</div>
+            <div className="space-y-3">{continues.map((x) => renderRow(x.stele, 'continue'))}</div>
           </div>
         ) : null}
 
@@ -1231,9 +1285,15 @@ export function MobileMasterpieceStudyHub({
 
 export function MobileMasterpieceStudyDeck({
   stele,
+  initialCardId,
+  restoreLastPosition,
+  entryKey,
   onDone,
 }: {
   stele: MasterpieceStele;
+  initialCardId?: string;
+  restoreLastPosition?: boolean;
+  entryKey?: number;
   onDone?: () => void;
 }) {
   const { find } = useSteleKnowledge();
@@ -1257,11 +1317,13 @@ export function MobileMasterpieceStudyDeck({
     label: string;
   };
   const [viewer, setViewer] = useState<null | { index: number; highlight?: ViewerHighlight | null }>(null);
+  const [viewerError, setViewerError] = useState<string | null>(null);
   const [viewerNaturalSize, setViewerNaturalSize] = useState<null | { w: number; h: number }>(null);
   const viewerBoxRef = useRef<HTMLDivElement | null>(null);
   const [viewerBoxSize, setViewerBoxSize] = useState<null | { w: number; h: number }>(null);
   useEffect(() => {
     setViewer(null);
+    setViewerError(null);
     setViewerNaturalSize(null);
     setViewerBoxSize(null);
   }, [stele.id]);
@@ -1352,7 +1414,7 @@ export function MobileMasterpieceStudyDeck({
           {cover ? (
             <>
               <div className="absolute inset-0">
-              <img src={cover} alt={stele.name} className="w-full h-full object-cover grayscale contrast-125" loading="lazy" decoding="async" />
+              <img src={cover} alt={stele.name} className="w-full h-full object-cover grayscale contrast-125" loading={IMG_LOADING} decoding={IMG_DECODING} />
               </div>
               <div className="absolute inset-0 bg-gradient-to-b from-white/85 via-white/55 to-[#F1E8DA]" />
             </>
@@ -1524,21 +1586,44 @@ export function MobileMasterpieceStudyDeck({
                 <div className="mt-3 text-2xl font-serif font-black tracking-wide text-stone-950">看“全帖气”</div>
                 <div className="mt-6 rounded-[1.75rem] bg-white/65 border border-stone-200/70 p-5">
                   <div className="flex gap-3 overflow-x-auto pb-2">
-                    {(pageThumbs.length ? pageThumbs : pages).slice(0, 12).map((src, i) => (
+                    {(pageThumbs.length ? pageThumbs : pages).map((src, i) => (
                       <button
                         key={src}
                         onClick={() => {
+                          const pageSrc = pages[i] || src;
+                          console.debug('[MasterpieceStudy] open stele page', {
+                            steleId: String(stele.id),
+                            steleName: String(stele.name || ''),
+                            pageIndex: i,
+                            thumbSrc: src,
+                            pageSrc,
+                          });
                           setViewerNaturalSize(null);
+                          setViewerError(null);
                           setViewer({ index: i, highlight: null });
                         }}
-                        className="shrink-0 w-20 h-28 rounded-2xl overflow-hidden border border-stone-200/80 bg-stone-100 active:scale-[0.99] transition"
+                        className="shrink-0 w-20 h-28 rounded-2xl overflow-hidden border border-stone-200/80 bg-white active:scale-[0.99] transition"
                         aria-label={`Open page ${i + 1}`}
                       >
-                      <img src={src} alt="page" className="w-full h-full object-cover grayscale contrast-125" loading="lazy" decoding="async" />
+                      <img
+                        src={src}
+                        alt="page"
+                        className="w-full h-full object-contain grayscale contrast-150"
+                        loading={IMG_LOADING}
+                        decoding={IMG_DECODING}
+                        onError={() => {
+                          console.error('[MasterpieceStudy] page thumb load failed', {
+                            steleId: String(stele.id),
+                            steleName: String(stele.name || ''),
+                            thumbSrc: src,
+                            pageSrc: pages[i] || null,
+                          });
+                        }}
+                      />
                       </button>
                     ))}
                   </div>
-                  <div className="mt-3 text-[12px] font-sans text-stone-600">本帖共 {pages.length} 张，先选 12 张做快速扫读。</div>
+                  <div className="mt-3 text-[12px] font-sans text-stone-600">本帖共 {pages.length} 张，横向滑动做快速扫读。</div>
                 </div>
               </div>
             </div>
@@ -1556,7 +1641,16 @@ export function MobileMasterpieceStudyDeck({
             indexUrl={charIndexUrl}
             initialChar={stele.id === 'li_001' ? '曹' : undefined}
             onOpenInPage={({ pageIndex, cropBox, label }) => {
+              console.debug('[MasterpieceStudy] open stele page from atlas', {
+                steleId: String(stele.id),
+                steleName: String(stele.name || ''),
+                pageIndex,
+                cropBox,
+                label,
+                pageSrc: pages[pageIndex] || null,
+              });
               setViewerNaturalSize(null);
+              setViewerError(null);
               setViewer({ index: pageIndex, highlight: { cropBox, label } });
             }}
           />
@@ -1754,16 +1848,44 @@ export function MobileMasterpieceStudyDeck({
   ]);
 
   const [index, setIndex] = useState(0);
-  useEffect(() => setIndex(0), [stele.id]);
-
-  // Restore last position.
+  const didInitRef = useRef<number | null>(null);
   useEffect(() => {
-    const p = getProgressFor(String(stele.id));
-    if (!p) return;
-    if (typeof p.lastIndex !== 'number') return;
-    const i = Math.max(0, Math.min(cards.length - 1, p.lastIndex));
-    setIndex(i);
-  }, [stele.id, cards.length]);
+    if (!cards.length) return;
+    const k = typeof entryKey === 'number' ? entryKey : 0;
+    if (didInitRef.current === k) return;
+
+    let nextIndex = 0;
+    let reason: 'default' | 'initialCardId' | 'restoreLastPosition' = 'default';
+
+    if (initialCardId) {
+      const i = cards.findIndex((c) => c.id === initialCardId);
+      if (i >= 0) {
+        nextIndex = i;
+        reason = 'initialCardId';
+      }
+    } else if (restoreLastPosition) {
+      const p = getProgressFor(String(stele.id));
+      if (p && typeof p.lastIndex === 'number') {
+        nextIndex = Math.max(0, Math.min(cards.length - 1, p.lastIndex));
+        reason = 'restoreLastPosition';
+      }
+    }
+
+    console.debug('[MasterpieceStudy] init deck index', {
+      steleId: String(stele.id),
+      steleName: String(stele.name || ''),
+      entryKey: k,
+      reason,
+      nextIndex,
+      initialCardId: initialCardId || null,
+      restoreLastPosition: Boolean(restoreLastPosition),
+      savedLastIndex: getProgressFor(String(stele.id))?.lastIndex ?? null,
+      totalCards: cards.length,
+    });
+
+    setIndex(nextIndex);
+    didInitRef.current = k;
+  }, [stele.id, cards.length, initialCardId, restoreLastPosition, entryKey]);
 
   // Persist position.
   useEffect(() => {
@@ -1831,6 +1953,7 @@ export function MobileMasterpieceStudyDeck({
             className="fixed inset-0 z-[380] bg-black/90 backdrop-blur-2xl"
             onClick={() => {
               setViewer(null);
+              setViewerError(null);
               setViewerNaturalSize(null);
               setViewerBoxSize(null);
             }}
@@ -1840,7 +1963,7 @@ export function MobileMasterpieceStudyDeck({
               animate={{ y: 0, opacity: 1, scale: 1 }}
               exit={{ y: 16, opacity: 0, scale: 0.98 }}
               transition={{ type: 'spring', stiffness: 260, damping: 26 }}
-              className="absolute inset-x-0 top-[max(env(safe-area-inset-top),24px)] bottom-[env(safe-area-inset-bottom)] flex flex-col"
+              className="absolute inset-x-0 top-[max(env(safe-area-inset-top),32px)] bottom-[env(safe-area-inset-bottom)] flex flex-col"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="px-5 pt-4 pb-3 flex items-center justify-between">
@@ -1856,6 +1979,7 @@ export function MobileMasterpieceStudyDeck({
                 <button
                   onClick={() => {
                     setViewer(null);
+                    setViewerError(null);
                     setViewerNaturalSize(null);
                     setViewerBoxSize(null);
                   }}
@@ -1869,21 +1993,52 @@ export function MobileMasterpieceStudyDeck({
               <div className="flex-1 px-5 pb-5">
                 <div className="h-full rounded-[1.75rem] bg-black/30 border border-white/10 overflow-hidden">
                   <TransformWrapper initialScale={1} minScale={1} maxScale={4} centerOnInit>
-                    <TransformComponent wrapperStyle={{ width: '100%', height: '100%' }}>
+                    <TransformComponent
+                      wrapperStyle={{ width: '100%', height: '100%' }}
+                      contentStyle={{ width: '100%', height: '100%' }}
+                    >
                       <div ref={viewerBoxRef} className="relative w-full h-full">
                         <img
                           src={pages[viewer.index]}
                           alt="page"
-                          className="absolute inset-0 w-full h-full object-contain"
+                          className="w-full h-full object-contain"
                           draggable={false}
-                          loading="lazy"
-                          decoding="async"
+                          loading={IMG_LOADING}
+                          decoding={IMG_DECODING}
                           onLoad={(e) => {
                             const w = e.currentTarget.naturalWidth;
                             const h = e.currentTarget.naturalHeight;
                             if (w > 0 && h > 0) setViewerNaturalSize({ w, h });
+                            console.debug('[MasterpieceStudy] stele page loaded', {
+                              steleId: String(stele.id),
+                              steleName: String(stele.name || ''),
+                              pageIndex: viewer.index,
+                              pageSrc: pages[viewer.index] || null,
+                              natural: { w, h },
+                              box: viewerBoxSize,
+                            });
+                          }}
+                          onError={() => {
+                            const pageSrc = pages[viewer.index] || '';
+                            console.error('[MasterpieceStudy] stele page load failed', {
+                              steleId: String(stele.id),
+                              steleName: String(stele.name || ''),
+                              pageIndex: viewer.index,
+                              pageSrc,
+                            });
+                            setViewerError(pageSrc || 'unknown');
                           }}
                         />
+
+                        {viewerError ? (
+                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <div className="max-w-[92%] rounded-[1.5rem] bg-black/60 border border-white/15 px-5 py-4 text-center shadow-2xl">
+                              <div className="text-[12px] font-black tracking-[0.25em] text-[#F2E6CE]">图片加载失败</div>
+                              <div className="mt-2 text-[10px] font-mono tracking-widest text-stone-200/80 break-all">{viewerError}</div>
+                              <div className="mt-2 text-[11px] font-sans text-stone-200/80">打开 F12 → Console 查看详细日志与 URL。</div>
+                            </div>
+                          </div>
+                        ) : null}
 
                         {viewer.highlight && highlightRect ? (
                           <motion.div
@@ -1909,6 +2064,7 @@ export function MobileMasterpieceStudyDeck({
                 <button
                   onClick={() => {
                     setViewerNaturalSize(null);
+                    setViewerError(null);
                     setViewer((v) => {
                       if (!v) return v;
                       const nextIndex = Math.max(0, v.index - 1);
@@ -1923,6 +2079,7 @@ export function MobileMasterpieceStudyDeck({
                 <button
                   onClick={() => {
                     setViewerNaturalSize(null);
+                    setViewerError(null);
                     setViewer((v) => {
                       if (!v) return v;
                       const nextIndex = Math.min(pages.length - 1, v.index + 1);

@@ -44,6 +44,7 @@ interface InkFlowProps {
   isOpen: boolean;
   onClose: () => void;
   launch?: InkFlowLaunch | null;
+  onOpenYishanAppreciation?: () => void;
 }
 
 type FlowMode = 'characters' | 'steles';
@@ -51,6 +52,8 @@ type CardType = 'char' | 'stele';
 type MobilePage = 'hub' | FlowMode | 'posters' | 'study' | 'study_deck';
 
 const YISHAN_EXTRACTED_COUNT = 135;
+
+const ENABLE_GESTURE_NAV = false;
 
 interface FlowCard {
   id: string;
@@ -327,7 +330,7 @@ function SteleCard({ stele }: { stele: Stele }) {
   );
 }
 
-const InkFlow = forwardRef(({ isOpen, onClose, launch }: InkFlowProps, ref) => {
+const InkFlow = forwardRef(({ isOpen, onClose, launch, onOpenYishanAppreciation }: InkFlowProps, ref) => {
   const isMobile = useMediaQuery('(max-width: 768px)');
   const [mode, setMode] = useState<FlowMode>('characters');
   const [steleCards, setSteleCards] = useState<FlowCard[]>([]);
@@ -338,6 +341,9 @@ const InkFlow = forwardRef(({ isOpen, onClose, launch }: InkFlowProps, ref) => {
   const [mobilePosterTarget, setMobilePosterTarget] = useState<MobilePosterTarget | null>(null);
   const [mobilePage, setMobilePage] = useState<MobilePage>('hub');
   const [studyStele, setStudyStele] = useState<Stele | null>(null);
+  const [studyInitialCardId, setStudyInitialCardId] = useState<string | null>(null);
+  const [studyRestoreLastPosition, setStudyRestoreLastPosition] = useState(false);
+  const [studyDeckEntryKey, setStudyDeckEntryKey] = useState(0);
   const [mobileSteleIndex, setMobileSteleIndex] = useState(0);
   const [mobileSteleSection, setMobileSteleSection] = useState(0);
   const [mobileSteleAxis, setMobileSteleAxis] = useState<'post' | 'section'>('post');
@@ -447,6 +453,18 @@ const InkFlow = forwardRef(({ isOpen, onClose, launch }: InkFlowProps, ref) => {
         setMobileSteleAxis('post');
         setMobilePage('steles');
       }
+      if (launchPage === 'study') {
+        setStudyStele(null);
+        setStudyInitialCardId(null);
+        setStudyRestoreLastPosition(false);
+        setStudyDeckEntryKey((k) => k + 1);
+        setMobilePage('study');
+        return;
+      }
+      if (launchPage === 'study_deck') {
+        setMobilePage('study_deck');
+        return;
+      }
       return;
     }
 
@@ -457,6 +475,35 @@ const InkFlow = forwardRef(({ isOpen, onClose, launch }: InkFlowProps, ref) => {
 
   useEffect(() => {
     if (!isOpen || !launchKey || !launchPage) return;
+
+    if (isMobile && (launchPage === 'study' || launchPage === 'study_deck')) {
+      const len = steleCards.length;
+      if (!len) return;
+
+      const stelesNow = steleCards.map((c) => c.data as Stele);
+      let selected: Stele | null = null;
+      if (launchSteleId) {
+        selected = stelesNow.find((s) => s.id === launchSteleId) ?? null;
+      } else if (typeof launchSteleIndex === 'number') {
+        const idx = Math.min(len - 1, Math.max(0, launchSteleIndex));
+        selected = stelesNow[idx] ?? null;
+      }
+
+      if (selected) {
+        setStudyStele(selected);
+        setStudyInitialCardId(null);
+        setStudyRestoreLastPosition(false);
+        setStudyDeckEntryKey((k) => k + 1);
+        setMobilePage('study_deck');
+      } else {
+        setStudyStele(null);
+        setStudyInitialCardId(null);
+        setStudyRestoreLastPosition(false);
+        setStudyDeckEntryKey((k) => k + 1);
+        setMobilePage('study');
+      }
+      return;
+    }
 
     if (launchPage === 'characters') {
       const len = charDataFull.length;
@@ -657,9 +704,13 @@ const InkFlow = forwardRef(({ isOpen, onClose, launch }: InkFlowProps, ref) => {
     }
   }, [currentIndex, currentCards.length]);
 
-  const handleDragEnd = (_: any, info: PanInfo) => { if (Math.abs(info.offset.y) > 80) navigate(info.offset.y < 0 ? 1 : -1); };
+  const handleDragEnd = (_: any, info: PanInfo) => {
+    if (!ENABLE_GESTURE_NAV) return;
+    if (Math.abs(info.offset.y) > 80) navigate(info.offset.y < 0 ? 1 : -1);
+  };
 
   useEffect(() => {
+    if (!ENABLE_GESTURE_NAV) return;
     if (!isOpen || isMobile) return;
     const handleWheel = (e: WheelEvent) => { if (Math.abs(e.deltaY) < 30) return; navigate(e.deltaY > 0 ? 1 : -1); };
     window.addEventListener('wheel', handleWheel);
@@ -774,11 +825,17 @@ const InkFlow = forwardRef(({ isOpen, onClose, launch }: InkFlowProps, ref) => {
       }
       if (mobilePage === 'study_deck') {
         setStudyStele(null);
+        setStudyInitialCardId(null);
+        setStudyRestoreLastPosition(false);
         setMobilePage('study');
         return;
       }
       if (mobilePage !== 'hub') {
-        if (mobilePage === 'study') setStudyStele(null);
+        if (mobilePage === 'study') {
+          setStudyStele(null);
+          setStudyInitialCardId(null);
+          setStudyRestoreLastPosition(false);
+        }
         setMobilePage('hub');
         return;
       }
@@ -825,6 +882,9 @@ const InkFlow = forwardRef(({ isOpen, onClose, launch }: InkFlowProps, ref) => {
       setShowStelePicker(false);
       setShowSteleFullText(false);
       setStudyStele(null);
+      setStudyInitialCardId(null);
+      setStudyRestoreLastPosition(false);
+      setStudyDeckEntryKey((k) => k + 1);
       setMobilePage('study');
     };
 
@@ -849,6 +909,7 @@ const InkFlow = forwardRef(({ isOpen, onClose, launch }: InkFlowProps, ref) => {
       };
 
       const allowVerticalSwipe =
+        ENABLE_GESTURE_NAV &&
         !edge &&
         !isInteractive &&
         (mobilePage === 'characters' || mobilePage === 'steles');
@@ -893,7 +954,7 @@ const InkFlow = forwardRef(({ isOpen, onClose, launch }: InkFlowProps, ref) => {
 
     const onPointerUp = (e: React.PointerEvent) => {
       const v = verticalSwipeRef.current;
-      if (v.active && v.pointerId === e.pointerId) {
+      if (ENABLE_GESTURE_NAV && v.active && v.pointerId === e.pointerId) {
         const dx = e.clientX - v.startX;
         const dy = e.clientY - v.startY;
         const absX = Math.abs(dx);
@@ -949,7 +1010,7 @@ const InkFlow = forwardRef(({ isOpen, onClose, launch }: InkFlowProps, ref) => {
           transition={{ duration: 20, repeat: Infinity, ease: 'easeInOut' }}
         />
 
-        <div className="relative z-10 h-full flex flex-col pt-[max(env(safe-area-inset-top),24px)] pb-[env(safe-area-inset-bottom)]">
+        <div className="relative z-10 h-full flex flex-col pt-[max(env(safe-area-inset-top),32px)] pb-[env(safe-area-inset-bottom)]">
           {/* 顶栏 */}
           <div className="px-5 pt-3 pb-2 flex items-center justify-between">
             <button
@@ -1030,8 +1091,19 @@ const InkFlow = forwardRef(({ isOpen, onClose, launch }: InkFlowProps, ref) => {
             ) : mobilePage === 'study' ? (
               <MobileMasterpieceStudyHub
                 steles={mobileSteles as any}
-                onSelect={(s) => {
+                onOpenYishanAppreciation={
+                  onOpenYishanAppreciation
+                    ? () => {
+                        onClose();
+                        window.setTimeout(() => onOpenYishanAppreciation(), 0);
+                      }
+                    : undefined
+                }
+                onSelect={(s, opts) => {
                   setStudyStele(s as any);
+                  setStudyInitialCardId(opts?.initialCardId || null);
+                  setStudyRestoreLastPosition(Boolean(opts?.restoreLastPosition));
+                  setStudyDeckEntryKey((k) => k + 1);
                   setMobilePage('study_deck');
                 }}
               />
@@ -1039,8 +1111,14 @@ const InkFlow = forwardRef(({ isOpen, onClose, launch }: InkFlowProps, ref) => {
               studyStele ? (
                 <MobileMasterpieceStudyDeck
                   stele={studyStele as any}
+                  initialCardId={studyInitialCardId || undefined}
+                  restoreLastPosition={studyRestoreLastPosition}
+                  entryKey={studyDeckEntryKey}
                   onDone={() => {
                     setStudyStele(null);
+                    setStudyInitialCardId(null);
+                    setStudyRestoreLastPosition(false);
+                    setStudyDeckEntryKey((k) => k + 1);
                     setMobilePage('study');
                     showToast('已打卡');
                   }}
@@ -1143,8 +1221,23 @@ const InkFlow = forwardRef(({ isOpen, onClose, launch }: InkFlowProps, ref) => {
       </div>
       <AnimatePresence mode="wait" custom={direction}>
         {currentCard && (
-          <motion.div key={`${mode}-${currentCard.id}`} custom={direction} initial={{ y: direction * 800, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -direction * 800, opacity: 0 }} transition={{ type: 'spring', damping: 40, stiffness: 200 }} drag="y" dragControls={dragControls} dragListener={false} onDragEnd={handleDragEnd} className="absolute inset-0">
-            <div className="absolute inset-0 z-0 bg-[#0A0A0A]" onPointerDown={(e) => dragControls.start(e)} />
+          <motion.div
+            key={`${mode}-${currentCard.id}`}
+            custom={direction}
+            initial={{ y: direction * 800, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -direction * 800, opacity: 0 }}
+            transition={{ type: 'spring', damping: 40, stiffness: 200 }}
+            drag={ENABLE_GESTURE_NAV ? 'y' : false}
+            dragControls={dragControls}
+            dragListener={false}
+            onDragEnd={ENABLE_GESTURE_NAV ? handleDragEnd : undefined}
+            className="absolute inset-0"
+          >
+            <div
+              className="absolute inset-0 z-0 bg-[#0A0A0A]"
+              onPointerDown={ENABLE_GESTURE_NAV ? (e) => dragControls.start(e) : undefined}
+            />
             <div className="h-full w-full relative z-10 pointer-events-none">
               <div className="h-full w-full pointer-events-auto">
                 {currentCard.type === 'char' ? <CharCard char={currentCard.data} onDoubleClick={(e) => {
@@ -1834,7 +1927,7 @@ function MobileCuratedCollageModal({
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: 18, opacity: 0, scale: 0.98 }}
             transition={{ type: 'spring', stiffness: 260, damping: 26 }}
-            className="absolute inset-x-0 top-[max(env(safe-area-inset-top),24px)] bottom-[env(safe-area-inset-bottom)] flex flex-col"
+            className="absolute inset-x-0 top-[max(env(safe-area-inset-top),32px)] bottom-[env(safe-area-inset-bottom)] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="px-5 pt-4 pb-3 flex items-center justify-between">
@@ -2095,7 +2188,7 @@ function MobileNewYearPosterModal({
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: 18, opacity: 0, scale: 0.98 }}
             transition={{ type: 'spring', stiffness: 260, damping: 26 }}
-            className="absolute inset-x-0 top-[max(env(safe-area-inset-top),24px)] bottom-[env(safe-area-inset-bottom)] flex flex-col"
+            className="absolute inset-x-0 top-[max(env(safe-area-inset-top),32px)] bottom-[env(safe-area-inset-bottom)] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="px-5 pt-4 pb-3 flex items-center justify-between">
@@ -2710,7 +2803,7 @@ function MobileSteleFullText({ stele, onClose }: { stele: Stele; onClose: () => 
         animate={{ y: 0, opacity: 1, scale: 1 }}
         exit={{ y: 18, opacity: 0, scale: 0.98 }}
         transition={{ type: 'spring', stiffness: 260, damping: 26 }}
-        className="absolute inset-x-0 top-[max(env(safe-area-inset-top),24px)] bottom-[env(safe-area-inset-bottom)] px-5 pt-5 pb-6"
+        className="absolute inset-x-0 top-[max(env(safe-area-inset-top),32px)] bottom-[env(safe-area-inset-bottom)] px-5 pt-5 pb-6"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="h-full max-w-md mx-auto rounded-[2rem] bg-[#F6F1E7] border border-white/10 shadow-[0_40px_120px_rgba(0,0,0,0.65)] overflow-hidden flex flex-col">

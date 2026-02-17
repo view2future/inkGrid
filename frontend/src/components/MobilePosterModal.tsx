@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Download, Share2, X } from 'lucide-react';
 import { type PosterKind, type PosterTemplate, INKGRID_QR_LABEL, renderPosterPng } from '../utils/poster';
+import { sharePngToApps, savePngToGallery } from '../native/media';
+import { Capacitor } from '@capacitor/core';
 
 type PosterTarget =
   | {
@@ -51,7 +53,9 @@ export default function MobilePosterModal({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewBlob, setPreviewBlob] = useState<Blob | null>(null);
   const [tip, setTip] = useState<string | null>(null);
+  const [toastText, setToastText] = useState<string | null>(null);
   const [loadingIndex, setLoadingIndex] = useState(0);
+  const [isSaving, setIsSaving] = useState(false);
 
   const loadingNotes = useMemo(
     () =>
@@ -184,7 +188,37 @@ export default function MobilePosterModal({
 
   const handleDownload = async () => {
     if (!previewBlob) return;
+
+    const showToast = (text: string) => {
+      setToastText(text);
+      window.setTimeout(() => setToastText(null), 1600);
+    };
+
+    const blobToBase64 = (blob: Blob) =>
+      new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error('read failed'));
+        reader.onload = () => {
+          const res = String(reader.result || '');
+          const idx = res.indexOf(',');
+          resolve(idx >= 0 ? res.slice(idx + 1) : res);
+        };
+        reader.readAsDataURL(blob);
+      });
+
     try {
+      setIsSaving(true);
+      setTip(null);
+
+      // Native Android: save into system gallery via MediaStore.
+      const base64 = await blobToBase64(previewBlob);
+      const nativeRes = await savePngToGallery(base64, filename);
+      if (nativeRes.ok) {
+        showToast('已保存到相册');
+        return;
+      }
+
+      // Web fallback.
       const url = URL.createObjectURL(previewBlob);
       const a = document.createElement('a');
       a.href = url;
@@ -193,14 +227,59 @@ export default function MobilePosterModal({
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
+      showToast('已开始下载');
       setTip('已尝试保存；若无反应，请长按图片保存。');
     } catch {
-      setTip('请长按图片保存到手机本地。');
+      showToast('保存失败');
+      setTip('保存失败；可长按图片保存到手机本地。');
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const shareWithFile = async (label: string) => {
     if (!previewBlob) return;
+
+    const blobToBase64 = (blob: Blob) =>
+      new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error('read failed'));
+        reader.onload = () => {
+          const res = String(reader.result || '');
+          const idx = res.indexOf(',');
+          resolve(idx >= 0 ? res.slice(idx + 1) : res);
+        };
+        reader.readAsDataURL(blob);
+      });
+
+    const showToast = (text: string) => {
+      setToastText(text);
+      window.setTimeout(() => setToastText(null), 1600);
+    };
+
+    if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android') {
+      try {
+        setIsSaving(true);
+        const base64 = await blobToBase64(previewBlob);
+        const res = await sharePngToApps(base64, filename, {
+          dialogTitle: label,
+          title: target.title,
+          text: `${target.title} · ${INKGRID_QR_LABEL}`,
+        });
+        if (res.ok) {
+          showToast('已打开分享');
+          return;
+        }
+        showToast('分享失败');
+        setTip(`分享失败；可先保存海报，再在微信 ${label}。`);
+      } catch {
+        showToast('分享失败');
+        setTip(`分享失败；可先保存海报，再在微信 ${label}。`);
+      } finally {
+        setIsSaving(false);
+      }
+      return;
+    }
 
     const file = new File([previewBlob], filename, { type: 'image/png' });
     const nav: any = navigator;
@@ -239,7 +318,7 @@ export default function MobilePosterModal({
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: 18, opacity: 0, scale: 0.98 }}
             transition={{ type: 'spring', stiffness: 260, damping: 26 }}
-            className="absolute inset-x-0 top-[max(env(safe-area-inset-top),24px)] bottom-[env(safe-area-inset-bottom)] flex flex-col"
+            className="absolute inset-x-0 top-[max(env(safe-area-inset-top),32px)] bottom-[env(safe-area-inset-bottom)] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="px-5 pt-4 pb-3 flex items-center justify-between">
@@ -334,16 +413,16 @@ export default function MobilePosterModal({
                 <div className="mt-6 grid grid-cols-2 gap-3">
                   <button
                     onClick={handleDownload}
-                    disabled={!previewBlob || isBusy}
+                    disabled={!previewBlob || isBusy || isSaving}
                     className="flex items-center justify-center gap-3 px-4 py-4 rounded-[1.25rem] bg-white/10 border border-white/10 text-stone-100 text-[12px] font-black tracking-[0.18em] text-center active:scale-95 transition disabled:opacity-40"
                   >
                     <Download size={16} />
-                    保存海报
+                    保存典藏海报
                   </button>
 
                   <button
                     onClick={() => shareWithFile('发给好友')}
-                    disabled={!previewBlob || isBusy}
+                    disabled={!previewBlob || isBusy || isSaving}
                     className="flex items-center justify-center gap-3 px-4 py-4 rounded-[1.25rem] bg-[#8B0000] border border-[#8B0000]/60 text-[#F2E6CE] text-[12px] font-black tracking-[0.18em] text-center shadow-[0_18px_45px_rgba(139,0,0,0.35)] active:scale-95 transition disabled:opacity-40"
                   >
                     <Share2 size={16} />
@@ -353,7 +432,7 @@ export default function MobilePosterModal({
 
                 <button
                   onClick={() => shareWithFile('分享到朋友圈')}
-                  disabled={!previewBlob || isBusy}
+                  disabled={!previewBlob || isBusy || isSaving}
                   className="mt-3 w-full flex items-center justify-center gap-3 px-4 py-4 rounded-[1.25rem] bg-white/10 border border-white/10 text-stone-100 text-[12px] font-black tracking-[0.18em] text-center active:scale-95 transition disabled:opacity-40"
                 >
                   <Share2 size={16} />
@@ -368,6 +447,23 @@ export default function MobilePosterModal({
           </motion.div>
         </motion.div>
       )}
+
+      <AnimatePresence>
+        {toastText ? (
+          <motion.div
+            key={toastText}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            transition={{ duration: 0.25, ease: 'easeOut' }}
+            className="fixed left-1/2 -translate-x-1/2 bottom-[calc(2rem+env(safe-area-inset-bottom))] z-[310]"
+          >
+            <div className="px-5 py-3 rounded-full bg-black/70 border border-white/10 text-[#F2E6CE] text-[12px] font-black tracking-[0.18em] shadow-[0_18px_50px_rgba(0,0,0,0.55)]">
+              {toastText}
+            </div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </AnimatePresence>
   );
 }

@@ -1,4 +1,4 @@
-export type InkFlowMobilePage = 'hub' | 'characters' | 'steles' | 'posters';
+export type InkFlowMobilePage = 'hub' | 'characters' | 'steles' | 'posters' | 'study' | 'study_deck';
 
 export type InkFlowLaunch = {
   key: string;

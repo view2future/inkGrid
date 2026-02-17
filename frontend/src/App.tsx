@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Info, X, ChevronRight, ChevronLeft, Library } from 'lucide-react';
 import { App as CapacitorApp } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
+import { TransformComponent, TransformWrapper } from 'react-zoom-pan-pinch';
 import StrokeWriter from './components/StrokeWriter';
 import Logo from './components/Logo';
 import GalleryCorridor from './components/GalleryCorridor';
@@ -41,8 +42,21 @@ function App() {
   const [inkFlowLaunch, setInkFlowLaunch] = useState<InkFlowLaunch | null>(null);
   const [showAndroidLaunch, setShowAndroidLaunch] = useState(false);
   const [androidLaunchPhase, setAndroidLaunchPhase] = useState<0 | 1>(0);
+  const [androidLaunchClosing, setAndroidLaunchClosing] = useState(false);
+  const [androidLaunchRemaining, setAndroidLaunchRemaining] = useState(0);
+  const androidLaunchTimerRef = React.useRef<number | null>(null);
   const galleryRef = React.useRef<{ isInternalOpen: () => boolean; closeInternal: () => void }>(null);
   const inkFlowRef = React.useRef<{ isInternalOpen: () => boolean; closeInternal: () => void }>(null);
+
+  const exitAndroidLaunch = useCallback(() => {
+    setAndroidLaunchClosing(true);
+    setAndroidLaunchRemaining(0);
+    if (androidLaunchTimerRef.current !== null) {
+      window.clearInterval(androidLaunchTimerRef.current);
+      androidLaunchTimerRef.current = null;
+    }
+    window.setTimeout(() => setShowAndroidLaunch(false), 420);
+  }, []);
 
   const launchInkFlowFromUrl = useCallback((url: string) => {
     const parsed = parseInkgridDeepLink(url);
@@ -64,7 +78,7 @@ function App() {
     if (!Capacitor.isNativePlatform()) return;
     if (Capacitor.getPlatform() !== 'android') return;
 
-    const KEY = 'inkgrid_android_launch_showcase_v1';
+    const KEY = 'inkgrid_android_launch_showcase_v2';
     try {
       if (window.sessionStorage.getItem(KEY) === '1') return;
       window.sessionStorage.setItem(KEY, '1');
@@ -72,16 +86,36 @@ function App() {
       // ignore
     }
 
+    const TOTAL_MS = 10_000;
+    const PHASE_SWITCH_MS = 5_000;
+    const startedAt = Date.now();
+
     setShowAndroidLaunch(true);
     setAndroidLaunchPhase(0);
+    setAndroidLaunchClosing(false);
+    setAndroidLaunchRemaining(Math.ceil(TOTAL_MS / 1000));
 
-    const t1 = window.setTimeout(() => setAndroidLaunchPhase(1), 900);
-    const t2 = window.setTimeout(() => setShowAndroidLaunch(false), 1850);
-    return () => {
-      window.clearTimeout(t1);
-      window.clearTimeout(t2);
+    const tick = () => {
+      const elapsed = Date.now() - startedAt;
+      if (elapsed >= TOTAL_MS) {
+        exitAndroidLaunch();
+        return;
+      }
+      if (elapsed >= PHASE_SWITCH_MS) setAndroidLaunchPhase(1);
+      const remainingMs = Math.max(0, TOTAL_MS - elapsed);
+      setAndroidLaunchRemaining(Math.ceil(remainingMs / 1000));
     };
-  }, []);
+
+    tick();
+    androidLaunchTimerRef.current = window.setInterval(tick, 200);
+
+    return () => {
+      if (androidLaunchTimerRef.current !== null) {
+        window.clearInterval(androidLaunchTimerRef.current);
+        androidLaunchTimerRef.current = null;
+      }
+    };
+  }, [exitAndroidLaunch]);
 
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
@@ -271,11 +305,11 @@ function App() {
         <motion.header
           initial={{ y: -100 }}
           animate={{ y: 0 }}
-          className="h-14 border-b border-stone-200/60 bg-white/35 backdrop-blur-xl flex items-center justify-between px-5 z-[80] shrink-0"
+          className="border-b border-stone-200/60 bg-white/35 backdrop-blur-xl flex items-center justify-between px-5 z-[80] shrink-0 pt-[max(env(safe-area-inset-top),44px)] h-[calc(3.5rem+max(env(safe-area-inset-top),44px))]"
         >
           <div className="flex items-center gap-3">
             <Logo size={28} />
-            <h1 className="text-base font-black tracking-[0.35em] pl-[0.35em] text-stone-900">墨陣</h1>
+            <h1 className="text-base font-black tracking-[0.35em] pl-[0.35em] text-stone-900">墨阵</h1>
           </div>
           <div className="text-right">
             <div className="text-[10px] font-serif tracking-[0.22em] text-stone-600 opacity-85">墨香千載 · 筆鋒流轉</div>
@@ -311,15 +345,15 @@ function App() {
            }
          >
             <AnimatePresence mode="wait">
-              {!showDetailDesktop ? (
-                isMobile ? (
-                  <motion.div
-                    key="mobile-home"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="absolute inset-0 overflow-hidden"
-                  >
+              {isMobile ? (
+                !showDetail ? (
+                   <motion.div
+                     key="mobile-home"
+                     initial={{ opacity: 0 }}
+                     animate={{ opacity: 1 }}
+                     exit={{ opacity: 0 }}
+                     className="absolute inset-0 overflow-hidden"
+                   >
                     {/* 水墨册页 · 移动端首页 */}
                     <div className="absolute inset-0">
                       <div className="absolute inset-0 bg-[#F6F1E7]" />
@@ -406,29 +440,101 @@ function App() {
                         </div>
                       </div>
 
-                      <div className="mt-auto">
-                        <motion.button
-                          onClick={() => setShowInkFlow(true)}
-                          whileTap={{ scale: 0.98 }}
-                          className="relative w-full max-w-sm mx-auto flex items-center justify-center px-6 py-5 rounded-[1.75rem] bg-[#8B0000] text-[#F2E6CE] shadow-[0_25px_60px_rgba(139,0,0,0.28)] border border-[#8B0000]/60"
-                        >
-                          <div className="flex flex-col items-center text-center">
-                            <span className="text-[13px] font-black tracking-[0.35em]">入墨</span>
-                            <span className="mt-1 text-[10px] opacity-85 tracking-[0.12em] font-serif">篆字研习 · 名帖赏析 · 典藏画册</span>
-                          </div>
-                          <ChevronRight size={22} className="absolute right-6 opacity-80" />
-                        </motion.button>
-                        <div className="mt-4 text-center text-[10px] font-serif text-stone-500 tracking-[0.22em] opacity-80">
-                          墨陣 · 墨香千載 · 筆鋒流轉
-                        </div>
-                        <div className="mt-2 text-center text-[9px] font-mono text-stone-500/70 tracking-[0.12em]">
-                          built with love ❤️ · e13760@gmail.com
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                ) : (
-                  <motion.div key="homepage" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onMouseMove={handleMouseMove} className="absolute inset-0 flex items-center overflow-hidden">
+                       <div className="mt-auto">
+                         <motion.button
+                           onClick={() => setShowInkFlow(true)}
+                           whileTap={{ scale: 0.98 }}
+                           className="relative w-full max-w-sm mx-auto flex items-center justify-center px-6 py-5 rounded-[1.75rem] bg-[#8B0000] text-[#F2E6CE] shadow-[0_25px_60px_rgba(139,0,0,0.28)] border border-[#8B0000]/60"
+                         >
+                           <div className="flex flex-col items-center text-center">
+                             <span className="text-[13px] font-black tracking-[0.35em]">入墨</span>
+                             <span className="mt-1 text-[10px] opacity-85 tracking-[0.12em] font-serif">篆字研习 · 名帖赏析 · 典藏画册</span>
+                           </div>
+                           <ChevronRight size={22} className="absolute right-6 opacity-80" />
+                         </motion.button>
+
+                         <div className="mt-4 text-center text-[10px] font-serif text-stone-500 tracking-[0.22em] opacity-80">
+                           墨陣 · 墨香千載 · 筆鋒流轉
+                         </div>
+                         <div className="mt-2 text-center text-[9px] font-mono text-stone-500/70 tracking-[0.12em]">
+                           built with love ❤️ · e13760@gmail.com
+                         </div>
+                       </div>
+                     </div>
+                   </motion.div>
+                 ) : (
+                   <motion.div
+                     key="mobile-yishan-detail"
+                     initial={{ opacity: 0 }}
+                     animate={{ opacity: 1 }}
+                     exit={{ opacity: 0 }}
+                     className="absolute inset-0 overflow-hidden"
+                   >
+                     <div className="absolute inset-0">
+                       <div className="absolute inset-0 bg-[#F6F1E7]" />
+                       <div className="absolute inset-0 opacity-[0.14] bg-[url('https://www.transparenttextures.com/patterns/handmade-paper.png')]" />
+                       <div className="absolute inset-0 bg-gradient-to-b from-white/75 via-transparent to-[#F1E8DA]" />
+                     </div>
+
+                     <div className="relative z-10 h-full flex flex-col px-5 pt-[max(env(safe-area-inset-top),24px)] pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
+                       <div className="flex items-center justify-between">
+                         <button
+                           onClick={() => setShowDetail(false)}
+                           className="w-10 h-10 rounded-full bg-white/60 backdrop-blur-md border border-stone-200/70 flex items-center justify-center text-stone-700 shadow-sm active:scale-95 transition"
+                           aria-label="Close"
+                         >
+                           <X size={18} />
+                         </button>
+                         <div className="text-[12px] font-serif font-black tracking-[0.18em] text-stone-900">嶧山刻石 · 鐵線長卷</div>
+                         <div className="w-10" />
+                       </div>
+
+                       <div className="mt-4 flex-1 overflow-y-auto">
+                         <div className="rounded-[1.75rem] bg-white/60 border border-stone-200/70 shadow-sm overflow-hidden">
+                           <button
+                             onClick={() => setShowFullStele('edict1')}
+                             className="w-full text-left active:opacity-95 transition"
+                             aria-label="Open Edict I"
+                           >
+                             <div className="p-5">
+                               <div className="text-[11px] font-black tracking-[0.35em] text-stone-500 underline decoration-[#8B0000]/25 underline-offset-4">始皇詔辭</div>
+                               <div className="mt-2 text-[16px] font-serif font-black text-stone-950 tracking-wide">一世詔 · 始皇德政</div>
+                               <div className="mt-3 rounded-[1.5rem] bg-white/70 border border-stone-200/70 overflow-hidden">
+                                 <img src={YISHAN_IMAGE} alt="一世詔書" className="w-full h-[240px] object-contain grayscale contrast-125" />
+                               </div>
+                               <div className="mt-3 text-[12px] font-sans text-stone-600 leading-relaxed">
+                                 点图放大；双指缩放。
+                               </div>
+                             </div>
+                           </button>
+                         </div>
+
+                         <div className="mt-4 rounded-[1.75rem] bg-white/60 border border-stone-200/70 shadow-sm overflow-hidden">
+                           <button
+                             onClick={() => setShowFullStele('edict2')}
+                             className="w-full text-left active:opacity-95 transition"
+                             aria-label="Open Edict II"
+                           >
+                             <div className="p-5">
+                               <div className="text-[11px] font-black tracking-[0.35em] text-stone-500 underline decoration-[#8B0000]/25 underline-offset-4">二世詔辭</div>
+                               <div className="mt-2 text-[16px] font-serif font-black text-stone-950 tracking-wide">二世詔 · 襲號金石</div>
+                               <div className="mt-3 rounded-[1.5rem] bg-white/70 border border-stone-200/70 overflow-hidden">
+                                 <img src={YISHAN2_IMAGE} alt="二世詔書" className="w-full h-[240px] object-contain grayscale contrast-125" />
+                               </div>
+                               <div className="mt-3 text-[12px] font-sans text-stone-600 leading-relaxed">
+                                 点图放大；双指缩放。
+                               </div>
+                             </div>
+                           </button>
+                         </div>
+
+                       </div>
+                     </div>
+                   </motion.div>
+                 )
+               ) : (
+                 !showDetailDesktop ? (
+                   <motion.div key="homepage" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onMouseMove={handleMouseMove} className="absolute inset-0 flex items-center overflow-hidden">
                  
                  {/* 数字化美学背景层 */}
                  <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -561,14 +667,13 @@ function App() {
                  </button>
                </motion.div>
 
-                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-40 pointer-events-none text-[10px] font-mono text-stone-500/70 tracking-[0.18em]">
-                  built with love ❤️ · e13760@gmail.com
-                </div>
-               </motion.div>
-                )
-              ) : (
-                  <motion.div key="yishan-detail" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-[#080808] flex flex-col">
-                {/* 详情页页头 */}
+                 <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-40 pointer-events-none text-[10px] font-mono text-stone-500/70 tracking-[0.18em]">
+                   built with love ❤️ · e13760@gmail.com
+                 </div>
+                </motion.div>
+                ) : (
+                    <motion.div key="yishan-detail" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-[#080808] flex flex-col">
+                 {/* 详情页页头 */}
                 <div className="h-16 border-b border-white/5 flex items-center justify-between px-10 bg-black/40 backdrop-blur-xl shrink-0 z-20">
                   <button onClick={() => setShowDetail(false)} className="flex items-center gap-3 text-stone-500 hover:text-amber-500 transition-all group">
                     <X size={18} className="group-hover:rotate-90 transition-transform" />
@@ -702,7 +807,7 @@ function App() {
                   </div>
                 </div>
                   </motion.div>
-              )}
+              ))}
             </AnimatePresence>
         </section>
       </div>
@@ -715,6 +820,7 @@ function App() {
             ref={inkFlowRef}
             isOpen={showInkFlow}
             launch={inkFlowLaunch}
+            onOpenYishanAppreciation={() => setShowDetail(true)}
             onClose={() => {
               setShowInkFlow(false);
               setInkFlowLaunch(null);
@@ -733,42 +839,90 @@ function App() {
 
       {/* 独立展示页 */}
       <AnimatePresence>
-        {!isMobile && showFullStele && (
+        {showFullStele && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[150] bg-[#050505] flex flex-col">
-            <div className="h-16 border-b border-white/5 flex items-center justify-between px-10 bg-black/60 backdrop-blur-xl z-20">
-              <button onClick={() => setShowFullStele(null)} className="flex items-center gap-3 text-stone-500 hover:text-amber-500 transition-all group">
-                <X size={18} className="group-hover:rotate-90 transition-transform" />
-                <span className="text-[10px] font-black tracking-[0.4em] uppercase">Return to Gallery</span>
-              </button>
-              <span className="text-xl font-serif text-stone-200 tracking-[0.6em]">{showFullStele === 'edict1' ? '一世詔書 · 始皇德政' : '二世詔書 · 襲號金石'}</span>
-              <div className="flex gap-4">
-                 <div className="w-10 h-10 rounded-full border border-white/5 flex items-center justify-center text-stone-600 hover:border-amber-500/30 transition-colors cursor-pointer"><Info size={18}/></div>
-              </div>
-            </div>
-            <div className="flex-1 flex overflow-hidden">
-              <div className="flex-1 overflow-auto bg-black/40 flex items-center justify-center p-20">
-                <img src={showFullStele === 'edict1' ? YISHAN_IMAGE : YISHAN2_IMAGE} className="max-h-full object-contain shadow-[0_50px_100px_rgba(0,0,0,0.9)]" alt="Full Rubbing" />
-              </div>
-              <div className="w-[450px] border-l border-white/5 bg-[#080808] flex flex-col p-12 overflow-y-auto custom-scrollbar">
-                <div className="space-y-12">
-                   <div className="space-y-6">
-                      <h4 className="text-[10px] font-black text-amber-500/50 uppercase tracking-[0.5em]">Original Inscription</h4>
-                      <p className="text-2xl font-serif text-stone-300 leading-[2.2] tracking-widest text-justify">
-                        {showFullStele === 'edict1' ? EDICT1_TEXT : EDICT2_TEXT}
-                      </p>
-                   </div>
-                   <div className="h-px bg-gradient-to-r from-transparent via-white/5 to-transparent" />
-                   <div className="space-y-6">
-                      <h4 className="text-[10px] font-black text-stone-600 uppercase tracking-[0.5em]">Annotation / 释义</h4>
-                      <p className="text-stone-500 font-serif leading-relaxed text-sm">
-                        {showFullStele === 'edict1' 
-                          ? "此部分為秦始皇東巡登嶧山時所立之詔書，由李斯書寫。記述始皇統一天下、廢分封、行郡縣、平定亂世之功績，宣揚‘一家天下，兵不復起’的和平願景。" 
-                          : "此部分為秦二世胡亥登基後，為了申明其合法性並延續始皇功德，由丞相李斯等人奏請刻制。強調了對始皇功德的繼承與銘記。"}
-                      </p>
-                   </div>
+            {isMobile ? (
+              <>
+                <div className="px-5 pt-[max(env(safe-area-inset-top),24px)] pb-3 flex items-center justify-between bg-black/50 backdrop-blur-xl border-b border-white/10">
+                  <button
+                    onClick={() => setShowFullStele(null)}
+                    className="w-10 h-10 rounded-full bg-white/10 border border-white/10 flex items-center justify-center text-stone-200"
+                    aria-label="Close"
+                  >
+                    <X size={18} />
+                  </button>
+                  <div className="text-[12px] font-serif font-black tracking-[0.18em] text-[#F2E6CE]">
+                    {showFullStele === 'edict1' ? '一世詔書 · 始皇德政' : '二世詔書 · 襲號金石'}
+                  </div>
+                  <div className="w-10" />
                 </div>
-              </div>
-            </div>
+
+                <div className="flex-1 overflow-hidden px-5 pt-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] flex flex-col">
+                  <div className="flex-1 rounded-[1.75rem] bg-black/30 border border-white/10 overflow-hidden">
+                    <TransformWrapper initialScale={1} minScale={1} maxScale={4} centerOnInit>
+                      <TransformComponent wrapperStyle={{ width: '100%', height: '100%' }}>
+                        <img
+                          src={showFullStele === 'edict1' ? YISHAN_IMAGE : YISHAN2_IMAGE}
+                          className="w-full h-full object-contain"
+                          alt="Full Rubbing"
+                          draggable={false}
+                        />
+                      </TransformComponent>
+                    </TransformWrapper>
+                  </div>
+
+                  <div className="mt-4 rounded-[1.5rem] bg-white/10 border border-white/10 p-4 max-h-[34vh] overflow-y-auto">
+                    <div className="text-[11px] font-black tracking-[0.35em] text-[#F2E6CE]/70 underline decoration-[#8B0000]/30 underline-offset-4">释文</div>
+                    <div className="mt-3 text-[16px] font-serif text-[#F2E6CE] leading-[2.1] tracking-widest whitespace-pre-wrap">
+                      {showFullStele === 'edict1' ? EDICT1_TEXT : EDICT2_TEXT}
+                    </div>
+                    <div className="mt-4 h-px bg-white/10" />
+                    <div className="mt-4 text-[12px] font-sans text-stone-200/85 leading-relaxed">
+                      {showFullStele === 'edict1'
+                        ? "此部分為秦始皇東巡登嶧山時所立之詔書，由李斯書寫。記述始皇統一天下、廢分封、行郡縣、平定亂世之功績，宣揚‘一家天下，兵不復起’的和平願景。"
+                        : "此部分為秦二世胡亥登基後，為了申明其合法性並延續始皇功德，由丞相李斯等人奏請刻制。強調了對始皇功德的繼承與銘記。"}
+                    </div>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="h-16 border-b border-white/5 flex items-center justify-between px-10 bg-black/60 backdrop-blur-xl z-20">
+                  <button onClick={() => setShowFullStele(null)} className="flex items-center gap-3 text-stone-500 hover:text-amber-500 transition-all group">
+                    <X size={18} className="group-hover:rotate-90 transition-transform" />
+                    <span className="text-[10px] font-black tracking-[0.4em] uppercase">Return to Gallery</span>
+                  </button>
+                  <span className="text-xl font-serif text-stone-200 tracking-[0.6em]">{showFullStele === 'edict1' ? '一世詔書 · 始皇德政' : '二世詔書 · 襲號金石'}</span>
+                  <div className="flex gap-4">
+                    <div className="w-10 h-10 rounded-full border border-white/5 flex items-center justify-center text-stone-600 hover:border-amber-500/30 transition-colors cursor-pointer"><Info size={18}/></div>
+                  </div>
+                </div>
+                <div className="flex-1 flex overflow-hidden">
+                  <div className="flex-1 overflow-auto bg-black/40 flex items-center justify-center p-20">
+                    <img src={showFullStele === 'edict1' ? YISHAN_IMAGE : YISHAN2_IMAGE} className="max-h-full object-contain shadow-[0_50px_100px_rgba(0,0,0,0.9)]" alt="Full Rubbing" />
+                  </div>
+                  <div className="w-[450px] border-l border-white/5 bg-[#080808] flex flex-col p-12 overflow-y-auto custom-scrollbar">
+                    <div className="space-y-12">
+                      <div className="space-y-6">
+                        <h4 className="text-[10px] font-black text-amber-500/50 uppercase tracking-[0.5em]">Original Inscription</h4>
+                        <p className="text-2xl font-serif text-stone-300 leading-[2.2] tracking-widest text-justify">
+                          {showFullStele === 'edict1' ? EDICT1_TEXT : EDICT2_TEXT}
+                        </p>
+                      </div>
+                      <div className="h-px bg-gradient-to-r from-transparent via-white/5 to-transparent" />
+                      <div className="space-y-6">
+                        <h4 className="text-[10px] font-black text-stone-600 uppercase tracking-[0.5em]">Annotation / 释义</h4>
+                        <p className="text-stone-500 font-serif leading-relaxed text-sm">
+                          {showFullStele === 'edict1'
+                            ? "此部分為秦始皇東巡登嶧山時所立之詔書，由李斯書寫。記述始皇統一天下、廢分封、行郡縣、平定亂世之功績，宣揚‘一家天下，兵不復起’的和平願景。"
+                            : "此部分為秦二世胡亥登基後，為了申明其合法性並延續始皇功德，由丞相李斯等人奏請刻制。強調了對始皇功德的繼承與銘記。"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
@@ -858,18 +1012,35 @@ function App() {
       )}</AnimatePresence>
 
       <AnimatePresence>
-        {showAndroidLaunch ? <AndroidLaunchShowcase phase={androidLaunchPhase} /> : null}
+        {showAndroidLaunch ? (
+          <AndroidLaunchShowcase
+            phase={androidLaunchPhase}
+            closing={androidLaunchClosing}
+            remaining={androidLaunchRemaining}
+            onExit={exitAndroidLaunch}
+          />
+        ) : null}
       </AnimatePresence>
     </div>
   );
 }
 
-function AndroidLaunchShowcase({ phase }: { phase: 0 | 1 }) {
+function AndroidLaunchShowcase({
+  phase,
+  closing,
+  remaining,
+  onExit,
+}: {
+  phase: 0 | 1;
+  closing: boolean;
+  remaining: number;
+  onExit: () => void;
+}) {
   const yishan = [
+    { ch: '登', src: '/steles/extracted_by_grid/char_0061.png' },
+    { ch: '于', src: '/steles/extracted_by_grid/char_0062.png' },
     { ch: '峄', src: '/steles/extracted_by_grid/char_0063.png' },
     { ch: '山', src: '/steles/extracted_by_grid/char_0064.png' },
-    { ch: '刻', src: '/steles/extracted_by_grid/char_0137.png' },
-    { ch: '石', src: '/steles/extracted_by_grid/char_0140.png' },
   ];
 
   const caoquan = [
@@ -881,14 +1052,15 @@ function AndroidLaunchShowcase({ phase }: { phase: 0 | 1 }) {
   return (
     <motion.div
       initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
+      animate={{ opacity: closing ? 0 : 1 }}
       exit={{ opacity: 0 }}
+      transition={{ duration: closing ? 0.42 : 0.28, ease: 'easeOut' }}
       className="fixed inset-0 z-[1000] bg-[#070707]"
     >
       <div className="absolute inset-0 opacity-[0.12] bg-[radial-gradient(circle_at_20%_10%,rgba(184,134,11,0.35),transparent_55%),radial-gradient(circle_at_80%_70%,rgba(139,0,0,0.25),transparent_60%)]" />
       <div className="absolute inset-0 opacity-[0.10] bg-[url('/noise.png')] mix-blend-overlay" />
 
-      <div className="absolute inset-0 flex flex-col items-center justify-center px-8 pt-[max(env(safe-area-inset-top),24px)] pb-[max(env(safe-area-inset-bottom),16px)]">
+      <div className="absolute inset-0 flex flex-col items-center justify-center px-8 pt-[max(env(safe-area-inset-top),32px)] pb-[max(env(safe-area-inset-bottom),16px)]">
         <AnimatePresence mode="wait">
           {phase === 0 ? (
             <motion.div
@@ -984,6 +1156,23 @@ function AndroidLaunchShowcase({ phase }: { phase: 0 | 1 }) {
         <div className="mt-16 flex flex-col items-center">
           <div className="w-12 h-px bg-gradient-to-r from-transparent via-[#b8860b]/35 to-transparent" />
           <div className="mt-6 text-[10px] font-black tracking-[0.8em] pl-[0.8em] text-stone-400/70">墨阵</div>
+        </div>
+      </div>
+
+      <div className="absolute left-0 right-0 bottom-0 px-6 pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
+        <div className="flex items-center justify-between gap-4">
+          <button
+            type="button"
+            onClick={onExit}
+            disabled={closing}
+            className="h-11 px-5 rounded-full bg-white/10 border border-white/10 text-[#F2E6CE] text-[11px] font-black tracking-[0.28em] shadow-[0_18px_50px_rgba(0,0,0,0.45)] active:scale-95 transition disabled:opacity-60"
+          >
+            退出开屏
+          </button>
+
+          <div className="text-[11px] font-mono text-stone-300/70 tracking-widest">
+            倒计时 {Math.max(0, remaining)}s
+          </div>
         </div>
       </div>
     </motion.div>
