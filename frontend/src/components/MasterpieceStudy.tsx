@@ -1476,7 +1476,7 @@ export function MobileMasterpieceStudyDeck({
       id: 'about',
       title: '导读',
       render: () => (
-        <div className="h-full rounded-[2.25rem] border border-stone-200/70 bg-white/60 shadow-[0_30px_120px_rgba(0,0,0,0.16)] overflow-hidden">
+        <div className="min-h-full rounded-[2.25rem] border border-stone-200/70 bg-white/60 shadow-[0_30px_120px_rgba(0,0,0,0.16)] overflow-hidden">
           <div className="relative p-7">
             <div className="absolute inset-0 opacity-[0.10] bg-[url('https://www.transparenttextures.com/patterns/handmade-paper.png')]" />
             <div className="relative">
@@ -1505,7 +1505,7 @@ export function MobileMasterpieceStudyDeck({
       id: 'technique',
       title: '技法',
       render: () => (
-        <div className="h-full rounded-[2.25rem] border border-stone-200/70 bg-white/60 shadow-[0_30px_120px_rgba(0,0,0,0.16)] overflow-hidden">
+        <div className="min-h-full rounded-[2.25rem] border border-stone-200/70 bg-white/60 shadow-[0_30px_120px_rgba(0,0,0,0.16)] overflow-hidden">
           <div className="relative p-7">
             <div className="absolute inset-0 opacity-[0.10] bg-[url('https://www.transparenttextures.com/patterns/handmade-paper.png')]" />
             <div className="relative">
@@ -1534,7 +1534,7 @@ export function MobileMasterpieceStudyDeck({
       id: 'aesthetic',
       title: '气质',
       render: () => (
-        <div className="h-full rounded-[2.25rem] border border-stone-200/70 bg-white/60 shadow-[0_30px_120px_rgba(0,0,0,0.16)] overflow-hidden">
+        <div className="min-h-full rounded-[2.25rem] border border-stone-200/70 bg-white/60 shadow-[0_30px_120px_rgba(0,0,0,0.16)] overflow-hidden">
           <div className="relative p-7">
             <div className="absolute inset-0 opacity-[0.10] bg-[url('https://www.transparenttextures.com/patterns/handmade-paper.png')]" />
             <div className="relative">
@@ -1563,7 +1563,7 @@ export function MobileMasterpieceStudyDeck({
       id: 'excerpt',
       title: '节选',
       render: () => (
-        <div className="h-full rounded-[2.25rem] border border-stone-200/70 bg-white/60 shadow-[0_30px_120px_rgba(0,0,0,0.16)] overflow-hidden">
+        <div className="min-h-full rounded-[2.25rem] border border-stone-200/70 bg-white/60 shadow-[0_30px_120px_rgba(0,0,0,0.16)] overflow-hidden">
           <div className="relative p-7 h-full flex flex-col min-h-0">
             <div className="absolute inset-0 opacity-[0.10] bg-[url('https://www.transparenttextures.com/patterns/handmade-paper.png')]" />
             <div className="relative">
@@ -1589,11 +1589,11 @@ export function MobileMasterpieceStudyDeck({
 
     if (pages.length) {
       list.push({
-        id: 'pages',
-        title: '原拓',
-        render: () => (
-          <div className="h-full rounded-[2.25rem] border border-stone-200/70 bg-white/60 shadow-[0_30px_120px_rgba(0,0,0,0.16)] overflow-hidden">
-            <div className="relative p-7">
+          id: 'pages',
+          title: '原拓',
+          render: () => (
+            <div className="min-h-full rounded-[2.25rem] border border-stone-200/70 bg-white/60 shadow-[0_30px_120px_rgba(0,0,0,0.16)] overflow-hidden">
+              <div className="relative p-7">
                 <div className="absolute inset-0 opacity-[0.10] bg-[url('https://www.transparenttextures.com/patterns/handmade-paper.png')]" />
                 <div className="relative">
                 <div className="text-[11px] font-black tracking-[0.4em] text-stone-500 uppercase underline decoration-[#8B0000]/25 underline-offset-4">原拓浏览</div>
@@ -1674,11 +1674,11 @@ export function MobileMasterpieceStudyDeck({
 
     if (practice.length) {
       list.push({
-        id: 'practice',
-        title: '任务',
-        render: () => (
-          <div className="h-full rounded-[2.25rem] border border-stone-200/70 bg-white/60 shadow-[0_30px_120px_rgba(0,0,0,0.16)] overflow-hidden">
-            <div className="relative p-7">
+          id: 'practice',
+          title: '任务',
+          render: () => (
+            <div className="min-h-full rounded-[2.25rem] border border-stone-200/70 bg-white/60 shadow-[0_30px_120px_rgba(0,0,0,0.16)] overflow-hidden">
+              <div className="relative p-7">
               <div className="absolute inset-0 opacity-[0.10] bg-[url('https://www.transparenttextures.com/patterns/handmade-paper.png')]" />
               <div className="relative">
                 <div className="text-[11px] font-black tracking-[0.4em] text-stone-500 uppercase underline decoration-[#8B0000]/25 underline-offset-4">今日临摹任务</div>
@@ -1736,7 +1736,7 @@ export function MobileMasterpieceStudyDeck({
       id: 'check',
       title: '自检',
       render: () => (
-        <div className="h-full rounded-[2.25rem] border border-stone-200/70 bg-white/60 shadow-[0_30px_120px_rgba(0,0,0,0.16)] overflow-hidden">
+        <div className="min-h-full rounded-[2.25rem] border border-stone-200/70 bg-white/60 shadow-[0_30px_120px_rgba(0,0,0,0.16)] overflow-hidden">
           <div className="relative p-7">
             <div className="absolute inset-0 opacity-[0.10] bg-[url('https://www.transparenttextures.com/patterns/handmade-paper.png')]" />
             <div className="relative">
@@ -1772,7 +1772,7 @@ export function MobileMasterpieceStudyDeck({
       id: 'done',
       title: '完成',
       render: () => (
-        <div className="h-full rounded-[2.25rem] border border-stone-200/70 bg-white/60 shadow-[0_30px_120px_rgba(0,0,0,0.16)] overflow-hidden">
+        <div className="min-h-full rounded-[2.25rem] border border-stone-200/70 bg-white/60 shadow-[0_30px_120px_rgba(0,0,0,0.16)] overflow-hidden">
           <div className="relative p-7 h-full flex flex-col">
             <div className="absolute inset-0 opacity-[0.10] bg-[url('https://www.transparenttextures.com/patterns/handmade-paper.png')]" />
               <div className="relative">
@@ -1925,7 +1925,7 @@ export function MobileMasterpieceStudyDeck({
           </div>
         </div>
 
-        <div className="mt-4 flex-1 overflow-hidden">
+        <div className="mt-4 flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain">
           <AnimatePresence mode="wait">
             <motion.div
               key={cards[index]?.id}
@@ -1933,7 +1933,7 @@ export function MobileMasterpieceStudyDeck({
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -24 }}
               transition={{ type: 'spring', stiffness: 320, damping: 28 }}
-              className="h-full"
+              className="min-h-full"
             >
               {cards[index]?.render()}
             </motion.div>

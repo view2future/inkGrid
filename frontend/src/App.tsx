@@ -333,12 +333,12 @@ function App() {
             <AnimatePresence mode="wait">
               {isMobile ? (
                 !showDetail ? (
-                    <motion.div
+                  <motion.div
                       key="mobile-home"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      className="absolute inset-0 overflow-y-auto overflow-x-hidden overscroll-y-none touch-pan-y"
+                      className="absolute inset-0 overflow-hidden"
                     >
                     {/* 水墨册页 · 移动端首页 */}
                     <div className="absolute inset-0">
@@ -364,7 +364,7 @@ function App() {
                       transition={{ duration: 16, repeat: Infinity, ease: 'easeInOut' }}
                     />
 
-                    <div className="relative z-10 min-h-full flex flex-col px-6 pt-[max(env(safe-area-inset-top),16px)] pb-[max(env(safe-area-inset-bottom),0.75rem)]">
+                    <div className="relative z-10 h-full flex flex-col px-6 pt-[max(env(safe-area-inset-top),16px)] pb-[max(env(safe-area-inset-bottom),0.75rem)]">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <Logo size={28} />
@@ -375,7 +375,7 @@ function App() {
                         </div>
                       </div>
 
-                      <div className="flex-1 min-h-0 flex flex-col items-center justify-center gap-[clamp(2rem,6vh,3rem)]">
+                      <div className="flex-1 min-h-0 flex flex-col items-center justify-center gap-[clamp(1.25rem,4.2vh,2.25rem)]">
                         <div className="text-center">
                           <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-white/55 backdrop-blur-md border border-stone-200/70 shadow-sm">
                             <span className="text-[10px] font-black tracking-[0.6em] pl-[0.6em] text-stone-600">册页·竖屏</span>
@@ -383,7 +383,7 @@ function App() {
                           </div>
                         </div>
 
-                        <div className="relative w-[min(78vw,360px)] aspect-square">
+                        <div className="relative w-[min(78vw,42dvh,360px)] aspect-square">
                           <div className="absolute inset-0 rounded-[2.75rem] bg-white/40 border border-stone-200/70 shadow-[0_30px_90px_rgba(0,0,0,0.10)]" />
                           <div className="absolute inset-0 rounded-[2.75rem] opacity-[0.15] bg-[url('https://www.transparenttextures.com/patterns/handmade-paper.png')]" />
                           <div className="absolute inset-0 rounded-[2.75rem] ring-1 ring-black/5" />
@@ -398,7 +398,7 @@ function App() {
                                 transition={{ duration: 0.6, ease: 'easeOut' }}
                                 src={fullSteleContent[mobileHeroIndex].image}
                                 alt="篆字"
-                                className="absolute inset-10 w-[calc(100%-5rem)] h-[calc(100%-5rem)] object-contain mix-blend-multiply opacity-90"
+                                className="absolute inset-[12%] w-[76%] h-[76%] object-contain mix-blend-multiply opacity-90"
                               />
                             )}
                           </AnimatePresence>
@@ -412,8 +412,8 @@ function App() {
                                 exit={{ opacity: 0, x: 10 }}
                                 className="absolute right-7 top-1/2 -translate-y-1/2"
                               >
-                                <div className="w-16 h-16 rounded-2xl bg-white/65 backdrop-blur-md border border-stone-200/80 shadow-[0_18px_45px_rgba(0,0,0,0.14)] flex items-center justify-center">
-                                  <span className="text-3xl font-serif font-black text-stone-900">
+                                <div className="w-[clamp(3.25rem,14vw,4rem)] h-[clamp(3.25rem,14vw,4rem)] rounded-2xl bg-white/65 backdrop-blur-md border border-stone-200/80 shadow-[0_18px_45px_rgba(0,0,0,0.14)] flex items-center justify-center">
+                                  <span className="text-[clamp(22px,7vw,30px)] font-serif font-black text-stone-900">
                                     {fullSteleContent[mobileHeroIndex].simplified || fullSteleContent[mobileHeroIndex].aligned_text}
                                   </span>
                                 </div>
@@ -426,7 +426,7 @@ function App() {
                           </div>
                         </div>
 
-                        <div className="text-center space-y-4 max-w-sm">
+                        <div className="text-center space-y-3 max-w-sm">
                           <h2 className="text-[clamp(20px,6vw,26px)] leading-tight font-serif font-black tracking-[0.22em] text-stone-900">
                             峄山刻石 · 李斯
                           </h2>
@@ -436,7 +436,7 @@ function App() {
                         </div>
                       </div>
 
-                       <div className="mt-auto pt-6">
+                       <div className="pt-3">
                           <motion.button
                             onClick={() => setShowInkFlow(true)}
                             whileTap={{ scale: 0.98 }}
@@ -1054,7 +1054,7 @@ function AndroidLaunchShowcase({
       <div className="absolute inset-0 opacity-[0.10] bg-[url('/noise.png')] mix-blend-overlay" />
 
       <div className="absolute inset-0 flex flex-col items-center justify-center px-8 pt-[max(env(safe-area-inset-top),32px)] pb-[max(env(safe-area-inset-bottom),16px)]">
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="sync">
           {phase === 0 ? (
             <motion.div
               key="yishan"
