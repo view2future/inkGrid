@@ -74,14 +74,24 @@ export async function savePngToGallery(base64: string, filename: string): Promis
   try {
     const res = await writePngByChunks(base64, filename, 'save');
     return { ok: true, uri: res?.uri };
-  } catch {
+  } catch (err) {
+    console.error('[media] savePngToGallery failed', {
+      filename,
+      base64Len: String(base64 || '').length,
+      error: err instanceof Error ? err.message : String(err),
+    });
     // Fallback: legacy method (best-effort).
     try {
       if (InkgridMedia.savePngToGallery) {
         const res = await InkgridMedia.savePngToGallery({ base64, filename });
         return { ok: true, uri: res?.uri };
       }
-    } catch {
+    } catch (err2) {
+      console.error('[media] legacy savePngToGallery failed', {
+        filename,
+        base64Len: String(base64 || '').length,
+        error: err2 instanceof Error ? err2.message : String(err2),
+      });
       // ignore
     }
     return { ok: false };
@@ -101,7 +111,14 @@ export async function sharePngToApps(
       text: opts?.text,
     });
     return { ok: true, uri: res?.uri };
-  } catch {
+  } catch (err) {
+    console.error('[media] sharePngToApps failed', {
+      filename,
+      base64Len: String(base64 || '').length,
+      dialogTitle: opts?.dialogTitle,
+      title: opts?.title,
+      error: err instanceof Error ? err.message : String(err),
+    });
     return { ok: false };
   }
 }

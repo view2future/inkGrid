@@ -189,6 +189,9 @@ export default function MobilePosterModal({
   const handleDownload = async () => {
     if (!previewBlob) return;
 
+    const ua = typeof navigator !== 'undefined' ? String(navigator.userAgent || '') : '';
+    const isWeChat = /MicroMessenger\//i.test(ua);
+
     const showToast = (text: string) => {
       setToastText(text);
       window.setTimeout(() => setToastText(null), 1600);
@@ -210,6 +213,14 @@ export default function MobilePosterModal({
       setIsSaving(true);
       setTip(null);
 
+      console.debug('[Poster] download start', {
+        native: Capacitor.isNativePlatform(),
+        platform: Capacitor.getPlatform(),
+        isWeChat,
+        blobBytes: previewBlob.size,
+        filename,
+      });
+
       // Native Android: save into system gallery via MediaStore.
       const base64 = await blobToBase64(previewBlob);
       const nativeRes = await savePngToGallery(base64, filename);
@@ -228,10 +239,10 @@ export default function MobilePosterModal({
       a.remove();
       URL.revokeObjectURL(url);
       showToast('已开始下载');
-      setTip('已尝试保存；若无反应，请长按图片保存。');
+      setTip(isWeChat ? '微信内置浏览器通常不支持自动下载；请长按图片保存或用右上角菜单保存。' : '已尝试保存；若无反应，请长按图片保存。');
     } catch {
       showToast('保存失败');
-      setTip('保存失败；可长按图片保存到手机本地。');
+      setTip(isWeChat ? '微信内置浏览器限制下载/保存；请长按图片保存或用右上角菜单保存。' : '保存失败；可长按图片保存到手机本地。');
     } finally {
       setIsSaving(false);
     }
@@ -239,6 +250,9 @@ export default function MobilePosterModal({
 
   const shareWithFile = async (label: string) => {
     if (!previewBlob) return;
+
+    const ua = typeof navigator !== 'undefined' ? String(navigator.userAgent || '') : '';
+    const isWeChat = /MicroMessenger\//i.test(ua);
 
     const blobToBase64 = (blob: Blob) =>
       new Promise<string>((resolve, reject) => {
@@ -260,6 +274,11 @@ export default function MobilePosterModal({
     if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android') {
       try {
         setIsSaving(true);
+        console.debug('[Poster] share start (android native)', {
+          label,
+          filename,
+          blobBytes: previewBlob.size,
+        });
         const base64 = await blobToBase64(previewBlob);
         const res = await sharePngToApps(base64, filename, {
           dialogTitle: label,
@@ -272,7 +291,8 @@ export default function MobilePosterModal({
         }
         showToast('分享失败');
         setTip(`分享失败；可先保存海报，再在微信 ${label}。`);
-      } catch {
+      } catch (err) {
+        console.error('[Poster] share failed (android native)', { error: err instanceof Error ? err.message : String(err) });
         showToast('分享失败');
         setTip(`分享失败；可先保存海报，再在微信 ${label}。`);
       } finally {
@@ -284,7 +304,11 @@ export default function MobilePosterModal({
     const file = new File([previewBlob], filename, { type: 'image/png' });
     const nav: any = navigator;
     if (!nav?.share) {
-      setTip(`当前环境不支持一键分享，请先保存海报，再在微信 ${label}。`);
+      setTip(
+        isWeChat
+          ? '微信内置浏览器通常不支持一键分享文件；请先保存海报，再在微信里发送/发朋友圈。'
+          : `当前环境不支持一键分享，请先保存海报，再在微信 ${label}。`
+      );
       return;
     }
 
@@ -293,13 +317,21 @@ export default function MobilePosterModal({
         setTip(`无法直接分享图片，请先保存海报，再在微信 ${label}。`);
         return;
       }
+      console.debug('[Poster] share start (web)', {
+        label,
+        filename,
+        blobBytes: previewBlob.size,
+        canShareFiles: Boolean(nav.canShare && nav.canShare({ files: [file] })),
+        isWeChat,
+      });
       await nav.share({
         title: target.title,
         text: `${target.title} · ${INKGRID_QR_LABEL}`,
         files: [file],
       });
-    } catch {
-      setTip(`分享未完成；可长按保存海报，再在微信 ${label}。`);
+    } catch (err) {
+      console.error('[Poster] share failed (web)', { error: err instanceof Error ? err.message : String(err) });
+      setTip(isWeChat ? '微信内置浏览器限制一键分享；请先保存海报，再在微信里发送/发朋友圈。' : `分享未完成；可长按保存海报，再在微信 ${label}。`);
     }
   };
 

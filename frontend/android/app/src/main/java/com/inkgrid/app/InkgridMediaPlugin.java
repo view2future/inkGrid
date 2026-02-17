@@ -11,6 +11,7 @@ import android.os.Build;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Base64;
+import android.util.Log;
 import android.widget.Toast;
 
 import androidx.core.content.FileProvider;
@@ -84,7 +85,8 @@ public class InkgridMediaPlugin extends Plugin {
         try {
             out = new FileOutputStream(file, false);
         } catch (Exception e) {
-            call.reject("failed to create temp file");
+            Log.e(TAG, "beginPngSession: failed to create temp file", e);
+            call.reject("failed to create temp file: " + e.getMessage());
             return;
         }
 
@@ -126,7 +128,8 @@ public class InkgridMediaPlugin extends Plugin {
         try {
             bytes = Base64.decode(normalized, Base64.DEFAULT);
         } catch (Exception e) {
-            call.reject("invalid base64 chunk");
+            Log.e(TAG, "appendPngChunk: invalid base64", e);
+            call.reject("invalid base64 chunk: " + e.getMessage());
             return;
         }
 
@@ -142,7 +145,8 @@ public class InkgridMediaPlugin extends Plugin {
             ret.put("bytesWritten", session.bytesWritten);
             call.resolve(ret);
         } catch (IOException e) {
-            call.reject("write failed");
+            Log.e(TAG, "appendPngChunk: write failed", e);
+            call.reject("write failed: " + e.getMessage());
         }
     }
 
@@ -208,9 +212,10 @@ public class InkgridMediaPlugin extends Plugin {
             ret.put("uri", uri);
             call.resolve(ret);
         } catch (Exception e) {
+            Log.e(TAG, "finishPngSession: finish failed", e);
             //noinspection ResultOfMethodCallIgnored
             session.file.delete();
-            call.reject("finish failed");
+            call.reject("finish failed: " + e.getMessage());
         }
     }
 
@@ -235,7 +240,8 @@ public class InkgridMediaPlugin extends Plugin {
         try {
             bytes = Base64.decode(base64, Base64.DEFAULT);
         } catch (Exception e) {
-            call.reject("invalid base64");
+            Log.e(TAG, "savePngToGallery: invalid base64", e);
+            call.reject("invalid base64: " + e.getMessage());
             return;
         }
 
@@ -274,7 +280,8 @@ public class InkgridMediaPlugin extends Plugin {
             ret.put("uri", uri);
             call.resolve(ret);
         } catch (Exception e) {
-            call.reject("save failed");
+            Log.e(TAG, "savePngToGallery: save failed", e);
+            call.reject("save failed: " + e.getMessage());
         }
     }
 
@@ -301,13 +308,13 @@ public class InkgridMediaPlugin extends Plugin {
     }
 
     private boolean requiresSavePermission() {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU || Build.VERSION.SDK_INT <= Build.VERSION_CODES.P;
+        // MediaStore insert on Android 10+ does not require storage permissions.
+        // Only legacy external storage (Android 9 and below) needs WRITE permission.
+        return Build.VERSION.SDK_INT <= Build.VERSION_CODES.P;
     }
 
     private String getSavePermissionAlias() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) return PERM_PHOTOS;
-        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) return PERM_LEGACY_WRITE;
-        return PERM_LEGACY_READ;
+        return PERM_LEGACY_WRITE;
     }
 
     private boolean hasSavePermission() {
@@ -409,3 +416,4 @@ public class InkgridMediaPlugin extends Plugin {
         return s;
     }
 }
+    private static final String TAG = "InkgridMedia";

@@ -92,16 +92,32 @@ export function MasterpieceCharAtlasCard({
       setIsLoading(true);
       setError(null);
       try {
+        console.debug('[CharAtlas] loading index', { indexUrl });
         const res = await fetch(indexUrl);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        if (!res.ok) {
+          let detail = '';
+          try {
+            detail = (await res.text()).slice(0, 200);
+          } catch {
+            // ignore
+          }
+          throw new Error(`HTTP ${res.status}${detail ? `: ${detail}` : ''}`);
+        }
         const json = (await res.json()) as CharSliceIndex;
         if (cancelled) return;
         setData(json);
+        console.debug('[CharAtlas] index loaded', {
+          indexUrl,
+          name: json?.name,
+          totalChars: json?.total_chars,
+          files: json?.files?.length,
+        });
       } catch (err) {
         if (cancelled) return;
         const msg = err instanceof Error ? err.message : String(err);
         setError(msg || 'failed to load');
         setData(null);
+        console.error('[CharAtlas] failed to load index', { indexUrl, error: msg });
       } finally {
         if (!cancelled) setIsLoading(false);
       }
@@ -219,6 +235,15 @@ export function MasterpieceCharAtlasCard({
           className="absolute inset-0 w-full h-full object-contain grayscale contrast-150"
           loading={IMG_LOADING}
           decoding={IMG_DECODING}
+          onError={() => {
+            console.error('[CharAtlas] thumb load failed', {
+              indexUrl,
+              src,
+              file: f.file,
+              char: f.char,
+              index: f.index,
+            });
+          }}
         />
         <div className="absolute inset-0 ring-1 ring-black/5" />
       </button>

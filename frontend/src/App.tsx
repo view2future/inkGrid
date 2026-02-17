@@ -347,13 +347,13 @@ function App() {
             <AnimatePresence mode="wait">
               {isMobile ? (
                 !showDetail ? (
-                    <motion.div
-                      key="mobile-home"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="absolute inset-0 overflow-y-auto overscroll-y-contain"
-                    >
+                     <motion.div
+                       key="mobile-home"
+                       initial={{ opacity: 0 }}
+                       animate={{ opacity: 1 }}
+                       exit={{ opacity: 0 }}
+                      className="absolute inset-0 overflow-y-auto overflow-x-hidden overscroll-y-contain touch-pan-y"
+                     >
                     {/* 水墨册页 · 移动端首页 */}
                     <div className="absolute inset-0">
                       <div className="absolute inset-0 bg-[#F6F1E7]" />
@@ -378,8 +378,8 @@ function App() {
                       transition={{ duration: 16, repeat: Infinity, ease: 'easeInOut' }}
                     />
 
-                    <div className="relative z-10 min-h-full flex flex-col px-6 pt-10 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-                      <div className="flex-1 flex flex-col items-center justify-center gap-12">
+                    <div className="relative z-10 px-6 pt-10 pb-[calc(3.25rem+env(safe-area-inset-bottom))]">
+                      <div className="flex flex-col items-center justify-center gap-12">
                         <div className="text-center">
                           <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-white/55 backdrop-blur-md border border-stone-200/70 shadow-sm">
                             <span className="text-[10px] font-black tracking-[0.6em] pl-[0.6em] text-stone-600">册页·竖屏</span>
@@ -440,28 +440,30 @@ function App() {
                         </div>
                       </div>
 
-                       <div className="mt-auto">
-                         <motion.button
-                           onClick={() => setShowInkFlow(true)}
-                           whileTap={{ scale: 0.98 }}
-                           className="relative w-full max-w-sm mx-auto flex items-center justify-center px-6 py-5 rounded-[1.75rem] bg-[#8B0000] text-[#F2E6CE] shadow-[0_25px_60px_rgba(139,0,0,0.28)] border border-[#8B0000]/60"
-                         >
-                           <div className="flex flex-col items-center text-center">
-                             <span className="text-[13px] font-black tracking-[0.35em]">入墨</span>
-                             <span className="mt-1 text-[10px] opacity-85 tracking-[0.12em] font-serif">篆字研习 · 名帖赏析 · 典藏画册</span>
-                           </div>
-                           <ChevronRight size={22} className="absolute right-6 opacity-80" />
-                         </motion.button>
+                       <div className="mt-10">
+                          <motion.button
+                            onClick={() => setShowInkFlow(true)}
+                            whileTap={{ scale: 0.98 }}
+                            className="relative w-full max-w-sm mx-auto flex items-center justify-center px-6 py-5 rounded-[1.75rem] bg-[#8B0000] text-[#F2E6CE] shadow-[0_25px_60px_rgba(139,0,0,0.28)] border border-[#8B0000]/60"
+                          >
+                            <div className="flex flex-col items-center text-center">
+                              <span className="text-[13px] font-black tracking-[0.35em]">入墨</span>
+                              <span className="mt-1 text-[10px] opacity-85 tracking-[0.12em] font-serif">篆字研习 · 名帖赏析 · 典藏画册</span>
+                            </div>
+                            <ChevronRight size={22} className="absolute right-6 opacity-80" />
+                          </motion.button>
+                          <div className="mt-2 text-center text-[9px] font-mono text-stone-500/70 tracking-[0.12em]">
+                            built with love ❤️ · e13760@gmail.com
+                          </div>
+                        </div>
+                      </div>
 
-                         <div className="mt-4 text-center text-[10px] font-serif text-stone-500 tracking-[0.22em] opacity-80">
-                           墨陣 · 墨香千載 · 筆鋒流轉
-                         </div>
-                         <div className="mt-2 text-center text-[9px] font-mono text-stone-500/70 tracking-[0.12em]">
-                           built with love ❤️ · e13760@gmail.com
-                         </div>
-                       </div>
-                     </div>
-                   </motion.div>
+                      <div className="sticky bottom-0 z-20 mt-10 -mx-6 px-6 py-2 bg-white/70 backdrop-blur-md border-t border-stone-200/70">
+                        <div className="text-center text-[10px] font-serif text-stone-600 tracking-[0.22em] opacity-90">
+                          墨陣 · 墨香千載 · 筆鋒流轉
+                        </div>
+                      </div>
+                    </motion.div>
                  ) : (
                    <motion.div
                      key="mobile-yishan-detail"
