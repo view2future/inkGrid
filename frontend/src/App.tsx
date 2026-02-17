@@ -347,13 +347,13 @@ function App() {
             <AnimatePresence mode="wait">
               {isMobile ? (
                 !showDetail ? (
-                   <motion.div
-                     key="mobile-home"
-                     initial={{ opacity: 0 }}
-                     animate={{ opacity: 1 }}
-                     exit={{ opacity: 0 }}
-                     className="absolute inset-0 overflow-hidden"
-                   >
+                    <motion.div
+                      key="mobile-home"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="absolute inset-0 overflow-y-auto overscroll-y-contain"
+                    >
                     {/* 水墨册页 · 移动端首页 */}
                     <div className="absolute inset-0">
                       <div className="absolute inset-0 bg-[#F6F1E7]" />
@@ -378,7 +378,7 @@ function App() {
                       transition={{ duration: 16, repeat: Infinity, ease: 'easeInOut' }}
                     />
 
-                    <div className="relative z-10 h-full flex flex-col px-6 pt-10 pb-[calc(2.5rem+env(safe-area-inset-bottom))]">
+                    <div className="relative z-10 min-h-full flex flex-col px-6 pt-10 pb-[calc(1rem+env(safe-area-inset-bottom))]">
                       <div className="flex-1 flex flex-col items-center justify-center gap-12">
                         <div className="text-center">
                           <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-white/55 backdrop-blur-md border border-stone-200/70 shadow-sm">

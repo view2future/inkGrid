@@ -588,6 +588,18 @@ export function MobileMasterpieceStudyHub({
     return { yishan, caoquan };
   }, [steles]);
 
+  const caoquanProgress = useMemo(() => {
+    const s = flagships.caoquan;
+    if (!s) return null;
+    return progressStore[String(s.id)] || null;
+  }, [flagships.caoquan, progressStore]);
+
+  const caoquanPct = useMemo(() => {
+    const p = caoquanProgress;
+    if (!p || !p.totalCards) return 0;
+    return Math.min(1, Math.max(0, (Number(p.lastIndex) + 1) / Number(p.totalCards)));
+  }, [caoquanProgress]);
+
   const pathStats = useMemo(() => {
     const total = mustLearn.length;
     let done = 0;
@@ -681,7 +693,7 @@ export function MobileMasterpieceStudyHub({
     return (
       <button
         key={s.id}
-        onClick={() => onSelect(s, { restoreLastPosition: variant === 'continue' })}
+        onClick={() => onSelect(s, { restoreLastPosition: true })}
         className="w-full text-left rounded-[1.75rem] bg-white/60 backdrop-blur-md border border-stone-200/70 shadow-[0_22px_70px_rgba(0,0,0,0.10)] overflow-hidden active:scale-[0.995] transition"
       >
         <div className="relative p-5 flex items-start gap-4">
@@ -776,11 +788,13 @@ export function MobileMasterpieceStudyHub({
                   {flagships.caoquan ? (
                     <button
                       type="button"
-                      onClick={() => onSelect(flagships.caoquan!, { initialCardId: 'atlas' })}
+                      onClick={() => onSelect(flagships.caoquan!, { restoreLastPosition: true })}
                       className="h-12 rounded-[1.25rem] bg-[#8B0000] border border-[#8B0000]/60 text-[#F2E6CE] font-black tracking-[0.16em] shadow-[0_18px_45px_rgba(139,0,0,0.22)] active:scale-[0.99] transition flex items-center justify-between px-5"
                     >
-                      <span>曹全碑 · 字库与定位</span>
-                      <span className="text-[10px] font-mono text-[#F2E6CE]/85 tracking-widest">原拓</span>
+                      <span>曹全碑 · 学习闭环</span>
+                      <span className="text-[10px] font-mono text-[#F2E6CE]/85 tracking-widest">
+                        {caoquanProgress ? `继续 · ${Math.round(caoquanPct * 100)}%` : '开始'}
+                      </span>
                     </button>
                   ) : null}
                 </div>
@@ -816,7 +830,7 @@ export function MobileMasterpieceStudyHub({
                   </div>
                   {pathStats.next ? (
                     <button
-                      onClick={() => onSelect(pathStats.next!)}
+                      onClick={() => onSelect(pathStats.next!, { restoreLastPosition: true })}
                       className="shrink-0 h-10 px-5 rounded-full bg-[#8B0000] border border-[#8B0000]/60 text-[#F2E6CE] text-[10px] font-black tracking-[0.28em] shadow-[0_14px_40px_rgba(139,0,0,0.22)] active:scale-95 transition"
                     >
                       继续
