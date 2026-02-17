@@ -301,21 +301,7 @@ function App() {
         )}
       />
 
-      {isMobile ? (
-        <motion.header
-          initial={{ y: -100 }}
-          animate={{ y: 0 }}
-          className="border-b border-stone-200/60 bg-white/35 backdrop-blur-xl flex items-center justify-between px-5 z-[80] shrink-0 pt-[max(env(safe-area-inset-top),44px)] h-[calc(3.5rem+max(env(safe-area-inset-top),44px))]"
-        >
-          <div className="flex items-center gap-3">
-            <Logo size={28} />
-            <h1 className="text-base font-black tracking-[0.35em] pl-[0.35em] text-stone-900">墨阵</h1>
-          </div>
-          <div className="text-right">
-            <div className="text-[10px] font-serif tracking-[0.22em] text-stone-600 opacity-85">墨香千載 · 筆鋒流轉</div>
-          </div>
-        </motion.header>
-      ) : (
+      {!isMobile ? (
         <motion.header
           initial={{ y: -100 }}
           animate={{ y: 0 }}
@@ -334,7 +320,7 @@ function App() {
             <div className="text-[10px] font-serif tracking-[0.25em] text-stone-500 opacity-85">墨香千載 · 筆鋒流轉</div>
           </div>
         </motion.header>
-      )}
+      ) : null}
 
        <div className={cn('flex-1 overflow-hidden relative z-10 flex flex-col min-h-0', isMobile ? 'p-0' : 'p-4')}>
          <section
@@ -347,13 +333,13 @@ function App() {
             <AnimatePresence mode="wait">
               {isMobile ? (
                 !showDetail ? (
-                     <motion.div
-                       key="mobile-home"
-                       initial={{ opacity: 0 }}
-                       animate={{ opacity: 1 }}
-                       exit={{ opacity: 0 }}
-                      className="absolute inset-0 overflow-y-auto overflow-x-hidden overscroll-y-contain touch-pan-y"
-                     >
+                    <motion.div
+                      key="mobile-home"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="absolute inset-0 overflow-y-auto overflow-x-hidden overscroll-y-none touch-pan-y"
+                    >
                     {/* 水墨册页 · 移动端首页 */}
                     <div className="absolute inset-0">
                       <div className="absolute inset-0 bg-[#F6F1E7]" />
@@ -378,8 +364,18 @@ function App() {
                       transition={{ duration: 16, repeat: Infinity, ease: 'easeInOut' }}
                     />
 
-                    <div className="relative z-10 px-6 pt-10 pb-[calc(3.25rem+env(safe-area-inset-bottom))]">
-                      <div className="flex flex-col items-center justify-center gap-12">
+                    <div className="relative z-10 min-h-full flex flex-col px-6 pt-[max(env(safe-area-inset-top),16px)] pb-[max(env(safe-area-inset-bottom),0.75rem)]">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <Logo size={28} />
+                          <div className="text-[16px] font-black tracking-[0.28em] pl-[0.28em] text-stone-900">墨阵</div>
+                        </div>
+                        <div className="text-right text-[12px] font-serif tracking-[0.18em] text-stone-700/90">
+                          墨香千載 · 筆鋒流轉
+                        </div>
+                      </div>
+
+                      <div className="flex-1 min-h-0 flex flex-col items-center justify-center gap-[clamp(2rem,6vh,3rem)]">
                         <div className="text-center">
                           <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-white/55 backdrop-blur-md border border-stone-200/70 shadow-sm">
                             <span className="text-[10px] font-black tracking-[0.6em] pl-[0.6em] text-stone-600">册页·竖屏</span>
@@ -387,7 +383,7 @@ function App() {
                           </div>
                         </div>
 
-                        <div className="relative w-[78vw] max-w-[360px] aspect-square">
+                        <div className="relative w-[min(78vw,360px)] aspect-square">
                           <div className="absolute inset-0 rounded-[2.75rem] bg-white/40 border border-stone-200/70 shadow-[0_30px_90px_rgba(0,0,0,0.10)]" />
                           <div className="absolute inset-0 rounded-[2.75rem] opacity-[0.15] bg-[url('https://www.transparenttextures.com/patterns/handmade-paper.png')]" />
                           <div className="absolute inset-0 rounded-[2.75rem] ring-1 ring-black/5" />
@@ -431,7 +427,7 @@ function App() {
                         </div>
 
                         <div className="text-center space-y-4 max-w-sm">
-                          <h2 className="text-[26px] leading-tight font-serif font-black tracking-[0.22em] text-stone-900">
+                          <h2 className="text-[clamp(20px,6vw,26px)] leading-tight font-serif font-black tracking-[0.22em] text-stone-900">
                             峄山刻石 · 李斯
                           </h2>
                           <p className="text-sm font-serif text-stone-600 leading-relaxed tracking-wide">
@@ -440,7 +436,7 @@ function App() {
                         </div>
                       </div>
 
-                       <div className="mt-10">
+                       <div className="mt-auto pt-6">
                           <motion.button
                             onClick={() => setShowInkFlow(true)}
                             whileTap={{ scale: 0.98 }}
@@ -458,11 +454,6 @@ function App() {
                         </div>
                       </div>
 
-                      <div className="sticky bottom-0 z-20 mt-10 -mx-6 px-6 py-2 bg-white/70 backdrop-blur-md border-t border-stone-200/70">
-                        <div className="text-center text-[10px] font-serif text-stone-600 tracking-[0.22em] opacity-90">
-                          墨陣 · 墨香千載 · 筆鋒流轉
-                        </div>
-                      </div>
                     </motion.div>
                  ) : (
                    <motion.div

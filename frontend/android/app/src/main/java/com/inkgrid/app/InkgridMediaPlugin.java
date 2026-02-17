@@ -43,6 +43,8 @@ import java.util.concurrent.ConcurrentHashMap;
     }
 )
 public class InkgridMediaPlugin extends Plugin {
+    private static final String TAG = "InkgridMedia";
+
     static final String PERM_PHOTOS = "photos";
     static final String PERM_LEGACY_READ = "legacyRead";
     static final String PERM_LEGACY_WRITE = "legacyWrite";
@@ -416,4 +418,3 @@ public class InkgridMediaPlugin extends Plugin {
         return s;
     }
 }
-    private static final String TAG = "InkgridMedia";

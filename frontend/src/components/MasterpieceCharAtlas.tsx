@@ -259,7 +259,11 @@ export function MasterpieceCharAtlasCard({
             <div className="text-[11px] font-black tracking-[0.4em] text-stone-500 uppercase underline decoration-[#8B0000]/25 underline-offset-4">字库与定位</div>
             <div className="mt-3 text-2xl font-serif font-black tracking-wide text-stone-950">一字多形 · 回到原拓</div>
             <div className="mt-2 text-[12px] font-sans text-stone-600">
-              {isLoading ? '正在加载字库…' : error ? `加载失败：${error}` : `${stats.total || data?.total_chars || 0} 字 · ${stats.unique} 个不同字`}
+              {isLoading
+                ? '正在加载字库…'
+                : error
+                  ? `加载失败：${error}（${indexUrl}）`
+                  : `${stats.total || data?.total_chars || 0} 字 · ${stats.unique} 个不同字`}
             </div>
           </div>
           <div className="shrink-0 flex items-center gap-2">
