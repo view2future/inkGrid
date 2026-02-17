@@ -7,6 +7,7 @@ import MobilePosterModal from './MobilePosterModal';
 import { MobileMasterpieceStudyDeck, MobileMasterpieceStudyHub } from './MasterpieceStudy';
 import { renderCuratedCollagePng, renderNewYearPosterPng, renderNewYearConceptPng, renderNewYearStoryPng } from '../utils/poster';
 import { track } from '../utils/analytics';
+import { emphasizeTip, extractGoldLine, getKeywords, highlightText, splitLeadSentence } from '../utils/readingEnhance';
 import type { InkFlowLaunch } from '../native/inkflow';
 import { cancelInkFlowNotification, showInkFlowNotification } from '../native/notifications';
 
@@ -38,6 +39,15 @@ interface Stele {
   content: string;
   description: string;
   story?: string;
+  appreciation?: {
+    summary: string;
+    points: Array<{ tag: string; text: string }>;
+    practiceTips: string[];
+    sources: {
+      museum: { title: string; url: string; kind: string };
+      publication: { title: string; url: string; kind: string };
+    };
+  };
 }
 
 interface InkFlowProps {
@@ -279,6 +289,7 @@ function SteleCard({ stele }: { stele: Stele }) {
   const leadSource = (hasContent ? String(stele.content) : String(stele.description || '')).trim();
   const leadSnippet = leadSource ? leadSource.substring(0, 60) : '此帖尚无原文';
   const contentText = hasContent ? stele.content : stele.description || '暂无原文。';
+  const app = stele.appreciation;
 
   return (
     <div className="h-full w-full flex flex-col bg-[#080808] relative overflow-hidden pointer-events-auto">
@@ -317,7 +328,57 @@ function SteleCard({ stele }: { stele: Stele }) {
                 <p className="text-3xl md:text-4xl font-serif text-stone-200 leading-[2.2] tracking-widest text-justify-zh italic px-4 border-l-4 border-[#8B0000]/40 pl-12">「{leadSnippet}{leadSource.length > 60 ? '…' : ''}」</p>
                 <div className="bg-[#121212] p-16 rounded-sm border border-stone-800/50 shadow-inner relative">
                   <h4 className="text-[11px] font-black text-[#8B0000] uppercase tracking-[0.8em] mb-10">名帖大觀 · 賞析</h4>
-                  <p className="text-xl text-stone-400 font-serif leading-[2.6] text-justify-zh tracking-widest indent-12">{stele.description}</p>
+                  {app?.summary ? (
+                    <p className="text-xl text-stone-300 font-serif leading-[2.4] text-justify-zh tracking-widest">{app.summary}</p>
+                  ) : (
+                    <p className="text-xl text-stone-400 font-serif leading-[2.6] text-justify-zh tracking-widest indent-12">{stele.description}</p>
+                  )}
+
+                  {app?.points?.length ? (
+                    <div className="mt-10 space-y-4">
+                      {app.points.slice(0, 10).map((p, idx) => (
+                        <div key={idx} className="flex gap-4">
+                          <div className="shrink-0 w-16 text-[10px] font-black tracking-[0.28em] text-amber-400/70">{p.tag}</div>
+                          <div className="text-[15px] text-stone-300 font-serif leading-[2.0] tracking-wide">{p.text}</div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+
+                  {app?.practiceTips?.length ? (
+                    <div className="mt-12 rounded-sm border border-stone-800/60 bg-black/25 p-10">
+                      <div className="text-[11px] font-black tracking-[0.6em] text-stone-400 uppercase">临写建议</div>
+                      <div className="mt-6 space-y-4">
+                        {app.practiceTips.slice(0, 3).map((t, i) => (
+                          <div key={i} className="flex gap-4">
+                            <div className="shrink-0 w-6 h-6 rounded-full bg-[#8B0000]/70 text-[#F2E6CE] flex items-center justify-center text-[11px] font-black">{i + 1}</div>
+                            <div className="text-[14px] text-stone-300 font-sans leading-relaxed">{t}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {app?.sources ? (
+                    <div className="mt-10 flex flex-wrap gap-3">
+                      <a
+                        href={app.sources.museum.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-5 py-3 rounded-full bg-white/10 border border-white/10 text-stone-200 text-[11px] font-black tracking-[0.18em] hover:bg-white/15 transition"
+                      >
+                        馆站来源
+                      </a>
+                      <a
+                        href={app.sources.publication.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-5 py-3 rounded-full bg-white/10 border border-white/10 text-stone-200 text-[11px] font-black tracking-[0.18em] hover:bg-white/15 transition"
+                      >
+                        出版物/研究
+                      </a>
+                    </div>
+                  ) : null}
                 </div>
               </div>
             )}
@@ -406,9 +467,31 @@ const InkFlow = forwardRef(({ isOpen, onClose, launch, onOpenYishanAppreciation 
   }, []);
 
   const loadSteles = useCallback(async () => {
-    const res = await fetch('/data/steles.json');
+    const [res, appRes] = await Promise.all([
+      fetch('/data/steles.json'),
+      fetch('/data/stele_appreciations.json'),
+    ]);
     const data = await res.json();
-    setSteleCards((data.steles || []).map((s: any) => ({ id: `s_${s.id}`, type: 'stele' as CardType, data: s })));
+    let appreciationById = new Map<string, any>();
+    try {
+      if (!appRes.ok) throw new Error(`HTTP ${appRes.status}`);
+      const app = await appRes.json();
+      for (const item of app?.items || []) appreciationById.set(String(item.id), item);
+    } catch (e) {
+      console.warn('[InkFlow] stele appreciations not loaded', {
+        url: '/data/stele_appreciations.json',
+        error: e instanceof Error ? e.message : String(e),
+      });
+      appreciationById = new Map();
+    }
+
+    setSteleCards(
+      (data.steles || []).map((s: any) => {
+        const a = appreciationById.get(String(s.id)) || null;
+        const merged = a ? { ...s, appreciation: a } : s;
+        return { id: `s_${s.id}`, type: 'stele' as CardType, data: merged };
+      })
+    );
   }, []);
 
   useEffect(() => {
@@ -2448,9 +2531,23 @@ function MobileInkFlowSteleFeed({
   const sectionLabels = ['赏析', '原文'];
   const excerpt = getExcerpt(stele.content, 260);
   const quote = getExcerpt(stele.content, 88);
+  const points = stele.appreciation?.points || [];
+  const practiceTips = stele.appreciation?.practiceTips || [];
+  const keywords = useMemo(() => getKeywords(stele.script_type), [stele.script_type]);
+  const goldLine = useMemo(
+    () => extractGoldLine({ summary: stele.appreciation?.summary || null, firstPointText: points[0]?.text || null }),
+    [stele.appreciation?.summary, points]
+  );
+
+  const [showAllPoints, setShowAllPoints] = useState(false);
+  const [showAllTips, setShowAllTips] = useState(false);
+  useEffect(() => {
+    setShowAllPoints(false);
+    setShowAllTips(false);
+  }, [stele.id]);
 
   return (
-    <div className="h-full flex flex-col px-5 pt-4 pb-[calc(2.5rem+env(safe-area-inset-bottom))]">
+    <div className="h-full flex flex-col px-4 pt-4 pb-[calc(2.5rem+env(safe-area-inset-bottom))]">
       <div className="flex items-center justify-between">
         <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-white/55 backdrop-blur-md border border-stone-200/70 shadow-sm">
           <span className="text-[10px] font-black tracking-[0.6em] pl-[0.6em] text-stone-600">名帖赏析</span>
@@ -2478,34 +2575,35 @@ function MobileInkFlowSteleFeed({
         </button>
       </div>
 
-      <div className="flex-1 flex items-center justify-center py-6">
-        <AnimatePresence mode="wait" custom={direction}>
-          <motion.div
-            key={`${stele.id}-${section}`}
-            custom={direction}
-            initial={
-              axis === 'post'
-                ? { opacity: 0, y: direction >= 0 ? 40 : -40, scale: 0.98 }
-                : { opacity: 0, x: direction >= 0 ? 40 : -40, scale: 0.98 }
-            }
-            animate={{ opacity: 1, x: 0, y: 0, scale: 1 }}
-            exit={
-              axis === 'post'
-                ? { opacity: 0, y: direction >= 0 ? -40 : 40, scale: 0.98 }
-                : { opacity: 0, x: direction >= 0 ? -40 : 40, scale: 0.98 }
-            }
-            transition={{ type: 'spring', stiffness: 240, damping: 28 }}
-            drag="x"
-            dragConstraints={{ left: 0, right: 0 }}
-            dragElastic={0.18}
-            onDragEnd={handleSectionDragEnd}
-            className="w-full max-w-[440px]"
-          >
-            <div className="relative rounded-[2.25rem] bg-white/60 backdrop-blur-md border border-stone-200/70 shadow-[0_30px_90px_rgba(0,0,0,0.10)] overflow-hidden p-6">
-              <div className="absolute inset-0 opacity-[0.12] bg-[url('https://www.transparenttextures.com/patterns/handmade-paper.png')]" />
-              <div className="absolute inset-0 bg-gradient-to-b from-white/50 via-transparent to-transparent" />
+      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain py-6 touch-pan-y">
+        <div className="min-h-full flex items-start justify-center px-0">
+          <AnimatePresence mode="wait" custom={direction}>
+            <motion.div
+              key={`${stele.id}-${section}`}
+              custom={direction}
+              initial={
+                axis === 'post'
+                  ? { opacity: 0, y: direction >= 0 ? 40 : -40, scale: 0.98 }
+                  : { opacity: 0, x: direction >= 0 ? 40 : -40, scale: 0.98 }
+              }
+              animate={{ opacity: 1, x: 0, y: 0, scale: 1 }}
+              exit={
+                axis === 'post'
+                  ? { opacity: 0, y: direction >= 0 ? -40 : 40, scale: 0.98 }
+                  : { opacity: 0, x: direction >= 0 ? -40 : 40, scale: 0.98 }
+              }
+              transition={{ type: 'spring', stiffness: 240, damping: 28 }}
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={0.18}
+              onDragEnd={handleSectionDragEnd}
+              className="w-full max-w-[min(720px,calc(100vw-2rem))] mx-auto"
+            >
+              <div className="relative rounded-[2.25rem] bg-white/60 backdrop-blur-md border border-stone-200/70 shadow-[0_30px_90px_rgba(0,0,0,0.10)] overflow-hidden p-4 min-[520px]:p-5">
+                <div className="absolute inset-0 opacity-[0.12] bg-[url('https://www.transparenttextures.com/patterns/handmade-paper.png')]" />
+                <div className="absolute inset-0 bg-gradient-to-b from-white/50 via-transparent to-transparent" />
 
-              <div className="relative min-h-[62vh] flex flex-col">
+                <div className="relative flex flex-col">
                 {section === 0 ? (
                   <>
                     <div className="inline-flex items-center gap-2 self-start">
@@ -2550,27 +2648,145 @@ function MobileInkFlowSteleFeed({
                       </div>
                     ) : null}
 
-                    <div className="mt-6 rounded-[1.5rem] bg-white/65 border border-stone-200/70 p-5 shadow-sm">
-                      <div className="flex items-start justify-between">
-                        <div className="inline-flex items-center gap-3">
-                          <div className="w-1.5 h-1.5 bg-[#8B0000] rotate-45" />
-                          <span className="text-[10px] font-black tracking-[0.18em] text-stone-600">赏析要点</span>
-                        </div>
-                        <div className="text-right text-[10px] font-mono text-stone-500 tracking-widest">
-                          {stele.year || ''}
+                    <div className="mt-6 grid grid-cols-1 min-[520px]:grid-cols-[1fr_260px] gap-4 items-start">
+                      <div className="min-w-0">
+                        <div className="rounded-[1.5rem] bg-white/65 border border-stone-200/70 p-5 shadow-sm">
+                          <div className="flex items-start justify-between">
+                            <div className="inline-flex items-center gap-3">
+                              <div className="w-1.5 h-1.5 bg-[#8B0000] rotate-45" />
+                              <span className="text-[10px] font-black tracking-[0.18em] text-stone-600">赏析要点</span>
+                            </div>
+                            <div className="text-right text-[10px] font-mono text-stone-500 tracking-widest">{points.length ? `${Math.min(10, points.length)}/10` : ''}</div>
+                          </div>
+
+                          <div className="mt-5 h-px bg-stone-200/70" />
+
+                          {goldLine ? (
+                            <div className="mt-4 rounded-[1.25rem] bg-white/55 border border-stone-200/70 p-4">
+                              <div className="text-[10px] font-black tracking-[0.18em] text-stone-500">金句</div>
+                              <div className="mt-2 text-[13px] font-serif font-semibold text-stone-900 leading-[2.0] tracking-[0.12em] text-justify-zh">
+                                「{goldLine}」
+                              </div>
+                            </div>
+                          ) : null}
+
+                          {points.length ? (
+                            <div className="mt-4 divide-y divide-stone-200/70">
+                              {(showAllPoints ? points.slice(0, 10) : points.slice(0, 3)).map((p, i) => (
+                                <div key={i} className="py-3 first:pt-0 last:pb-0">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-[10px] font-mono text-stone-500 tracking-widest">{String(i + 1).padStart(2, '0')}</span>
+                                    <span className="px-2 py-1 rounded-full bg-white/70 border border-stone-200/70 text-[10px] font-black tracking-[0.18em] text-stone-700">
+                                      {p.tag}
+                                    </span>
+                                  </div>
+                                  {(() => {
+                                    const split = splitLeadSentence(p.text);
+                                    const lead = split.lead;
+                                    const rest = split.rest;
+                                    return (
+                                      <div className="mt-2 text-[12px] font-sans text-stone-800 leading-relaxed">
+                                        {lead ? (
+                                          <span className="font-semibold text-stone-900">
+                                            {highlightText(lead, keywords)}
+                                            {rest ? ' ' : ''}
+                                          </span>
+                                        ) : null}
+                                        {rest ? <span className={lead ? 'text-stone-700' : ''}>{highlightText(rest, keywords)}</span> : null}
+                                      </div>
+                                    );
+                                  })()}
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="mt-4 text-[12px] font-sans text-stone-600">暂无要点（检查字库数据是否加载成功）。</div>
+                          )}
+
+                          {points.length > 3 ? (
+                            <button
+                              type="button"
+                              onClick={() => setShowAllPoints((v) => !v)}
+                              className="mt-4 h-9 px-4 rounded-full bg-white/70 border border-stone-200/70 text-stone-800 text-[10px] font-black tracking-[0.18em] shadow-sm active:scale-95 transition"
+                            >
+                              {showAllPoints ? '收起' : '展开全部(10)'}
+                            </button>
+                          ) : null}
                         </div>
                       </div>
 
-                      <div className="mt-5 h-px bg-stone-200/70" />
-                      <div className="mt-4 space-y-2 text-[12px] font-serif text-stone-700">
-                        <div className="flex items-center justify-between">
-                          <span className="text-stone-500 tracking-[0.18em] text-[10px] font-black">现藏</span>
-                          <span className="tracking-wide text-right">{stele.location}</span>
+                      <div className="min-w-0 space-y-4">
+                        <div className="rounded-[1.5rem] bg-white/55 border border-stone-200/70 p-5 shadow-sm">
+                          <div className="inline-flex items-center gap-3">
+                            <div className="w-1.5 h-1.5 bg-[#8B0000] rotate-45" />
+                            <span className="text-[10px] font-black tracking-[0.18em] text-stone-600">藏与类</span>
+                          </div>
+                          <div className="mt-4 space-y-3">
+                            <div>
+                              <div className="text-stone-500 tracking-[0.18em] text-[10px] font-black">现藏</div>
+                              <div className="mt-2 text-[12px] font-serif text-stone-800 leading-relaxed">{stele.location}</div>
+                            </div>
+                            <div>
+                              <div className="text-stone-500 tracking-[0.18em] text-[10px] font-black">类型</div>
+                              <div className="mt-2 text-[12px] font-serif text-stone-800 leading-relaxed">{stele.type}</div>
+                            </div>
+                          </div>
                         </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-stone-500 tracking-[0.18em] text-[10px] font-black">类型</span>
-                          <span className="tracking-wide">{stele.type}</span>
-                        </div>
+
+                        {practiceTips.length ? (
+                          <div className="rounded-[1.5rem] bg-white/55 border border-stone-200/70 p-5 shadow-sm">
+                            <div className="flex items-center justify-between">
+                              <div className="inline-flex items-center gap-3">
+                                <div className="w-1.5 h-1.5 bg-[#8B0000] rotate-45" />
+                                <span className="text-[10px] font-black tracking-[0.18em] text-stone-600">临写建议</span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => setShowAllTips((v) => !v)}
+                                className="text-[10px] font-mono text-stone-500 tracking-widest"
+                              >
+                                {showAllTips ? '收起' : '展开'}
+                              </button>
+                            </div>
+                            <div className="mt-4 space-y-3 border-l-2 border-[#8B0000]/45 pl-3">
+                              {(showAllTips ? practiceTips.slice(0, 3) : practiceTips.slice(0, 1)).map((t, idx) => (
+                                <div key={idx} className="flex gap-3">
+                                  <div className="shrink-0 w-5 h-5 rounded-full bg-[#8B0000]/70 text-[#F2E6CE] flex items-center justify-center text-[10px] font-black">
+                                    {idx + 1}
+                                  </div>
+                                  <div className="text-[12px] font-sans text-stone-800 leading-relaxed">{emphasizeTip(t)}</div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ) : null}
+
+                        {stele.appreciation?.sources ? (
+                          <div className="rounded-[1.5rem] bg-white/55 border border-stone-200/70 p-5 shadow-sm">
+                            <div className="inline-flex items-center gap-3">
+                              <div className="w-1.5 h-1.5 bg-[#8B0000] rotate-45" />
+                              <span className="text-[10px] font-black tracking-[0.18em] text-stone-600">来源</span>
+                            </div>
+                            <div className="mt-4 flex flex-col gap-2 text-[11px] font-sans">
+                              <a
+                                href={stele.appreciation.sources.museum.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="h-10 px-4 rounded-[1.25rem] bg-white/70 border border-stone-200/70 text-stone-800 font-black tracking-[0.12em] flex items-center justify-center shadow-sm"
+                              >
+                                馆站来源
+                              </a>
+                              <a
+                                href={stele.appreciation.sources.publication.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="h-10 px-4 rounded-[1.25rem] bg-white/70 border border-stone-200/70 text-stone-800 font-black tracking-[0.12em] flex items-center justify-center shadow-sm"
+                              >
+                                出版物/研究
+                              </a>
+                            </div>
+                          </div>
+                        ) : null}
                       </div>
                     </div>
                   </>
@@ -2597,10 +2813,11 @@ function MobileInkFlowSteleFeed({
 
                   </>
                 )}
+                </div>
               </div>
-            </div>
-          </motion.div>
-        </AnimatePresence>
+            </motion.div>
+          </AnimatePresence>
+        </div>
       </div>
 
       <div className="mt-auto flex items-center justify-center pt-1">
