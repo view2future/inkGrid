@@ -1,0 +1,17 @@
+{
+  "description": "墨阵 · 微信小程序 (MVP)",
+  "packOptions": {
+    "ignore": []
+  },
+  "setting": {
+    "urlCheck": false,
+    "es6": true,
+    "postcss": true,
+    "minified": true
+  },
+  "compileType": "miniprogram",
+  "appid": "touristappid",
+  "projectname": "墨阵",
+  "miniprogramRoot": "miniprogram/",
+  "libVersion": "3.4.3"
+}

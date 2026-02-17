@@ -1,0 +1,21 @@
+<view class="page">
+  <swiper
+    class="swiper"
+    vertical="true"
+    circular="false"
+    current="{{current}}"
+    bindchange="onChange"
+  >
+    <block wx:for="{{chars}}" wx:key="index">
+      <swiper-item>
+        <view class="card">
+          <image class="img" src="{{item.image}}" mode="aspectFit" />
+          <view class="label">{{item.simplified}}</view>
+          <view class="meta mono">{{current + 1}} / {{total}}</view>
+        </view>
+      </swiper-item>
+    </block>
+  </swiper>
+
+  <view wx:if="{{loading}}" class="loading">加载中…</view>
+</view>

@@ -1,0 +1,5 @@
+<view class="page">
+  <view class="title">一帖一组卡</view>
+  <view class="desc">MVP 暂未实现，本页占位。</view>
+  <view class="hint">后续会做高级搜索、进度与卡组阅读。</view>
+</view>

@@ -1,0 +1,50 @@
+.page {
+  height: 100vh;
+  background: #0a0a0b;
+}
+
+.swiper {
+  height: 100vh;
+}
+
+.card {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 36rpx;
+  box-sizing: border-box;
+}
+
+.img {
+  width: 560rpx;
+  height: 560rpx;
+  filter: grayscale(100%) contrast(1.25) brightness(1.08);
+}
+
+.label {
+  margin-top: 34rpx;
+  font-size: 64rpx;
+  letter-spacing: 0.6em;
+  padding-left: 0.6em;
+  font-weight: 900;
+  color: rgba(212, 165, 116, 0.95);
+}
+
+.meta {
+  margin-top: 22rpx;
+  font-size: 22rpx;
+  letter-spacing: 0.18em;
+  color: rgba(120, 113, 108, 0.85);
+}
+
+.loading {
+  position: absolute;
+  left: 50%;
+  bottom: 80rpx;
+  transform: translateX(-50%);
+  font-size: 24rpx;
+  letter-spacing: 0.22em;
+  color: rgba(242, 230, 206, 0.75);
+}

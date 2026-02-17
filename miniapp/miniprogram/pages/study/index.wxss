@@ -1,0 +1,22 @@
+.page {
+  padding: 36rpx;
+}
+
+.title {
+  font-size: 48rpx;
+  font-weight: 900;
+  letter-spacing: 0.32em;
+}
+
+.desc {
+  margin-top: 24rpx;
+  font-size: 28rpx;
+  color: rgba(120, 113, 108, 0.95);
+}
+
+.hint {
+  margin-top: 18rpx;
+  font-size: 22rpx;
+  letter-spacing: 0.22em;
+  color: rgba(120, 113, 108, 0.8);
+}

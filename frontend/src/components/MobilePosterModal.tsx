@@ -239,7 +239,7 @@ export default function MobilePosterModal({
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: 18, opacity: 0, scale: 0.98 }}
             transition={{ type: 'spring', stiffness: 260, damping: 26 }}
-            className="absolute inset-x-0 top-[env(safe-area-inset-top)] bottom-[env(safe-area-inset-bottom)] flex flex-col"
+            className="absolute inset-x-0 top-[max(env(safe-area-inset-top),24px)] bottom-[env(safe-area-inset-bottom)] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="px-5 pt-4 pb-3 flex items-center justify-between">

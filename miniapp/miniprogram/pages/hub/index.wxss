@@ -1,0 +1,94 @@
+.page {
+  padding: 28rpx 36rpx 60rpx;
+}
+
+.header {
+  padding: 12rpx 6rpx 34rpx;
+}
+
+.kicker {
+  font-size: 20rpx;
+  letter-spacing: 0.6em;
+  font-weight: 900;
+  color: rgba(120, 113, 108, 0.9);
+}
+
+.title {
+  margin-top: 20rpx;
+  font-size: 56rpx;
+  letter-spacing: 0.32em;
+  font-weight: 900;
+}
+
+.desc {
+  margin-top: 20rpx;
+  font-size: 28rpx;
+  color: rgba(120, 113, 108, 0.95);
+}
+
+.grid {
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+
+.row {
+  display: flex;
+  gap: 24rpx;
+}
+
+.card {
+  background: rgba(255, 255, 255, 0.6);
+  border: 1rpx solid rgba(120, 113, 108, 0.22);
+  border-radius: 34rpx;
+  padding: 28rpx;
+  box-shadow: 0 30rpx 90rpx rgba(0, 0, 0, 0.08);
+}
+
+.card.primary {
+  border-left: 10rpx solid rgba(139, 0, 0, 0.55);
+}
+
+.cardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tag {
+  font-size: 20rpx;
+  letter-spacing: 0.6em;
+  font-weight: 900;
+  color: rgba(87, 83, 78, 0.9);
+}
+
+.meta {
+  font-size: 22rpx;
+  letter-spacing: 0.12em;
+  color: rgba(120, 113, 108, 0.95);
+}
+
+.cardTitle {
+  margin-top: 20rpx;
+  font-size: 40rpx;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+}
+
+.cardDesc {
+  margin-top: 14rpx;
+  font-size: 24rpx;
+  color: rgba(120, 113, 108, 0.95);
+}
+
+.card.half {
+  flex: 1;
+}
+
+.footer {
+  margin-top: 48rpx;
+  text-align: center;
+  font-size: 20rpx;
+  letter-spacing: 0.32em;
+  color: rgba(120, 113, 108, 0.8);
+}

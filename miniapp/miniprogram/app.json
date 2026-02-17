@@ -1,0 +1,16 @@
+{
+  "pages": [
+    "pages/hub/index",
+    "pages/char/index",
+    "pages/steles/index",
+    "pages/posters/index",
+    "pages/study/index"
+  ],
+  "window": {
+    "navigationBarTitleText": "墨阵",
+    "navigationBarBackgroundColor": "#F6F1E7",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#F6F1E7",
+    "backgroundTextStyle": "light"
+  }
+}

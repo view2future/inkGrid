@@ -2,6 +2,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Info, X, ChevronRight, ChevronLeft, Library } from 'lucide-react';
+import { App as CapacitorApp } from '@capacitor/app';
+import { Capacitor } from '@capacitor/core';
 import StrokeWriter from './components/StrokeWriter';
 import Logo from './components/Logo';
 import GalleryCorridor from './components/GalleryCorridor';
@@ -9,6 +11,9 @@ import InkFlow from './components/InkFlow';
 import CharCarousel from './components/CharCarousel';
 import { cn } from './utils/cn';
 import { useMediaQuery } from './utils/useMediaQuery';
+import { initWebAnalytics } from './utils/analytics';
+import { parseInkgridDeepLink } from './native/deeplink';
+import { newLaunchKey, type InkFlowLaunch } from './native/inkflow';
 
 const YISHAN_IMAGE = "/steles/1-zhuanshu/1-yishankeshi/yishan.jpg";
 const YISHAN2_IMAGE = "/steles/1-zhuanshu/1-yishankeshi/yishan2.jpg";
@@ -33,8 +38,121 @@ function App() {
   const EDICT2_TEXT = "皇帝曰：『金石刻盡始皇帝所爲也。今襲號而金石刻辭不稱始皇帝，其於久遠也，如後嗣爲之者，不稱成功盛德。』丞相斯、去疾、御史大夫德昧死言：『臣請具刻詔書金石刻因明白矣。臣昧死請。』制曰：『可。』";
   const [showGallery, setShowGallery] = useState(false);
   const [showInkFlow, setShowInkFlow] = useState(false);
+  const [inkFlowLaunch, setInkFlowLaunch] = useState<InkFlowLaunch | null>(null);
+  const [showAndroidLaunch, setShowAndroidLaunch] = useState(false);
+  const [androidLaunchPhase, setAndroidLaunchPhase] = useState<0 | 1>(0);
   const galleryRef = React.useRef<{ isInternalOpen: () => boolean; closeInternal: () => void }>(null);
   const inkFlowRef = React.useRef<{ isInternalOpen: () => boolean; closeInternal: () => void }>(null);
+
+  const launchInkFlowFromUrl = useCallback((url: string) => {
+    const parsed = parseInkgridDeepLink(url);
+    if (!parsed) return;
+    setInkFlowLaunch({ key: newLaunchKey(), ...parsed });
+    setShowInkFlow(true);
+  }, []);
+
+  useEffect(() => {
+    initWebAnalytics();
+  }, []);
+
+  useEffect(() => {
+    // Browser debugging: allow `?inkflow=1`.
+    launchInkFlowFromUrl(window.location.href);
+  }, [launchInkFlowFromUrl]);
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    if (Capacitor.getPlatform() !== 'android') return;
+
+    const KEY = 'inkgrid_android_launch_showcase_v1';
+    try {
+      if (window.sessionStorage.getItem(KEY) === '1') return;
+      window.sessionStorage.setItem(KEY, '1');
+    } catch {
+      // ignore
+    }
+
+    setShowAndroidLaunch(true);
+    setAndroidLaunchPhase(0);
+
+    const t1 = window.setTimeout(() => setAndroidLaunchPhase(1), 900);
+    const t2 = window.setTimeout(() => setShowAndroidLaunch(false), 1850);
+    return () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+
+    if (Capacitor.getPlatform() !== 'android') return;
+
+    let handle: { remove: () => Promise<void> } | null = null;
+    let backHandle: { remove: () => Promise<void> } | null = null;
+
+    const setup = async () => {
+      const launch = await CapacitorApp.getLaunchUrl();
+      if (launch?.url) launchInkFlowFromUrl(launch.url);
+      handle = await CapacitorApp.addListener('appUrlOpen', (event) => {
+        launchInkFlowFromUrl(event.url);
+      });
+
+      backHandle = await CapacitorApp.addListener('backButton', () => {
+        if (zoomedImage) {
+          setZoomedImage(false);
+          return;
+        }
+        if (previewChar) {
+          setPreviewChar(null);
+          return;
+        }
+        if (showFullStele) {
+          setShowFullStele(null);
+          return;
+        }
+        if (showDetail) {
+          setShowDetail(false);
+          return;
+        }
+
+        if (showGallery) {
+          if (galleryRef.current?.isInternalOpen()) {
+            galleryRef.current.closeInternal();
+            return;
+          }
+          setShowGallery(false);
+          return;
+        }
+
+        if (showInkFlow) {
+          if (inkFlowRef.current?.isInternalOpen()) {
+            inkFlowRef.current.closeInternal();
+            return;
+          }
+          setShowInkFlow(false);
+          setInkFlowLaunch(null);
+          return;
+        }
+
+        void CapacitorApp.exitApp();
+      });
+    };
+
+    void setup();
+    return () => {
+      if (handle) void handle.remove();
+      if (backHandle) void backHandle.remove();
+    };
+  }, [
+    launchInkFlowFromUrl,
+    zoomedImage,
+    previewChar,
+    showFullStele,
+    showDetail,
+    showGallery,
+    showInkFlow,
+  ]);
   
   useEffect(() => {
     fetch('/data/yishan_characters.json')
@@ -591,7 +709,19 @@ function App() {
 
       {/* 全局交互组件 */}
       <AnimatePresence>{!isMobile && showGallery && <GalleryCorridor ref={galleryRef} isOpen={showGallery} onClose={() => setShowGallery(false)} />}</AnimatePresence>
-      <AnimatePresence>{showInkFlow && <InkFlow ref={inkFlowRef} isOpen={showInkFlow} onClose={() => setShowInkFlow(false)} />}</AnimatePresence>
+      <AnimatePresence>
+        {showInkFlow && (
+          <InkFlow
+            ref={inkFlowRef}
+            isOpen={showInkFlow}
+            launch={inkFlowLaunch}
+            onClose={() => {
+              setShowInkFlow(false);
+              setInkFlowLaunch(null);
+            }}
+          />
+        )}
+      </AnimatePresence>
        
       {/* 原拓放大 */}
       <AnimatePresence>{!isMobile && zoomedImage && (
@@ -726,7 +856,137 @@ function App() {
           </motion.div>
         </div>
       )}</AnimatePresence>
+
+      <AnimatePresence>
+        {showAndroidLaunch ? <AndroidLaunchShowcase phase={androidLaunchPhase} /> : null}
+      </AnimatePresence>
     </div>
+  );
+}
+
+function AndroidLaunchShowcase({ phase }: { phase: 0 | 1 }) {
+  const yishan = [
+    { ch: '峄', src: '/steles/extracted_by_grid/char_0063.png' },
+    { ch: '山', src: '/steles/extracted_by_grid/char_0064.png' },
+    { ch: '刻', src: '/steles/extracted_by_grid/char_0137.png' },
+    { ch: '石', src: '/steles/extracted_by_grid/char_0140.png' },
+  ];
+
+  const caoquan = [
+    { ch: '曹', src: '/steles/2-lishu/1-caoquanbei/chars_yang/caoquanbei_yang_0043_U66F9.png' },
+    { ch: '全', src: '/steles/2-lishu/1-caoquanbei/chars_yang/caoquanbei_yang_0003_U5168.png' },
+    { ch: '国', src: '/steles/2-lishu/1-caoquanbei/chars_yang/caoquanbei_yang_0044_U570B.png' },
+  ];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[1000] bg-[#070707]"
+    >
+      <div className="absolute inset-0 opacity-[0.12] bg-[radial-gradient(circle_at_20%_10%,rgba(184,134,11,0.35),transparent_55%),radial-gradient(circle_at_80%_70%,rgba(139,0,0,0.25),transparent_60%)]" />
+      <div className="absolute inset-0 opacity-[0.10] bg-[url('/noise.png')] mix-blend-overlay" />
+
+      <div className="absolute inset-0 flex flex-col items-center justify-center px-8 pt-[max(env(safe-area-inset-top),24px)] pb-[max(env(safe-area-inset-bottom),16px)]">
+        <AnimatePresence mode="wait">
+          {phase === 0 ? (
+            <motion.div
+              key="yishan"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.55, ease: 'easeOut' }}
+              className="w-full max-w-md"
+            >
+              <div className="text-center">
+                <div className="text-[10px] font-black tracking-[0.6em] pl-[0.6em] text-stone-300/70">金石一瞬</div>
+                <div className="mt-3 text-3xl font-serif font-black tracking-[0.5em] pl-[0.5em] text-[#F2E6CE]">嶧山刻石</div>
+              </div>
+
+              <div className="mt-10 flex items-center justify-center gap-4">
+                {yishan.map((it, i) => (
+                  <motion.div
+                    key={it.ch}
+                    initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    transition={{ delay: 0.08 * i, duration: 0.5, ease: 'easeOut' }}
+                    className="relative"
+                    style={{ transform: `rotate(${(i - 1.5) * 2.5}deg)` }}
+                  >
+                    <div className="w-20 h-20 rounded-2xl bg-white/5 border border-white/10 shadow-[0_18px_50px_rgba(0,0,0,0.45)] overflow-hidden">
+                      <img src={it.src} alt={it.ch} className="w-full h-full object-contain grayscale brightness-110 contrast-125" />
+                    </div>
+                    <div className="mt-2 text-center text-[10px] font-serif text-stone-300/70 tracking-[0.45em] pl-[0.45em]">{it.ch}</div>
+                  </motion.div>
+                ))}
+              </div>
+
+              <div className="mt-10 flex items-center justify-center">
+                <div className="h-px w-40 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+              </div>
+
+              <div className="mt-6 text-center text-[10px] font-serif text-stone-400/70 tracking-[0.32em]">圆劲 · 中和 · 如玉</div>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="caoquan"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.55, ease: 'easeOut' }}
+              className="w-full max-w-md"
+            >
+              <div className="text-center">
+                <div className="text-[10px] font-black tracking-[0.6em] pl-[0.6em] text-stone-300/70">碑阳一页</div>
+                <div className="mt-3 text-3xl font-serif font-black tracking-[0.5em] pl-[0.5em] text-[#F2E6CE]">曹全碑</div>
+              </div>
+
+              <div className="mt-8 rounded-[2rem] overflow-hidden border border-white/10 bg-white/5 shadow-[0_30px_90px_rgba(0,0,0,0.55)]">
+                <div className="relative h-40">
+                  <img
+                    src="/steles/2-lishu/1-caoquanbei/thumbs/caoquanbei-001.jpg"
+                    alt="曹全碑"
+                    className="absolute inset-0 w-full h-full object-cover grayscale contrast-125 brightness-95"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/35 to-black/70" />
+                  <div className="absolute inset-0 flex items-end justify-between p-5">
+                    <div>
+                      <div className="text-[10px] font-black tracking-[0.4em] text-stone-200/80">汉 · 隶书</div>
+                      <div className="mt-2 text-[10px] font-serif text-stone-200/70 tracking-[0.24em]">波磔舒展，骨气内敛</div>
+                    </div>
+                    <div className="w-10 h-10 rounded-2xl bg-white/10 border border-white/10" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-8 flex items-center justify-center gap-4">
+                {caoquan.map((it, i) => (
+                  <motion.div
+                    key={it.ch}
+                    initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    transition={{ delay: 0.06 * i, duration: 0.5, ease: 'easeOut' }}
+                    className="relative"
+                    style={{ transform: `rotate(${(i - 1) * 2.2}deg)` }}
+                  >
+                    <div className="w-20 h-20 rounded-2xl bg-white/5 border border-white/10 shadow-[0_18px_50px_rgba(0,0,0,0.45)] overflow-hidden">
+                      <img src={it.src} alt={it.ch} className="w-full h-full object-contain grayscale contrast-125 brightness-105" />
+                    </div>
+                    <div className="mt-2 text-center text-[10px] font-serif text-stone-300/70 tracking-[0.45em] pl-[0.45em]">{it.ch}</div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <div className="mt-16 flex flex-col items-center">
+          <div className="w-12 h-px bg-gradient-to-r from-transparent via-[#b8860b]/35 to-transparent" />
+          <div className="mt-6 text-[10px] font-black tracking-[0.8em] pl-[0.8em] text-stone-400/70">墨阵</div>
+        </div>
+      </div>
+    </motion.div>
   );
 }
 

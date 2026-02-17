@@ -1,0 +1,5 @@
+<view class="page">
+  <view class="title">典藏画册</view>
+  <view class="desc">MVP 暂未实现，本页占位。</view>
+  <view class="hint">后续会做海报瀑布流与保存到相册。</view>
+</view>

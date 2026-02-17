@@ -1,0 +1,49 @@
+<view class="page">
+  <view class="header">
+    <view class="kicker">今日入墨</view>
+    <view class="title">选一页，慢慢看</view>
+    <view class="desc">先研习一字，再游目一帖。</view>
+  </view>
+
+  <view class="grid">
+    <view class="card primary" bindtap="openChars">
+      <view class="cardTop">
+        <text class="tag">篆字研习</text>
+        <text class="meta mono">{{charTotal}} 字</text>
+      </view>
+      <view class="cardTitle">一字一页</view>
+      <view class="cardDesc">竖向滑动，慢慢看懂笔意。</view>
+    </view>
+
+    <view class="row">
+      <view class="card half" bindtap="openSteles">
+        <view class="cardTop">
+          <text class="tag">名帖赏析</text>
+          <text class="meta mono">{{steleTotal}}</text>
+        </view>
+        <view class="cardTitle">{{steleTotal}} 名帖</view>
+        <view class="cardDesc">赏析 · 原文 · 背景</view>
+      </view>
+
+      <view class="card half" bindtap="openStudy">
+        <view class="cardTop">
+          <text class="tag">学习卡</text>
+          <text class="meta mono">8 级</text>
+        </view>
+        <view class="cardTitle">一帖一组卡</view>
+        <view class="cardDesc">任务驱动学帖</view>
+      </view>
+    </view>
+
+    <view class="card" bindtap="openPosters">
+      <view class="cardTop">
+        <text class="tag">典藏画册</text>
+        <text class="meta mono">24</text>
+      </view>
+      <view class="cardTitle">海报与字卡</view>
+      <view class="cardDesc">精选拼贴，收藏分享。</view>
+    </view>
+  </view>
+
+  <view class="footer">墨阵 · 墨香千载 · 笔锋流转</view>
+</view>
