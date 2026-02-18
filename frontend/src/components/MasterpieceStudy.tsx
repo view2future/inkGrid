@@ -1190,7 +1190,7 @@ export function MobileMasterpieceStudyHub({
             <div className="w-1.5 h-1.5 bg-[#8B0000] rotate-45" />
             <span className="text-[10px] font-black tracking-[0.6em] pl-[0.6em] text-stone-600">学习路径</span>
           </div>
-          <h2 className="text-3xl font-serif font-black tracking-[0.35em] pl-[0.35em] text-stone-900">名帖学习卡</h2>
+          <h2 className="text-3xl font-serif font-black tracking-[0.35em] pl-[0.35em] text-stone-900">学一课</h2>
           <p className="text-sm font-serif text-stone-600 leading-relaxed tracking-wide">把一帖拆成一组卡片：看懂背景、抓住技法、带着任务去临。</p>
         </div>
 
@@ -1895,7 +1895,7 @@ export function MobileMasterpieceStudyDeck({
 
           <div className="relative h-full p-7 flex flex-col">
             <div className="inline-flex items-center gap-2 rounded-full bg-white/70 border border-stone-200/80 px-4 py-2 w-fit">
-              <span className="text-[11px] font-black tracking-[0.4em] pl-[0.4em] text-stone-700">名帖学习卡</span>
+              <span className="text-[11px] font-black tracking-[0.4em] pl-[0.4em] text-stone-700">学一课</span>
               <span className="text-[10px] font-mono text-stone-500 tracking-widest">8级路径</span>
             </div>
 

@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect, useCallback, useMemo, forwardRef, useImperativeHandle } from 'react';
 import { motion, AnimatePresence, type PanInfo, useDragControls } from 'framer-motion';
-import { X, BookOpen, Info, Share2, Scroll, Sparkles, MapPin, Download, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Search } from 'lucide-react';
+import { X, BookOpen, Info, Share2, Scroll, Sparkles, MapPin, Download, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Search, Shuffle } from 'lucide-react';
 import Logo from './Logo';
 import { useMediaQuery } from '../utils/useMediaQuery';
 import MobilePosterModal from './MobilePosterModal';
@@ -77,6 +77,83 @@ type MobilePage = 'hub' | FlowMode | 'posters' | 'study' | 'study_deck';
 const YISHAN_EXTRACTED_COUNT = 135;
 
 const ENABLE_GESTURE_NAV = false;
+
+const CHAR_LAST_KEY = 'inkgrid_inkflow_chars_last_v1';
+const STELE_LAST_KEY = 'inkgrid_inkflow_steles_last_v1';
+const STELE_SEEN_KEY = 'inkgrid_inkflow_steles_seen_v1';
+
+type CharLastState = {
+  index: number;
+  updatedAt: number;
+};
+
+type SteleLastState = {
+  steleId: string;
+  index: number;
+  section: number;
+  axis: 'post' | 'section';
+  updatedAt: number;
+};
+
+function clampIndex(n: number, total: number) {
+  if (!Number.isFinite(n)) return 0;
+  const t = Math.max(0, total | 0);
+  if (t <= 0) return 0;
+  return Math.max(0, Math.min(t - 1, n | 0));
+}
+
+function loadJson<T>(key: string): T | null {
+  try {
+    const raw = window.localStorage.getItem(key);
+    if (!raw) return null;
+    return JSON.parse(raw) as T;
+  } catch {
+    return null;
+  }
+}
+
+function saveJson(key: string, value: unknown) {
+  try {
+    window.localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    // ignore
+  }
+}
+
+function loadCharLast(): CharLastState | null {
+  const v = loadJson<CharLastState>(CHAR_LAST_KEY);
+  if (!v || typeof v !== 'object') return null;
+  if (typeof v.index !== 'number') return null;
+  return { index: v.index, updatedAt: typeof v.updatedAt === 'number' ? v.updatedAt : 0 };
+}
+
+function loadSteleLast(): SteleLastState | null {
+  const v = loadJson<SteleLastState>(STELE_LAST_KEY);
+  if (!v || typeof v !== 'object') return null;
+  if (typeof v.steleId !== 'string' || !v.steleId) return null;
+  if (typeof v.index !== 'number') return null;
+  return {
+    steleId: v.steleId,
+    index: v.index,
+    section: typeof v.section === 'number' ? v.section : 0,
+    axis: v.axis === 'section' ? 'section' : 'post',
+    updatedAt: typeof v.updatedAt === 'number' ? v.updatedAt : 0,
+  };
+}
+
+function loadSteleSeen(): string[] {
+  const v = loadJson<unknown>(STELE_SEEN_KEY);
+  if (!Array.isArray(v)) return [];
+  return v.filter((x) => typeof x === 'string' && x.trim()).slice(0, 40);
+}
+
+function pushSteleSeen(steleId: string) {
+  const id = String(steleId || '').trim();
+  if (!id) return;
+  const prev = loadSteleSeen();
+  const next = [id, ...prev.filter((x) => x !== id)].slice(0, 40);
+  saveJson(STELE_SEEN_KEY, next);
+}
 
 interface FlowCard {
   id: string;
@@ -430,6 +507,10 @@ const InkFlow = forwardRef(({ isOpen, onClose, launch, onOpenYishanAppreciation 
   const [mobileSteleFacetValue, setMobileSteleFacetValue] = useState('');
   const [showSteleFullText, setShowSteleFullText] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [charLastIndex, setCharLastIndex] = useState<number | null>(null);
+  const [steleLast, setSteleLast] = useState<SteleLastState | null>(null);
+  const pendingCharIndexRef = useRef<number | null>(null);
+  const pendingSteleRef = useRef<SteleLastState | null>(null);
   const edgeSwipeRef = useRef<{
     pointerId: number | null;
     startX: number;
@@ -459,6 +540,13 @@ const InkFlow = forwardRef(({ isOpen, onClose, launch, onOpenYishanAppreciation 
   }));
 
   const [charDataFull, setCharDataFull] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const c = loadCharLast();
+    setCharLastIndex(typeof c?.index === 'number' ? c.index : null);
+    setSteleLast(loadSteleLast());
+  }, [isOpen]);
 
   const toastTimerRef = useRef<number | null>(null);
   const showToast = useCallback((message: string) => {
@@ -680,7 +768,7 @@ const InkFlow = forwardRef(({ isOpen, onClose, launch, onOpenYishanAppreciation 
         const nextDeepLinkUrl = total && currentIndex + 1 < total ? `inkgrid://inkflow?page=characters&index=${currentIndex + 1}` : undefined;
 
         void showInkFlowNotification({
-          title: '墨流 · 篆字研习',
+       title: '墨流 · 临一字',
           subtitle,
           deepLinkUrl,
           nextDeepLinkUrl,
@@ -703,7 +791,7 @@ const InkFlow = forwardRef(({ isOpen, onClose, launch, onOpenYishanAppreciation 
           : undefined;
 
         void showInkFlowNotification({
-          title: '墨流 · 名帖赏析',
+       title: '墨流 · 赏一帖',
           subtitle,
           deepLinkUrl,
           nextDeepLinkUrl,
@@ -716,7 +804,7 @@ const InkFlow = forwardRef(({ isOpen, onClose, launch, onOpenYishanAppreciation 
 
       if (mobilePage === 'posters') {
         void showInkFlowNotification({
-          title: '墨流 · 典藏画册',
+       title: '墨流 · 藏一册',
           subtitle: '海报与画册',
           deepLinkUrl: 'inkgrid://inkflow?page=posters',
           ongoing: true,
@@ -747,7 +835,7 @@ const InkFlow = forwardRef(({ isOpen, onClose, launch, onOpenYishanAppreciation 
     if (mode === 'characters') {
       const total = charDataFull.length;
       void showInkFlowNotification({
-        title: '墨流 · 篆字研习',
+         title: '墨流 · 临一字',
         subtitle: total ? `${currentIndex + 1}/${total}` : '',
         deepLinkUrl: `inkgrid://inkflow?page=characters&index=${currentIndex}`,
         ongoing: true,
@@ -760,7 +848,7 @@ const InkFlow = forwardRef(({ isOpen, onClose, launch, onOpenYishanAppreciation 
     const total = steleCards.length;
     const s = (steleCards[currentIndex]?.data as Stele | undefined) ?? undefined;
     void showInkFlowNotification({
-      title: '墨流 · 名帖赏析',
+       title: '墨流 · 赏一帖',
       subtitle: s ? `《${s.name}》 ${currentIndex + 1}/${total}` : '',
       deepLinkUrl: s ? `inkgrid://inkflow?page=steles&steleId=${encodeURIComponent(s.id)}` : defaultDeepLink,
       ongoing: true,
@@ -790,6 +878,78 @@ const InkFlow = forwardRef(({ isOpen, onClose, launch, onOpenYishanAppreciation 
   const currentCard = currentCards[currentIndex];
 
   const mobileSteles = useMemo(() => steleCards.map((c) => c.data as Stele), [steleCards]);
+
+  useEffect(() => {
+    if (!isOpen || !isMobile) return;
+    if (mobilePage !== 'characters') return;
+    if (!charDataFull.length) return;
+    const idx = clampIndex(currentIndex, charDataFull.length);
+    setCharLastIndex(idx);
+    saveJson(CHAR_LAST_KEY, { index: idx, updatedAt: Date.now() } satisfies CharLastState);
+  }, [isOpen, isMobile, mobilePage, currentIndex, charDataFull.length]);
+
+  useEffect(() => {
+    if (!isOpen || !isMobile) return;
+    if (mobilePage !== 'steles') return;
+    const s = mobileSteles[mobileSteleIndex];
+    if (!s) return;
+    const patch: SteleLastState = {
+      steleId: s.id,
+      index: mobileSteleIndex,
+      section: mobileSteleSection,
+      axis: mobileSteleAxis,
+      updatedAt: Date.now(),
+    };
+    setSteleLast(patch);
+    saveJson(STELE_LAST_KEY, patch);
+    pushSteleSeen(s.id);
+  }, [
+    isOpen,
+    isMobile,
+    mobilePage,
+    mobileSteleIndex,
+    mobileSteleSection,
+    mobileSteleAxis,
+    mobileSteles,
+  ]);
+
+  const applyPendingCharIndex = useCallback(() => {
+    const pending = pendingCharIndexRef.current;
+    if (pending == null) return;
+    if (charDataFull.length <= 0) return;
+    pendingCharIndexRef.current = null;
+    setCurrentIndex(clampIndex(pending, charDataFull.length));
+  }, [charDataFull.length]);
+
+  const applyPendingStele = useCallback(
+    (target: SteleLastState) => {
+      if (!mobileSteles.length) return false;
+      let idx = target.index;
+      if (target.steleId) {
+        const found = mobileSteles.findIndex((s) => s.id === target.steleId);
+        if (found >= 0) idx = found;
+      }
+      idx = clampIndex(idx, mobileSteles.length);
+      setMobileSteleAxis(target.axis || 'post');
+      setMobileSteleIndex(idx);
+      setMobileSteleSection(Math.max(0, target.section | 0));
+      return true;
+    },
+    [mobileSteles]
+  );
+
+  useEffect(() => {
+    if (!isOpen || !isMobile) return;
+    applyPendingCharIndex();
+  }, [applyPendingCharIndex, isOpen, isMobile, charDataFull.length]);
+
+  useEffect(() => {
+    if (!isOpen || !isMobile) return;
+    const pending = pendingSteleRef.current;
+    if (!pending) return;
+    if (!mobileSteles.length) return;
+    if (applyPendingStele(pending)) pendingSteleRef.current = null;
+  }, [applyPendingStele, isOpen, isMobile, mobileSteles.length]);
   const mobileFilteredSteles = useMemo(() => {
     let list = mobileSteles;
 
@@ -856,7 +1016,7 @@ const InkFlow = forwardRef(({ isOpen, onClose, launch, onOpenYishanAppreciation 
     const currentPosterTarget: MobilePosterTarget | null = currentChar
       ? {
           kind: 'char' as const,
-          title: `墨阵 · ${String(currentChar.simplified || currentChar.char || '').trim() || '篆字研习'}`,
+           title: `墨阵 · ${String(currentChar.simplified || currentChar.char || '').trim() || '临一字'}`,
           data: currentChar,
         }
       : currentStele
@@ -869,17 +1029,17 @@ const InkFlow = forwardRef(({ isOpen, onClose, launch, onOpenYishanAppreciation 
 
     const title =
       mobilePage === 'characters'
-        ? '篆字研习'
+        ? '临一字'
         : mobilePage === 'steles'
-          ? '名帖赏析'
+          ? '赏一帖'
           : mobilePage === 'posters'
-            ? '典藏画册'
+            ? '藏一册'
             : mobilePage === 'study'
-              ? '名帖学习卡'
+              ? '学一课'
               : mobilePage === 'study_deck'
                 ? studyStele
-                  ? `学习卡 · ${studyStele.name}`
-                  : '名帖学习卡'
+                  ? `学一课 · ${studyStele.name}`
+                  : '学一课'
             : '选一页，慢慢看';
 
     const refreshAll = async () => {
@@ -889,6 +1049,26 @@ const InkFlow = forwardRef(({ isOpen, onClose, launch, onOpenYishanAppreciation 
       } catch {
         showToast('刷新失败');
       }
+    };
+
+    const randomizeStele = () => {
+      const total = mobileSteles.length;
+      if (total <= 1) return;
+      const recent = new Set(loadSteleSeen().slice(0, 10));
+      const candidates = [] as number[];
+      for (let i = 0; i < total; i++) {
+        if (i === mobileSteleIndex) continue;
+        const s = mobileSteles[i];
+        if (!s) continue;
+        if (!recent.has(s.id)) candidates.push(i);
+      }
+      const pool = candidates.length ? candidates : Array.from({ length: total }, (_v, i) => i).filter((i) => i !== mobileSteleIndex);
+      if (!pool.length) return;
+      const next = pool[Math.floor(Math.random() * pool.length)] ?? mobileSteleIndex;
+      setMobileSteleAxis('post');
+      setDirection(next > mobileSteleIndex ? 1 : -1);
+      setMobileSteleIndex(next);
+      setMobileSteleSection(0);
     };
 
     const navigateChar = (dir: number) => {
@@ -964,7 +1144,10 @@ const InkFlow = forwardRef(({ isOpen, onClose, launch, onOpenYishanAppreciation 
 
     const openCharacters = () => {
       setMode('characters');
-      setCurrentIndex(0);
+      const last = loadCharLast();
+      const idx = last?.index ?? charLastIndex ?? 0;
+      pendingCharIndexRef.current = idx;
+      setCurrentIndex(idx);
       setDirection(0);
       setShowStelePicker(false);
       setShowSteleFullText(false);
@@ -974,15 +1157,29 @@ const InkFlow = forwardRef(({ isOpen, onClose, launch, onOpenYishanAppreciation 
     const openSteles = () => {
       setMode('steles');
       setDirection(0);
-      setMobileSteleAxis('post');
-      setMobileSteleIndex(0);
-      setMobileSteleSection(0);
+      const last = loadSteleLast() ?? steleLast;
+      if (last) {
+        pendingSteleRef.current = last;
+        setMobileSteleAxis(last.axis || 'post');
+        setMobileSteleIndex(last.index || 0);
+        setMobileSteleSection(Math.max(0, last.section | 0));
+        applyPendingStele(last);
+      } else {
+        setMobileSteleAxis('post');
+        setMobileSteleIndex(0);
+        setMobileSteleSection(0);
+      }
       setMobileSteleQuery('');
       setMobileSteleFacetKind('all');
       setMobileSteleFacetValue('');
       setShowStelePicker(false);
       setShowSteleFullText(false);
       setMobilePage('steles');
+    };
+
+    const discoverSteles = () => {
+      openSteles();
+      setShowStelePicker(true);
     };
 
     const openPosters = () => {
@@ -1152,14 +1349,33 @@ const InkFlow = forwardRef(({ isOpen, onClose, launch, onOpenYishanAppreciation 
             </div>
 
             <div className="flex items-center gap-2">
-              {mobilePage === 'steles' ? (
+              {mobilePage === 'hub' ? (
                 <button
-                  onClick={() => setShowStelePicker(true)}
+                  onClick={() => void refreshAll()}
                   className="w-10 h-10 rounded-full bg-white/60 backdrop-blur-md border border-stone-200/70 flex items-center justify-center text-stone-700 shadow-sm active:scale-95 transition"
-                  aria-label="Pick stele"
+                  aria-label="刷新"
                 >
-                  <Search size={18} />
+                  <Sparkles size={18} />
                 </button>
+              ) : null}
+
+              {mobilePage === 'steles' ? (
+                <>
+                  <button
+                    onClick={randomizeStele}
+                    className="w-10 h-10 rounded-full bg-white/60 backdrop-blur-md border border-stone-200/70 flex items-center justify-center text-stone-700 shadow-sm active:scale-95 transition"
+                    aria-label="换一帖"
+                  >
+                    <Shuffle size={18} />
+                  </button>
+                  <button
+                    onClick={() => setShowStelePicker(true)}
+                    className="w-10 h-10 rounded-full bg-white/60 backdrop-blur-md border border-stone-200/70 flex items-center justify-center text-stone-700 shadow-sm active:scale-95 transition"
+                    aria-label="发现名帖"
+                  >
+                    <Search size={18} />
+                  </button>
+                </>
               ) : null}
 
               {currentPosterTarget ? (
@@ -1173,9 +1389,7 @@ const InkFlow = forwardRef(({ isOpen, onClose, launch, onOpenYishanAppreciation 
                 >
                   <Share2 size={18} />
                 </button>
-              ) : (
-                <div className="w-10" />
-              )}
+              ) : null}
             </div>
           </div>
 
@@ -1185,11 +1399,27 @@ const InkFlow = forwardRef(({ isOpen, onClose, launch, onOpenYishanAppreciation 
               <MobileInkFlowHub
                 charTotal={charDataFull.length}
                 steleTotal={mobileSteles.length}
+                lastCharIndex={typeof charLastIndex === 'number' ? charLastIndex : undefined}
+                lastCharLabel={
+                  typeof charLastIndex === 'number' && charDataFull[charLastIndex]
+                    ? String(charDataFull[charLastIndex]?.simplified || charDataFull[charLastIndex]?.char || '').trim() || undefined
+                    : undefined
+                }
+                lastStele={steleLast || undefined}
+                lastSteleLabel={
+                  steleLast?.steleId
+                    ? (mobileSteles.find((s) => s.id === steleLast.steleId)?.name || undefined)
+                    : undefined
+                }
                 onOpenCharacters={openCharacters}
                 onOpenSteles={openSteles}
+                onDiscoverSteles={discoverSteles}
+                onRandomStele={() => {
+                  openSteles();
+                  randomizeStele();
+                }}
                 onOpenPosters={openPosters}
                 onOpenStudy={openStudy}
-                onRefresh={refreshAll}
               />
             ) : mobilePage === 'characters' ? (
               <MobileInkFlowCharacter
@@ -1428,64 +1658,71 @@ function CharCard({ char, onDoubleClick }: { char: any; onDoubleClick: (e: React
 function MobileInkFlowHub({
   charTotal,
   steleTotal,
+  lastCharIndex,
+  lastCharLabel,
+  lastStele,
+  lastSteleLabel,
   onOpenCharacters,
   onOpenSteles,
+  onDiscoverSteles,
+  onRandomStele,
   onOpenPosters,
   onOpenStudy,
-  onRefresh,
 }: {
   charTotal: number;
   steleTotal: number;
+  lastCharIndex?: number;
+  lastCharLabel?: string;
+  lastStele?: SteleLastState;
+  lastSteleLabel?: string;
   onOpenCharacters: () => void;
   onOpenSteles: () => void;
+  onDiscoverSteles: () => void;
+  onRandomStele: () => void;
   onOpenPosters: () => void;
   onOpenStudy: () => void;
-  onRefresh: () => void;
 }) {
+  const charResume = typeof lastCharIndex === 'number' ? clampIndex(lastCharIndex, charTotal) : 0;
+  const steleResume = lastStele ? clampIndex(lastStele.index, steleTotal) : 0;
+
   return (
-    <motion.div
-      drag="y"
-      dragConstraints={{ top: 0, bottom: 120 }}
-      dragElastic={0.22}
-      onDragEnd={(_, info) => {
-        if (info.offset.y > 90) onRefresh();
-      }}
-      className="h-full"
-    >
-        <div className="h-full overflow-y-auto px-5 pt-6 pb-[calc(2.5rem+env(safe-area-inset-bottom))]">
-          <div className="max-w-md mx-auto">
-        <div className="mb-10 space-y-4">
-            <div className="inline-flex items-center gap-3">
-              <div className="w-1.5 h-1.5 bg-[#8B0000] rotate-45" />
-              <span className="text-[10px] font-black tracking-[0.6em] pl-[0.6em] text-stone-600">今日入墨</span>
-            </div>
-          <h2 className="text-3xl font-serif font-black tracking-[0.35em] pl-[0.35em] text-stone-900">选一页，慢慢看</h2>
-          <p className="text-sm font-serif text-stone-600 leading-relaxed tracking-wide">把屏幕当作一张小册页：先研习一字，再游目一帖。</p>
+    <div className="h-full overflow-hidden px-5 sm:px-6 pt-4 sm:pt-6 pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
+      <div className="max-w-xl mx-auto h-full flex flex-col">
+        <div className="shrink-0 space-y-2">
+          <div className="inline-flex items-center gap-3">
+            <div className="w-1.5 h-1.5 bg-[#8B0000] rotate-45" />
+            <span className="text-[10px] font-black tracking-[0.6em] pl-[0.6em] text-stone-600">今日入墨</span>
+          </div>
+          <h2 className="text-2xl font-serif font-black tracking-[0.32em] pl-[0.32em] text-stone-900">选一页，慢慢看</h2>
+          <p className="text-[12px] font-serif text-stone-600 leading-relaxed tracking-wide">临一字 · 赏一帖 · 学一课 · 藏一册</p>
         </div>
 
-        <div className="space-y-4">
+        <div className="flex-1 min-h-0 pt-6 sm:pt-8 flex flex-col gap-4 sm:gap-5">
           {/* Primary */}
           <motion.button
             onClick={() => {
               track('hub_open_characters', { total: charTotal || 0 });
               onOpenCharacters();
             }}
-            whileTap={{ scale: 0.98 }}
-            className="w-full text-left rounded-[2rem] bg-white/60 backdrop-blur-md border border-stone-200/70 shadow-[0_25px_70px_rgba(0,0,0,0.10)] overflow-hidden"
+            whileTap={{ scale: 0.985 }}
+            className="w-full text-left rounded-[1.75rem] bg-white/60 backdrop-blur-md border border-stone-200/70 shadow-[0_18px_55px_rgba(0,0,0,0.10)] overflow-hidden"
           >
-            <div className="relative p-6">
+            <div className="relative p-5 min-[380px]:p-6">
               <div className="absolute inset-0 opacity-[0.12] bg-[url('https://www.transparenttextures.com/patterns/handmade-paper.png')]" />
               <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#8B0000]/70" />
-              <div className="relative flex items-start justify-between gap-6">
-                <div className="space-y-2">
+              <div className="relative flex items-start justify-between gap-4">
+                <div className="space-y-1.5">
                   <div className="flex items-center gap-3">
-                    <span className="text-[10px] font-black tracking-[0.6em] pl-[0.6em] text-stone-600">篆字研习</span>
+                    <span className="text-[10px] font-black tracking-[0.6em] pl-[0.6em] text-stone-600">临一字</span>
                     <span className="text-[10px] font-mono text-stone-500 tracking-widest">{charTotal || 0} 字</span>
                   </div>
-                  <div className="text-2xl font-serif font-black text-stone-900 tracking-wide">一字一页</div>
-                  <p className="text-[12px] font-serif text-stone-600 leading-relaxed tracking-wide">把屏幕当作册页，上滑翻临，下滑回看。</p>
+                  <div className="text-xl font-serif font-black text-stone-900 tracking-wide">临一字</div>
+                  <div className="text-[12px] font-serif text-stone-600 tracking-wide">
+                    第 {String(charResume + 1).padStart(3, '0')}/{String(charTotal || 0).padStart(3, '0')}
+                    {lastCharLabel ? ` · 「${lastCharLabel}」` : ''}
+                  </div>
                 </div>
-                <div className="shrink-0 w-11 h-11 rounded-full bg-[#8B0000] text-[#F2E6CE] flex items-center justify-center shadow-[0_18px_40px_rgba(139,0,0,0.22)]">
+                <div className="shrink-0 w-10 h-10 min-[380px]:w-11 min-[380px]:h-11 rounded-full bg-[#8B0000] text-[#F2E6CE] flex items-center justify-center shadow-[0_18px_40px_rgba(139,0,0,0.22)]">
                   <ChevronRight size={18} />
                 </div>
               </div>
@@ -1493,55 +1730,93 @@ function MobileInkFlowHub({
           </motion.button>
 
           {/* Secondary grid */}
-          <div className="grid grid-cols-2 gap-4">
-            <motion.button
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
+            <motion.div
               onClick={() => {
                 track('hub_open_steles', { total: steleTotal || 0 });
                 onOpenSteles();
               }}
-              whileTap={{ scale: 0.98 }}
-              className="w-full text-left rounded-[1.75rem] bg-white/60 backdrop-blur-md border border-stone-200/70 shadow-[0_22px_60px_rgba(0,0,0,0.10)] overflow-hidden"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  track('hub_open_steles', { total: steleTotal || 0 });
+                  onOpenSteles();
+                }
+              }}
+              role="button"
+              tabIndex={0}
+              whileTap={{ scale: 0.985 }}
+              className="w-full text-left rounded-[1.6rem] bg-white/60 backdrop-blur-md border border-stone-200/70 shadow-[0_16px_48px_rgba(0,0,0,0.10)] overflow-hidden"
             >
-              <div className="relative p-5 h-full">
+              <div className="relative p-4 min-[380px]:p-5 h-full">
                 <div className="absolute inset-0 opacity-[0.12] bg-[url('https://www.transparenttextures.com/patterns/handmade-paper.png')]" />
                 <div className="absolute left-0 top-0 right-0 h-1 bg-stone-900/20" />
                 <div className="relative flex flex-col h-full">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-black tracking-[0.5em] pl-[0.5em] text-stone-600">名帖赏析</span>
+                    <span className="text-[10px] font-black tracking-[0.5em] pl-[0.5em] text-stone-600">赏一帖</span>
                     <span className="text-[10px] font-mono text-stone-500 tracking-widest">{steleTotal || 0}</span>
                   </div>
-                  <div className="mt-3 text-lg font-serif font-black text-stone-900 tracking-wide">{steleTotal || 0} 名帖</div>
-                  <p className="mt-2 text-[11px] font-serif text-stone-600 leading-relaxed line-clamp-2 tracking-wide">气韵、原文、背景，一帖一景。</p>
-                  <div className="mt-auto pt-4 flex justify-end">
-                    <div className="w-9 h-9 rounded-full bg-white/70 border border-stone-200/80 text-stone-700 flex items-center justify-center shadow-sm">
-                      <ChevronRight size={16} />
+                  <div className="mt-2 text-[15px] font-serif font-black text-stone-900 tracking-wide">赏一帖</div>
+                  <div className="mt-2 text-[11px] font-serif text-stone-600 leading-relaxed tracking-wide line-clamp-2">
+                    {lastSteleLabel ? `《${lastSteleLabel}》` : '上次看到哪里，就从哪里继续。'}
+                  </div>
+                  <div className="mt-auto pt-3 flex items-center justify-between">
+                    <span className="text-[10px] font-mono text-stone-500 tracking-widest">
+                      {String(steleResume + 1).padStart(2, '0')}/{String(steleTotal || 0).padStart(2, '0')}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onRandomStele();
+                        }}
+                        className="w-8 h-8 rounded-full bg-white/70 border border-stone-200/80 text-stone-700 flex items-center justify-center shadow-sm active:scale-95 transition"
+                        aria-label="换一帖"
+                      >
+                        <Shuffle size={14} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDiscoverSteles();
+                        }}
+                        className="w-8 h-8 rounded-full bg-white/70 border border-stone-200/80 text-stone-700 flex items-center justify-center shadow-sm active:scale-95 transition"
+                        aria-label="发现名帖"
+                      >
+                        <Search size={14} />
+                      </button>
+                      <div className="w-8 h-8 rounded-full bg-white/70 border border-stone-200/80 text-stone-700 flex items-center justify-center shadow-sm">
+                        <ChevronRight size={15} />
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </motion.button>
+            </motion.div>
 
             <motion.button
               onClick={() => {
                 track('hub_open_study');
                 onOpenStudy();
               }}
-              whileTap={{ scale: 0.98 }}
-              className="w-full text-left rounded-[1.75rem] bg-white/60 backdrop-blur-md border border-stone-200/70 shadow-[0_22px_60px_rgba(0,0,0,0.10)] overflow-hidden"
+              whileTap={{ scale: 0.985 }}
+              className="w-full text-left rounded-[1.6rem] bg-white/60 backdrop-blur-md border border-stone-200/70 shadow-[0_16px_48px_rgba(0,0,0,0.10)] overflow-hidden"
             >
-              <div className="relative p-5 h-full">
+              <div className="relative p-4 min-[380px]:p-5 h-full">
                 <div className="absolute inset-0 opacity-[0.12] bg-[url('https://www.transparenttextures.com/patterns/handmade-paper.png')]" />
                 <div className="absolute left-0 top-0 right-0 h-1 bg-[#8B0000]/25" />
                 <div className="relative flex flex-col h-full">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-black tracking-[0.5em] pl-[0.5em] text-stone-600">学习卡</span>
+                    <span className="text-[10px] font-black tracking-[0.5em] pl-[0.5em] text-stone-600">学一课</span>
                     <span className="text-[10px] font-mono text-stone-500 tracking-widest">8 级</span>
                   </div>
-                  <div className="mt-3 text-lg font-serif font-black text-stone-900 tracking-wide">一帖一组卡</div>
+                  <div className="mt-2 text-[15px] font-serif font-black text-stone-900 tracking-wide">学一课</div>
                   <p className="mt-2 text-[11px] font-serif text-stone-600 leading-relaxed line-clamp-2 tracking-wide">背景、技法、节选、任务。</p>
-                  <div className="mt-auto pt-4 flex justify-end">
-                    <div className="w-9 h-9 rounded-full bg-white/70 border border-stone-200/80 text-stone-700 flex items-center justify-center shadow-sm">
-                      <ChevronRight size={16} />
+                  <div className="mt-auto pt-3 flex justify-end">
+                    <div className="w-8 h-8 rounded-full bg-white/70 border border-stone-200/80 text-stone-700 flex items-center justify-center shadow-sm">
+                      <ChevronRight size={15} />
                     </div>
                   </div>
                 </div>
@@ -1555,35 +1830,34 @@ function MobileInkFlowHub({
               track('hub_open_posters');
               onOpenPosters();
             }}
-            whileTap={{ scale: 0.98 }}
-            className="w-full text-left rounded-[2rem] bg-white/60 backdrop-blur-md border border-stone-200/70 shadow-[0_25px_70px_rgba(0,0,0,0.10)] overflow-hidden"
+            whileTap={{ scale: 0.985 }}
+            className="w-full text-left rounded-[1.75rem] bg-white/60 backdrop-blur-md border border-stone-200/70 shadow-[0_18px_55px_rgba(0,0,0,0.10)] overflow-hidden"
           >
-            <div className="relative p-6">
+            <div className="relative p-5 min-[380px]:p-6">
               <div className="absolute inset-0 opacity-[0.12] bg-[url('https://www.transparenttextures.com/patterns/handmade-paper.png')]" />
               <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#b8860b]/60" />
-              <div className="relative flex items-start justify-between gap-6">
-                <div className="space-y-2">
+              <div className="relative flex items-start justify-between gap-4">
+                <div className="space-y-1.5">
                   <div className="flex items-center gap-3">
-                    <span className="text-[10px] font-black tracking-[0.6em] pl-[0.6em] text-stone-600">典藏画册</span>
+                    <span className="text-[10px] font-black tracking-[0.6em] pl-[0.6em] text-stone-600">藏一册</span>
                     <span className="text-[10px] font-mono text-stone-500 tracking-widest">24 字卡</span>
                   </div>
-                  <div className="text-xl font-serif font-black text-stone-900 tracking-wide">把好看的做成海报</div>
-                  <p className="text-[12px] font-serif text-stone-600 leading-relaxed tracking-wide">平铺、拼贴、年节专题：一键收藏与分享。</p>
+                  <div className="text-[15px] font-serif font-black text-stone-900 tracking-wide">藏一册</div>
+                  <p className="text-[11px] font-serif text-stone-600 leading-relaxed tracking-wide line-clamp-1">平铺、拼贴、专题：一键收藏与分享。</p>
                 </div>
-                <div className="shrink-0 w-10 h-10 rounded-full bg-white/70 border border-stone-200/80 text-stone-700 flex items-center justify-center shadow-sm">
-                  <ChevronRight size={18} />
+                <div className="shrink-0 w-9 h-9 rounded-full bg-white/70 border border-stone-200/80 text-stone-700 flex items-center justify-center shadow-sm">
+                  <ChevronRight size={16} />
                 </div>
               </div>
             </div>
           </motion.button>
         </div>
 
-        <div className="mt-10 text-center text-[10px] font-serif text-stone-500 tracking-[0.35em] opacity-70">
+        <div className="shrink-0 pt-3 text-center text-[10px] font-serif text-stone-500 tracking-[0.35em] opacity-70">
           一屏只做一件事，才能更好看字
         </div>
-        </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -1731,7 +2005,7 @@ function MobileInkFlowPosterGallery({
       for (const c of collages) {
         try {
           const res = await renderCuratedCollagePng(
-            { title: '典藏画册', subtitle: c.subtitle, cards: c.cards },
+            { title: '藏一册', subtitle: c.subtitle, cards: c.cards },
             { scale: 0.42, pixelRatio: 1 }
           );
           if (cancelled) return;
@@ -1799,7 +2073,7 @@ function MobileInkFlowPosterGallery({
             <div className="w-1.5 h-1.5 bg-[#b8860b] rotate-45" />
             <span className="text-[10px] font-black tracking-[0.6em] pl-[0.6em] text-stone-600">精美海报赏析</span>
           </div>
-          <h2 className="text-3xl font-serif font-black tracking-[0.25em] text-stone-900">典藏画册</h2>
+          <h2 className="text-3xl font-serif font-black tracking-[0.25em] text-stone-900">藏一册</h2>
           <p className="text-sm font-serif text-stone-600 leading-relaxed tracking-wide">
             预设 24 张字卡与平铺海报：只看美，也可一键生成高清海报。
           </p>
@@ -2035,7 +2309,7 @@ function MobileCuratedCollageModal({
     setIsBusy(true);
     setTip(null);
     try {
-      const res = await renderCuratedCollagePng({ title: '典藏画册', subtitle: collage.subtitle, cards: collage.cards });
+      const res = await renderCuratedCollagePng({ title: '藏一册', subtitle: collage.subtitle, cards: collage.cards });
       const url = URL.createObjectURL(res.blob);
       const a = document.createElement('a');
       a.href = url;
@@ -2454,7 +2728,7 @@ function MobileInkFlowCharacter({
     <div className="h-full flex flex-col px-5 pt-4 pb-[calc(2.5rem+env(safe-area-inset-bottom))] relative">
       <div className="flex items-center justify-between">
         <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-white/55 backdrop-blur-md border border-stone-200/70 shadow-sm">
-          <span className="text-[10px] font-black tracking-[0.6em] pl-[0.6em] text-stone-600">篆字研习</span>
+          <span className="text-[10px] font-black tracking-[0.6em] pl-[0.6em] text-stone-600">临一字</span>
         </div>
         <span className="text-[10px] font-mono text-stone-500 tracking-widest">{String(index + 1).padStart(3, '0')} / {String(total).padStart(3, '0')}</span>
       </div>
@@ -2697,7 +2971,7 @@ function MobileInkFlowSteleFeed({
     <div className="h-full flex flex-col px-4 pt-4 pb-[calc(2.5rem+env(safe-area-inset-bottom))]">
       <div className="flex items-center justify-between">
         <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-white/55 backdrop-blur-md border border-stone-200/70 shadow-sm">
-          <span className="text-[10px] font-black tracking-[0.6em] pl-[0.6em] text-stone-600">名帖赏析</span>
+          <span className="text-[10px] font-black tracking-[0.6em] pl-[0.6em] text-stone-600">赏一帖</span>
           <span className="text-[10px] font-serif tracking-[0.2em] text-stone-500">{sectionLabels[section] || '阅读'}</span>
         </div>
         <span className="text-[10px] font-mono text-stone-500 tracking-widest">{String(index + 1).padStart(2, '0')} / {String(total).padStart(2, '0')}</span>

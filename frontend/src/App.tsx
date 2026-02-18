@@ -466,7 +466,7 @@ function App() {
                           >
                             <div className="flex flex-col items-center text-center">
                               <span className="text-[13px] font-black tracking-[0.35em]">入墨</span>
-                              <span className="mt-1 text-[10px] opacity-85 tracking-[0.12em] font-serif">篆字研习 · 名帖赏析 · 典藏画册</span>
+                              <span className="mt-1 text-[10px] opacity-85 tracking-[0.12em] font-serif">临一字 · 赏一帖 · 学一课 · 藏一册</span>
                             </div>
                             <ChevronRight size={22} className="absolute right-6 opacity-80" />
                           </motion.button>
