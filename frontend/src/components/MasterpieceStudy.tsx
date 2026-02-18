@@ -3,6 +3,9 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Search, SlidersHorizontal, Star, X } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
 import { TransformComponent, TransformWrapper } from 'react-zoom-pan-pinch';
+import QRCode from 'qrcode';
+
+import { extractGoldLine, getKeywords, highlightText, splitLeadSentence } from '../utils/readingEnhance';
 
 const IS_NATIVE_ANDROID = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
 const IMG_LOADING: 'eager' | 'lazy' = IS_NATIVE_ANDROID ? 'eager' : 'lazy';
@@ -232,6 +235,380 @@ function buildExcerpt(text: string, maxLen: number) {
   const punct = Math.max(slice.lastIndexOf('。'), slice.lastIndexOf('；'));
   if (punct > Math.floor(maxLen * 0.5)) return slice.slice(0, punct + 1);
   return slice;
+}
+
+function baseDirFromUrl(url: string) {
+  const parts = String(url || '').split('?')[0].split('#')[0].split('/');
+  if (parts.length <= 1) return '/';
+  parts.pop();
+  return parts.join('/') + '/';
+}
+
+type SteleAppreciation = {
+  id: string;
+  name: string;
+  summary: string;
+  points: Array<{ tag: string; text: string }>;
+  practiceTips: string[];
+  sources: {
+    museum: { title: string; url: string; kind: string };
+    publication: { title: string; url: string; kind: string };
+  };
+};
+
+type CaoquanPointEvidence = {
+  version: number;
+  steleId: string;
+  steleName: string;
+  nPerPoint: number;
+  points: Record<string, { tag: string; char: string; glyphIds: number[] }>;
+};
+
+function CaoquanKnowledgeCard({
+  charIndexUrl,
+  stele,
+  initialOpenPoint,
+  onOpenInPage,
+}: {
+  charIndexUrl: string;
+  stele: MasterpieceStele;
+  initialOpenPoint?: number;
+  onOpenInPage: (args: { pageIndex: number; cropBox: [number, number, number, number]; label: string }) => void;
+}) {
+  const [app, setApp] = useState<SteleAppreciation | null>(null);
+  const [evidence, setEvidence] = useState<CaoquanPointEvidence | null>(null);
+  const [indexData, setIndexData] = useState<null | { files: Array<{ index: number; char: string; file: string; source: any }> }>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [openPoint, setOpenPoint] = useState<number | null>(null);
+  const [sharePoint, setSharePoint] = useState<number | null>(null);
+  const [shareQrUrl, setShareQrUrl] = useState<string | null>(null);
+  const [shareCopied, setShareCopied] = useState(false);
+
+  const baseDir = useMemo(() => baseDirFromUrl(charIndexUrl), [charIndexUrl]);
+  const evidenceUrl = useMemo(() => baseDir + 'point_evidence.json', [baseDir]);
+  const keywords = useMemo(() => getKeywords(stele.script_type), [stele.script_type]);
+
+  const byGlyphId = useMemo(() => {
+    const map = new Map<number, any>();
+    for (const f of indexData?.files || []) {
+      map.set(Number(f.index), f);
+    }
+    return map;
+  }, [indexData]);
+
+  const goldLine = useMemo(() => {
+    return extractGoldLine({ summary: app?.summary || null, firstPointText: app?.points?.[0]?.text || null });
+  }, [app?.summary, app?.points]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      setError(null);
+      try {
+        const [appRes, evRes, idxRes] = await Promise.all([
+          fetch('/data/stele_appreciations.json'),
+          fetch(evidenceUrl),
+          fetch(charIndexUrl),
+        ]);
+        if (!appRes.ok) throw new Error(`appreciations HTTP ${appRes.status}`);
+        if (!evRes.ok) throw new Error(`evidence HTTP ${evRes.status}`);
+        if (!idxRes.ok) throw new Error(`index HTTP ${idxRes.status}`);
+        const appJson = await appRes.json();
+        const items = appJson?.items || [];
+        const found = items.find((x: any) => String(x?.id) === String(stele.id)) || null;
+        const evJson = (await evRes.json()) as CaoquanPointEvidence;
+        const idxJson = await idxRes.json();
+        if (cancelled) return;
+        setApp(found);
+        setEvidence(evJson);
+        setIndexData(idxJson);
+      } catch (e) {
+        if (cancelled) return;
+        setError(e instanceof Error ? e.message : String(e));
+        setApp(null);
+        setEvidence(null);
+        setIndexData(null);
+      }
+    };
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [charIndexUrl, evidenceUrl, stele.id]);
+
+  useEffect(() => {
+    if (sharePoint === null) return;
+    const url = buildShareUrl(sharePoint);
+    if (!url) return;
+    let cancelled = false;
+    const run = async () => {
+      try {
+        const dataUrl = await QRCode.toDataURL(url, { margin: 1, width: 320, color: { dark: '#0a0a0a', light: '#00000000' } });
+        if (cancelled) return;
+        setShareQrUrl(dataUrl);
+      } catch {
+        if (cancelled) return;
+        setShareQrUrl(null);
+      }
+    };
+    void run();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sharePoint]);
+
+  useEffect(() => {
+    if (typeof initialOpenPoint !== 'number') return;
+    setOpenPoint(initialOpenPoint);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stele.id]);
+
+  const buildShareUrl = (pointIndex: number) => {
+    try {
+      const u = new URL(window.location.origin + '/');
+      u.searchParams.set('inkflow', '1');
+      u.searchParams.set('page', 'study_deck');
+      u.searchParams.set('steleId', 'li_001');
+      u.searchParams.set('card', 'knowledge');
+      u.searchParams.set('point', String(pointIndex));
+      return u.toString();
+    } catch {
+      return '';
+    }
+  };
+
+  const points = app?.points?.slice(0, 10) || [];
+  const pointEvidence = evidence?.points || {};
+
+  return (
+    <div className="min-h-full rounded-[2.25rem] border border-stone-200/70 bg-white/60 shadow-[0_30px_120px_rgba(0,0,0,0.16)] overflow-hidden">
+      <div className="relative p-7">
+        <div className="absolute inset-0 opacity-[0.10] bg-[url('https://www.transparenttextures.com/patterns/handmade-paper.png')]" />
+        <div className="relative">
+          <div className="text-[11px] font-black tracking-[0.4em] text-stone-500 uppercase underline decoration-[#8B0000]/25 underline-offset-4">知识点 · 证据</div>
+          <div className="mt-3 text-2xl font-serif font-black tracking-wide text-stone-950">要点落到原拓</div>
+
+          {error ? (
+            <div className="mt-6 rounded-[1.5rem] bg-white/70 border border-stone-200/70 p-5 text-[12px] font-sans text-stone-700">
+              加载失败：{error}
+            </div>
+          ) : null}
+
+          {goldLine ? (
+            <div className="mt-6 rounded-[1.75rem] bg-white/70 border border-stone-200/70 p-6">
+              <div className="text-[10px] font-black tracking-[0.35em] text-stone-500 underline decoration-[#8B0000]/25 underline-offset-4">金句</div>
+              <div className="mt-3 text-[15px] font-serif font-semibold text-stone-900 leading-[2.0] tracking-[0.12em] text-justify-zh">
+                「{goldLine}」
+              </div>
+            </div>
+          ) : null}
+
+          <div className="mt-6 rounded-[1.75rem] bg-white/70 border border-stone-200/70 p-6">
+            <div className="flex items-center justify-between">
+              <div className="text-[10px] font-black tracking-[0.35em] text-stone-500 underline decoration-[#8B0000]/25 underline-offset-4">十条要点</div>
+              <div className="text-[10px] font-mono text-stone-500 tracking-widest">{points.length}/10</div>
+            </div>
+
+            <div className="mt-4 divide-y divide-stone-200/70">
+              {points.map((p, i) => {
+                const split = splitLeadSentence(p.text);
+                const lead = split.lead;
+                const rest = split.rest;
+                const ev = pointEvidence[String(i)] || null;
+                const hasEv = Boolean(ev?.glyphIds?.length);
+                return (
+                  <div key={i} className="py-4 first:pt-0 last:pb-0">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <div className="text-[10px] font-mono text-stone-500 tracking-widest">{String(i + 1).padStart(2, '0')}</div>
+                          <div className="px-2 py-1 rounded-full bg-white border border-stone-200/70 text-[10px] font-black tracking-[0.18em] text-stone-700">
+                            {p.tag}
+                          </div>
+                        </div>
+                        <div className="mt-2 text-[13px] font-sans text-stone-800 leading-relaxed">
+                          {lead ? (
+                            <span className="font-semibold text-stone-900">
+                              {highlightText(lead, keywords)}
+                              {rest ? ' ' : ''}
+                            </span>
+                          ) : null}
+                          {rest ? <span className={lead ? 'text-stone-700' : ''}>{highlightText(rest, keywords)}</span> : null}
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        disabled={!hasEv}
+                        onClick={() => setOpenPoint(i)}
+                        className="shrink-0 h-10 px-4 rounded-[1.25rem] bg-[#8B0000] border border-[#8B0000]/60 text-[#F2E6CE] text-[10px] font-black tracking-[0.18em] shadow-sm disabled:opacity-35"
+                      >
+                        看例
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSharePoint(i);
+                          setShareQrUrl(null);
+                          setShareCopied(false);
+                        }}
+                        className="shrink-0 h-10 px-3 rounded-[1.25rem] bg-white/70 border border-stone-200/70 text-stone-800 text-[10px] font-black tracking-[0.18em] shadow-sm"
+                      >
+                        分享
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {app?.sources ? (
+            <div className="mt-6 flex flex-wrap gap-2">
+              <a
+                href={app.sources.museum.url}
+                target="_blank"
+                rel="noreferrer"
+                className="h-10 px-4 rounded-full bg-white/70 border border-stone-200/70 text-stone-800 text-[10px] font-black tracking-[0.18em] flex items-center justify-center shadow-sm"
+              >
+                馆站来源
+              </a>
+              <a
+                href={app.sources.publication.url}
+                target="_blank"
+                rel="noreferrer"
+                className="h-10 px-4 rounded-full bg-white/70 border border-stone-200/70 text-stone-800 text-[10px] font-black tracking-[0.18em] flex items-center justify-center shadow-sm"
+              >
+                出版物/研究
+              </a>
+            </div>
+          ) : null}
+        </div>
+      </div>
+
+      <AnimatePresence>
+        {openPoint !== null ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[420] bg-black/60 backdrop-blur-md flex items-end justify-center"
+            onClick={() => setOpenPoint(null)}
+          >
+            <motion.div
+              initial={{ y: 30, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 30, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 260, damping: 26 }}
+              className="w-full max-w-md rounded-t-[2rem] bg-[#F6F1E7] border-t border-stone-200/70 p-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between">
+                <div className="text-[12px] font-black tracking-[0.18em] text-stone-900">看例</div>
+                <button
+                  type="button"
+                  onClick={() => setOpenPoint(null)}
+                  className="w-9 h-9 rounded-full bg-white/70 border border-stone-200/70 text-stone-700 flex items-center justify-center"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="mt-4 grid grid-cols-4 gap-2">
+                {(() => {
+                  const ev = pointEvidence[String(openPoint)] || null;
+                  const glyphIds = ev?.glyphIds || [];
+                  const items = glyphIds.map((gid) => byGlyphId.get(Number(gid)) || null).filter(Boolean);
+                  return items.map((f: any) => (
+                    <button
+                      key={String(f.index)}
+                      type="button"
+                      onClick={() => {
+                        const pageIndex = Math.max(0, Number(f?.source?.image_index || 1) - 1);
+                        const cropBox = f?.source?.crop_box as [number, number, number, number];
+                        onOpenInPage({ pageIndex, cropBox, label: `${String(f.char || '').trim()} · 第${Number(f.index)}字` });
+                        setOpenPoint(null);
+                      }}
+                      className="aspect-square rounded-xl overflow-hidden border border-stone-200/70 bg-white/70"
+                    >
+                      <img src={baseDir + String(f.file)} alt={String(f.char || '')} className="w-full h-full object-contain grayscale contrast-150" />
+                    </button>
+                  ));
+                })()}
+              </div>
+            </motion.div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {sharePoint !== null ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[421] bg-black/60 backdrop-blur-md flex items-end justify-center"
+            onClick={() => setSharePoint(null)}
+          >
+            <motion.div
+              initial={{ y: 30, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 30, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 260, damping: 26 }}
+              className="w-full max-w-md rounded-t-[2rem] bg-[#F6F1E7] border-t border-stone-200/70 p-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between">
+                <div className="text-[12px] font-black tracking-[0.18em] text-stone-900">分享要点</div>
+                <button
+                  type="button"
+                  onClick={() => setSharePoint(null)}
+                  className="w-9 h-9 rounded-full bg-white/70 border border-stone-200/70 text-stone-700 flex items-center justify-center"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="mt-4 grid grid-cols-2 gap-4">
+                <div className="rounded-[1.5rem] bg-white/70 border border-stone-200/70 p-4 flex flex-col items-center justify-center">
+                  <div className="w-full aspect-square rounded-2xl bg-white border border-stone-200/70 flex items-center justify-center overflow-hidden">
+                    {shareQrUrl ? (
+                      <img src={shareQrUrl} alt="qr" className="w-full h-full object-contain" />
+                    ) : (
+                      <div className="text-[11px] font-sans text-stone-500">生成二维码…</div>
+                    )}
+                  </div>
+                  <div className="mt-3 text-[10px] font-mono text-stone-500 tracking-widest">扫码直达</div>
+                </div>
+                <div className="rounded-[1.5rem] bg-white/70 border border-stone-200/70 p-4">
+                  <div className="text-[10px] font-black tracking-[0.22em] text-stone-600">链接</div>
+                  <div className="mt-3 text-[10px] font-mono text-stone-600 break-all">{buildShareUrl(sharePoint)}</div>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const url = buildShareUrl(sharePoint);
+                      if (!url) return;
+                      try {
+                        if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(url);
+                        setShareCopied(true);
+                        window.setTimeout(() => setShareCopied(false), 1200);
+                      } catch {
+                        // ignore
+                      }
+                    }}
+                    className="mt-4 w-full h-10 rounded-[1.25rem] bg-[#8B0000] text-[#F2E6CE] font-black tracking-[0.18em] text-[11px] flex items-center justify-center"
+                  >
+                    {shareCopied ? '已复制' : '复制链接'}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+    </div>
+  );
 }
 
 function getSteleCover(stele: MasterpieceStele) {
@@ -1302,12 +1679,18 @@ export function MobileMasterpieceStudyDeck({
   initialCardId,
   restoreLastPosition,
   entryKey,
+  initialAtlasChar,
+  initialAtlasGlyphId,
+  initialKnowledgePoint,
   onDone,
 }: {
   stele: MasterpieceStele;
   initialCardId?: string;
   restoreLastPosition?: boolean;
   entryKey?: number;
+  initialAtlasChar?: string;
+  initialAtlasGlyphId?: number;
+  initialKnowledgePoint?: number;
   onDone?: () => void;
 }) {
   const { find } = useSteleKnowledge();
@@ -1653,7 +2036,8 @@ export function MobileMasterpieceStudyDeck({
         render: () => (
           <MasterpieceCharAtlasCard
             indexUrl={charIndexUrl}
-            initialChar={stele.id === 'li_001' ? '曹' : undefined}
+            initialChar={initialAtlasChar || (stele.id === 'li_001' ? '曹' : undefined)}
+            initialGlyphId={initialAtlasGlyphId}
             onOpenInPage={({ pageIndex, cropBox, label }) => {
               console.debug('[MasterpieceStudy] open stele page from atlas', {
                 steleId: String(stele.id),
@@ -1670,6 +2054,25 @@ export function MobileMasterpieceStudyDeck({
           />
         ),
       });
+
+      if (stele.id === 'li_001') {
+        list.push({
+          id: 'knowledge',
+          title: '证据',
+          render: () => (
+            <CaoquanKnowledgeCard
+              stele={stele}
+              charIndexUrl={charIndexUrl}
+              initialOpenPoint={initialKnowledgePoint}
+              onOpenInPage={({ pageIndex, cropBox, label }) => {
+                setViewerNaturalSize(null);
+                setViewerError(null);
+                setViewer({ index: pageIndex, highlight: { cropBox, label } });
+              }}
+            />
+          ),
+        });
+      }
     }
 
     if (practice.length) {

@@ -405,6 +405,9 @@ const InkFlow = forwardRef(({ isOpen, onClose, launch, onOpenYishanAppreciation 
   const [studyInitialCardId, setStudyInitialCardId] = useState<string | null>(null);
   const [studyRestoreLastPosition, setStudyRestoreLastPosition] = useState(false);
   const [studyDeckEntryKey, setStudyDeckEntryKey] = useState(0);
+  const [studyAtlasChar, setStudyAtlasChar] = useState<string | null>(null);
+  const [studyAtlasGlyphId, setStudyAtlasGlyphId] = useState<number | null>(null);
+  const [studyKnowledgePoint, setStudyKnowledgePoint] = useState<number | null>(null);
   const [mobileSteleIndex, setMobileSteleIndex] = useState(0);
   const [mobileSteleSection, setMobileSteleSection] = useState(0);
   const [mobileSteleAxis, setMobileSteleAxis] = useState<'post' | 'section'>('post');
@@ -506,6 +509,10 @@ const InkFlow = forwardRef(({ isOpen, onClose, launch, onOpenYishanAppreciation 
   const launchSteleId = launch?.steleId;
   const launchSteleIndex = launch?.steleIndex;
   const launchSteleSection = launch?.steleSection;
+  const launchCardId = launch?.cardId;
+  const launchChar = launch?.char;
+  const launchGlyphId = launch?.glyphId;
+  const launchPoint = launch?.point;
 
   useEffect(() => {
     if (!isOpen || !launchKey || !launchPage) return;
@@ -541,6 +548,9 @@ const InkFlow = forwardRef(({ isOpen, onClose, launch, onOpenYishanAppreciation 
         setStudyInitialCardId(null);
         setStudyRestoreLastPosition(false);
         setStudyDeckEntryKey((k) => k + 1);
+        setStudyAtlasChar(null);
+        setStudyAtlasGlyphId(null);
+        setStudyKnowledgePoint(null);
         setMobilePage('study');
         return;
       }
@@ -574,15 +584,21 @@ const InkFlow = forwardRef(({ isOpen, onClose, launch, onOpenYishanAppreciation 
 
       if (selected) {
         setStudyStele(selected);
-        setStudyInitialCardId(null);
+        setStudyInitialCardId(launchCardId || null);
         setStudyRestoreLastPosition(false);
         setStudyDeckEntryKey((k) => k + 1);
+        setStudyAtlasChar(launchChar || null);
+        setStudyAtlasGlyphId(typeof launchGlyphId === 'number' ? launchGlyphId : null);
+        setStudyKnowledgePoint(typeof launchPoint === 'number' ? launchPoint : null);
         setMobilePage('study_deck');
       } else {
         setStudyStele(null);
         setStudyInitialCardId(null);
         setStudyRestoreLastPosition(false);
         setStudyDeckEntryKey((k) => k + 1);
+        setStudyAtlasChar(null);
+        setStudyAtlasGlyphId(null);
+        setStudyKnowledgePoint(null);
         setMobilePage('study');
       }
       return;
@@ -1187,6 +1203,9 @@ const InkFlow = forwardRef(({ isOpen, onClose, launch, onOpenYishanAppreciation 
                   setStudyInitialCardId(opts?.initialCardId || null);
                   setStudyRestoreLastPosition(Boolean(opts?.restoreLastPosition));
                   setStudyDeckEntryKey((k) => k + 1);
+                  setStudyAtlasChar(null);
+                  setStudyAtlasGlyphId(null);
+                  setStudyKnowledgePoint(null);
                   setMobilePage('study_deck');
                 }}
               />
@@ -1197,11 +1216,17 @@ const InkFlow = forwardRef(({ isOpen, onClose, launch, onOpenYishanAppreciation 
                   initialCardId={studyInitialCardId || undefined}
                   restoreLastPosition={studyRestoreLastPosition}
                   entryKey={studyDeckEntryKey}
+                  initialAtlasChar={studyAtlasChar || undefined}
+                  initialAtlasGlyphId={typeof studyAtlasGlyphId === 'number' ? studyAtlasGlyphId : undefined}
+                  initialKnowledgePoint={typeof studyKnowledgePoint === 'number' ? studyKnowledgePoint : undefined}
                   onDone={() => {
                     setStudyStele(null);
                     setStudyInitialCardId(null);
                     setStudyRestoreLastPosition(false);
                     setStudyDeckEntryKey((k) => k + 1);
+                    setStudyAtlasChar(null);
+                    setStudyAtlasGlyphId(null);
+                    setStudyKnowledgePoint(null);
                     setMobilePage('study');
                     showToast('已打卡');
                   }}
@@ -2539,6 +2564,44 @@ function MobileInkFlowSteleFeed({
     [stele.appreciation?.summary, points]
   );
 
+  const focusKey = `inkgrid_focus_stele_v1:${String(stele.id)}`;
+  const [focusOpen, setFocusOpen] = useState(false);
+  const [focusTab, setFocusTab] = useState<'points' | 'tips'>('points');
+  const [focusPointIndex, setFocusPointIndex] = useState(0);
+  const [focusTipIndex, setFocusTipIndex] = useState(0);
+  const [focusStarred, setFocusStarred] = useState<number[]>([]);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(focusKey);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (parsed?.tab === 'tips') setFocusTab('tips');
+      if (typeof parsed?.pointIndex === 'number') setFocusPointIndex(parsed.pointIndex);
+      if (typeof parsed?.tipIndex === 'number') setFocusTipIndex(parsed.tipIndex);
+      if (Array.isArray(parsed?.starredPoints)) setFocusStarred(parsed.starredPoints.filter((x: any) => typeof x === 'number'));
+    } catch {
+      // ignore
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stele.id]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(
+        focusKey,
+        JSON.stringify({
+          tab: focusTab,
+          pointIndex: focusPointIndex,
+          tipIndex: focusTipIndex,
+          starredPoints: focusStarred,
+        })
+      );
+    } catch {
+      // ignore
+    }
+  }, [focusKey, focusTab, focusPointIndex, focusTipIndex, focusStarred]);
+
   const [showAllPoints, setShowAllPoints] = useState(false);
   const [showAllTips, setShowAllTips] = useState(false);
   useEffect(() => {
@@ -2651,13 +2714,24 @@ function MobileInkFlowSteleFeed({
                     <div className="mt-6 grid grid-cols-1 min-[520px]:grid-cols-[1fr_260px] gap-4 items-start">
                       <div className="min-w-0">
                         <div className="rounded-[1.5rem] bg-white/65 border border-stone-200/70 p-5 shadow-sm">
-                          <div className="flex items-start justify-between">
-                            <div className="inline-flex items-center gap-3">
-                              <div className="w-1.5 h-1.5 bg-[#8B0000] rotate-45" />
-                              <span className="text-[10px] font-black tracking-[0.18em] text-stone-600">赏析要点</span>
-                            </div>
-                            <div className="text-right text-[10px] font-mono text-stone-500 tracking-widest">{points.length ? `${Math.min(10, points.length)}/10` : ''}</div>
+                        <div className="flex items-start justify-between">
+                          <div className="inline-flex items-center gap-3">
+                            <div className="w-1.5 h-1.5 bg-[#8B0000] rotate-45" />
+                            <span className="text-[10px] font-black tracking-[0.18em] text-stone-600">赏析要点</span>
                           </div>
+                          <div className="flex items-center gap-2">
+                            <div className="text-right text-[10px] font-mono text-stone-500 tracking-widest">{points.length ? `${Math.min(10, points.length)}/10` : ''}</div>
+                            {points.length ? (
+                              <button
+                                type="button"
+                                onClick={() => setFocusOpen(true)}
+                                className="h-8 px-3 rounded-full bg-white/70 border border-stone-200/70 text-stone-800 text-[10px] font-black tracking-[0.18em] shadow-sm"
+                              >
+                                专注
+                              </button>
+                            ) : null}
+                          </div>
+                        </div>
 
                           <div className="mt-5 h-px bg-stone-200/70" />
 
@@ -2819,6 +2893,179 @@ function MobileInkFlowSteleFeed({
           </AnimatePresence>
         </div>
       </div>
+
+      <AnimatePresence>
+        {focusOpen ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[420] bg-black/70 backdrop-blur-md flex items-end justify-center"
+            onClick={() => setFocusOpen(false)}
+          >
+            <motion.div
+              initial={{ y: 30, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 30, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 260, damping: 26 }}
+              className="w-full max-w-[min(720px,calc(100vw-2rem))] rounded-t-[2rem] bg-[#F6F1E7] border-t border-stone-200/70 p-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-[12px] font-black tracking-[0.18em] text-stone-900">{stele.name}</div>
+                  <div className="mt-1 text-[10px] font-mono text-stone-500 tracking-widest">
+                    {focusTab === 'points'
+                      ? `要点 ${String(focusPointIndex + 1).padStart(2, '0')} / ${String(Math.min(10, points.length)).padStart(2, '0')}`
+                      : `建议 ${String(focusTipIndex + 1)} / ${String(Math.min(3, practiceTips.length))}`}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setFocusTab('points')}
+                    className={`h-9 px-4 rounded-full text-[11px] font-black tracking-[0.18em] border ${
+                      focusTab === 'points'
+                        ? 'bg-[#8B0000] text-[#F2E6CE] border-[#8B0000]/60'
+                        : 'bg-white/70 text-stone-700 border-stone-200/70'
+                    }`}
+                  >
+                    要点
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFocusTab('tips')}
+                    className={`h-9 px-4 rounded-full text-[11px] font-black tracking-[0.18em] border ${
+                      focusTab === 'tips'
+                        ? 'bg-[#8B0000] text-[#F2E6CE] border-[#8B0000]/60'
+                        : 'bg-white/70 text-stone-700 border-stone-200/70'
+                    }`}
+                  >
+                    临写
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFocusOpen(false)}
+                    className="w-9 h-9 rounded-full bg-white/70 border border-stone-200/70 text-stone-700 flex items-center justify-center"
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-5 rounded-[1.5rem] bg-white/70 border border-stone-200/70 p-5">
+                {focusTab === 'points' ? (
+                  (() => {
+                    const totalPoints = Math.min(10, points.length);
+                    const i = clamp(focusPointIndex, 0, Math.max(0, totalPoints - 1));
+                    const p = points[i];
+                    if (!p) return <div className="text-[12px] text-stone-600">暂无要点。</div>;
+                    const split = splitLeadSentence(p.text);
+                    const lead = split.lead;
+                    const rest = split.rest;
+                    const isStar = focusStarred.includes(i);
+                    return (
+                      <>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[12px] font-black text-stone-900">{String(i + 1).padStart(2, '0')}</span>
+                            <span className="px-2 py-1 rounded-full bg-white border border-stone-200/70 text-[10px] font-black tracking-[0.18em] text-stone-700">
+                              {p.tag}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setFocusStarred((prev) =>
+                                prev.includes(i) ? prev.filter((x) => x !== i) : [...prev, i].sort((a, b) => a - b)
+                              )
+                            }
+                            className={`h-9 px-4 rounded-full border text-[11px] font-black tracking-[0.18em] ${
+                              isStar ? 'bg-amber-50 text-stone-900 border-amber-200/70' : 'bg-white/70 text-stone-700 border-stone-200/70'
+                            }`}
+                          >
+                            {isStar ? '已标记' : '标记'}
+                          </button>
+                        </div>
+                        <div className="mt-4 text-[14px] font-sans text-stone-900 leading-relaxed">
+                          {lead ? (
+                            <span className="font-semibold">
+                              {highlightText(lead, keywords)}
+                              {rest ? ' ' : ''}
+                            </span>
+                          ) : null}
+                          {rest ? <span className={lead ? 'text-stone-800' : ''}>{highlightText(rest, keywords)}</span> : null}
+                        </div>
+                        <div className="mt-5 flex items-center justify-between">
+                          <button
+                            type="button"
+                            onClick={() => setFocusPointIndex((v) => Math.max(0, v - 1))}
+                            disabled={i <= 0}
+                            className="h-10 px-4 rounded-[1.25rem] bg-white border border-stone-200/70 text-stone-800 text-[11px] font-black tracking-[0.18em] disabled:opacity-35"
+                          >
+                            上一条
+                          </button>
+                          <div className="h-1.5 w-24 rounded-full bg-stone-200/70 overflow-hidden">
+                            <div
+                              className="h-full bg-[#8B0000]/60"
+                              style={{ width: `${((i + 1) / Math.max(1, totalPoints)) * 100}%` }}
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setFocusPointIndex((v) => Math.min(totalPoints - 1, v + 1))}
+                            disabled={i >= totalPoints - 1}
+                            className="h-10 px-4 rounded-[1.25rem] bg-[#8B0000] border border-[#8B0000]/60 text-[#F2E6CE] text-[11px] font-black tracking-[0.18em] disabled:opacity-35"
+                          >
+                            下一条
+                          </button>
+                        </div>
+                      </>
+                    );
+                  })()
+                ) : (
+                  (() => {
+                    const totalTips = Math.min(3, practiceTips.length);
+                    const i = clamp(focusTipIndex, 0, Math.max(0, totalTips - 1));
+                    const t = practiceTips[i];
+                    if (!t) return <div className="text-[12px] text-stone-600">暂无建议。</div>;
+                    return (
+                      <>
+                        <div className="text-[10px] font-black tracking-[0.18em] text-stone-600">临写建议</div>
+                        <div className="mt-4 text-[14px] font-sans text-stone-900 leading-relaxed">{emphasizeTip(t)}</div>
+                        <div className="mt-5 flex items-center justify-between">
+                          <button
+                            type="button"
+                            onClick={() => setFocusTipIndex((v) => Math.max(0, v - 1))}
+                            disabled={i <= 0}
+                            className="h-10 px-4 rounded-[1.25rem] bg-white border border-stone-200/70 text-stone-800 text-[11px] font-black tracking-[0.18em] disabled:opacity-35"
+                          >
+                            上一条
+                          </button>
+                          <div className="h-1.5 w-24 rounded-full bg-stone-200/70 overflow-hidden">
+                            <div
+                              className="h-full bg-[#8B0000]/60"
+                              style={{ width: `${((i + 1) / Math.max(1, totalTips)) * 100}%` }}
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setFocusTipIndex((v) => Math.min(totalTips - 1, v + 1))}
+                            disabled={i >= totalTips - 1}
+                            className="h-10 px-4 rounded-[1.25rem] bg-[#8B0000] border border-[#8B0000]/60 text-[#F2E6CE] text-[11px] font-black tracking-[0.18em] disabled:opacity-35"
+                          >
+                            下一条
+                          </button>
+                        </div>
+                      </>
+                    );
+                  })()
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
 
       <div className="mt-auto flex items-center justify-center pt-1">
         <div className="flex items-center gap-2">
@@ -3089,4 +3336,8 @@ function formatAuthorLabel(author: string) {
   if (a === '不可考' || a === '未知' || a === '不详') return '作者不可考';
   if (a.includes('不可考')) return '作者不可考';
   return a;
+}
+
+function clamp(n: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, n));
 }

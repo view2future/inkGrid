@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { BookOpen, Search } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { BookOpen, Copy, QrCode, Search, Share2 } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
+import QRCode from 'qrcode';
 
 const IS_NATIVE_ANDROID = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
 const IMG_LOADING: 'eager' | 'lazy' = IS_NATIVE_ANDROID ? 'eager' : 'lazy';
@@ -27,6 +29,19 @@ export type CharSliceIndex = {
   total_chars: number;
   skipped_chunk?: { chunk_index: number; text: string };
   files: CharSliceIndexFile[];
+};
+
+type CharAnalysis = {
+  version: number;
+  by_char: Record<
+    string,
+    {
+      count: number;
+      glyphIds: number[];
+      similar: Record<string, number[]>;
+      clusters: Array<{ id: number; members: number[]; rep: number }>;
+    }
+  >;
 };
 
 type Tab = 'search' | 'read';
@@ -64,10 +79,12 @@ function chunkWithHighlight(chunk: string, index: number) {
 export function MasterpieceCharAtlasCard({
   indexUrl,
   initialChar,
+  initialGlyphId,
   onOpenInPage,
 }: {
   indexUrl: string;
   initialChar?: string;
+  initialGlyphId?: number;
   onOpenInPage: (args: {
     pageIndex: number;
     cropBox: [number, number, number, number];
@@ -82,16 +99,52 @@ export function MasterpieceCharAtlasCard({
 
   const [selectedChar, setSelectedChar] = useState('');
   const [selectedOccIdx, setSelectedOccIdx] = useState(0);
+  const [occView, setOccView] = useState<'grid' | 'similar' | 'clusters'>('grid');
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
+  const [similarOrder, setSimilarOrder] = useState<number[] | null>(null);
+  const [clusters, setClusters] = useState<Array<{ id: number; members: number[]; rep: number }> | null>(null);
+  const [activeCluster, setActiveCluster] = useState<number | null>(null);
+
+  const [offlineAnalysis, setOfflineAnalysis] = useState<CharAnalysis | null>(null);
+
+  const [shareOpen, setShareOpen] = useState(false);
+  const [shareQrUrl, setShareQrUrl] = useState<string | null>(null);
+  const [shareCopied, setShareCopied] = useState(false);
 
   const selectChar = (next: string) => {
     const ch = toChar(next);
     if (!ch) return;
     setSelectedChar(ch);
     setSelectedOccIdx(0);
+    setOccView('grid');
+    setSimilarOrder(null);
+    setClusters(null);
+    setActiveCluster(null);
   };
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const baseDir = useMemo(() => baseDirFromUrl(indexUrl), [indexUrl]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      try {
+        const res = await fetch(baseDir + 'analysis.json');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = (await res.json()) as CharAnalysis;
+        if (cancelled) return;
+        setOfflineAnalysis(json);
+      } catch {
+        if (cancelled) return;
+        setOfflineAnalysis(null);
+      }
+    };
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [baseDir]);
 
   useEffect(() => {
     let cancelled = false;
@@ -185,6 +238,23 @@ export function MasterpieceCharAtlasCard({
   const occIdx = clamp(selectedOccIdx, 0, Math.max(0, occurrences.length - 1));
   const selected = occurrences.length ? occurrences[occIdx] : null;
 
+  const didApplyInitialGlyphRef = useRef(false);
+  useEffect(() => {
+    didApplyInitialGlyphRef.current = false;
+  }, [selectedChar]);
+
+  useEffect(() => {
+    if (!data) return;
+    if (!selectedChar) return;
+    if (typeof initialGlyphId !== 'number') return;
+    if (didApplyInitialGlyphRef.current) return;
+    const i = occurrences.findIndex((f) => Number(f.index) === Number(initialGlyphId));
+    if (i >= 0) {
+      setSelectedOccIdx(i);
+      didApplyInitialGlyphRef.current = true;
+    }
+  }, [data, selectedChar, initialGlyphId, occurrences]);
+
   useEffect(() => {
     if (occIdx !== selectedOccIdx) setSelectedOccIdx(occIdx);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -225,6 +295,284 @@ export function MasterpieceCharAtlasCard({
       cropBox,
       label: `${String(f.char || '').trim()} · 第${f.index}字`,
     });
+  };
+
+  // --- analysis (similarity + clustering) ---
+  const featureCacheRef = useRef<Map<string, Float32Array>>(new Map());
+  const analyzeTokenRef = useRef(0);
+
+  const featureKey = (f: CharSliceIndexFile) => `${baseDir}${f.file}`;
+
+  const computeFeature = async (src: string): Promise<Float32Array> => {
+    const cached = featureCacheRef.current.get(src);
+    if (cached) return cached;
+
+    const img = new Image();
+    img.decoding = 'async';
+    img.src = src;
+    await img.decode();
+
+    const size = 24;
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    if (!ctx) throw new Error('canvas ctx missing');
+
+    ctx.clearRect(0, 0, size, size);
+    ctx.drawImage(img, 0, 0, size, size);
+    const data = ctx.getImageData(0, 0, size, size).data;
+
+    const v = new Float32Array(size * size);
+    let sum = 0;
+    for (let i = 0; i < size * size; i++) {
+      const r = data[i * 4 + 0] || 0;
+      const g = data[i * 4 + 1] || 0;
+      const b = data[i * 4 + 2] || 0;
+      const y = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+      v[i] = y;
+      sum += y;
+    }
+    const mean = sum / v.length;
+    let varSum = 0;
+    for (let i = 0; i < v.length; i++) {
+      const d = v[i] - mean;
+      varSum += d * d;
+    }
+    const std = Math.sqrt(varSum / v.length) || 1;
+    for (let i = 0; i < v.length; i++) v[i] = (v[i] - mean) / std;
+
+    featureCacheRef.current.set(src, v);
+    return v;
+  };
+
+  const dist = (a: Float32Array, b: Float32Array) => {
+    let s = 0;
+    const n = Math.min(a.length, b.length);
+    for (let i = 0; i < n; i++) {
+      const d = a[i] - b[i];
+      s += d * d;
+    }
+    return Math.sqrt(s);
+  };
+
+  const runSimilarity = async () => {
+    if (!selected || occurrences.length < 2) return;
+
+    const offline = offlineAnalysis?.by_char?.[String(selectedChar || '').trim()];
+    if (offline) {
+      const list = offline.similar?.[String(selected.index)] || null;
+      if (list && list.length) {
+        const occOrder = list
+          .map((gid) => occurrences.findIndex((f) => Number(f.index) === Number(gid)))
+          .filter((i) => i >= 0);
+        setSimilarOrder(occOrder);
+        return;
+      }
+    }
+
+    const token = ++analyzeTokenRef.current;
+    setIsAnalyzing(true);
+    setAnalysisError(null);
+    setSimilarOrder(null);
+    try {
+      const src0 = featureKey(selected);
+      const f0 = await computeFeature(src0);
+      const scores: Array<{ i: number; d: number }> = [];
+      for (let i = 0; i < occurrences.length; i++) {
+        const src = featureKey(occurrences[i]);
+        const fi = await computeFeature(src);
+        scores.push({ i, d: dist(f0, fi) });
+        // yield
+        if (i % 4 === 0) await new Promise((r) => window.setTimeout(r, 0));
+      }
+      if (token !== analyzeTokenRef.current) return;
+      scores.sort((a, b) => a.d - b.d);
+      setSimilarOrder(scores.map((x) => x.i));
+    } catch (e) {
+      if (token !== analyzeTokenRef.current) return;
+      setAnalysisError(e instanceof Error ? e.message : String(e));
+    } finally {
+      if (token === analyzeTokenRef.current) setIsAnalyzing(false);
+    }
+  };
+
+  const runClustering = async () => {
+    if (occurrences.length < 2) return;
+
+    const offline = offlineAnalysis?.by_char?.[String(selectedChar || '').trim()];
+    if (offline?.clusters?.length) {
+      const mapped = offline.clusters
+        .map((g) => ({
+          id: Number(g.id),
+          members: (g.members || [])
+            .map((gid) => occurrences.findIndex((f) => Number(f.index) === Number(gid)))
+            .filter((i) => i >= 0),
+          rep: occurrences.findIndex((f) => Number(f.index) === Number(g.rep)),
+        }))
+        .filter((g) => g.members.length);
+      setClusters(mapped);
+      setActiveCluster(mapped[0]?.id ?? null);
+      return;
+    }
+
+    const token = ++analyzeTokenRef.current;
+    setIsAnalyzing(true);
+    setAnalysisError(null);
+    setClusters(null);
+    setActiveCluster(null);
+    try {
+      const feats: Float32Array[] = [];
+      for (let i = 0; i < occurrences.length; i++) {
+        feats[i] = await computeFeature(featureKey(occurrences[i]));
+        if (i % 4 === 0) await new Promise((r) => window.setTimeout(r, 0));
+      }
+      if (token !== analyzeTokenRef.current) return;
+
+      const n = occurrences.length;
+      const k = clamp(Math.round(Math.sqrt(n / 2)), 2, 5);
+
+      // init centroids (deterministic: take evenly spaced)
+      const centroids: Float32Array[] = [];
+      for (let c = 0; c < k; c++) centroids.push(feats[Math.floor((c * (n - 1)) / Math.max(1, k - 1))]);
+
+      let assign = new Array<number>(n).fill(0);
+      for (let iter = 0; iter < 10; iter++) {
+        // assign
+        for (let i = 0; i < n; i++) {
+          let best = 0;
+          let bestD = Number.POSITIVE_INFINITY;
+          for (let c = 0; c < k; c++) {
+            const d0 = dist(feats[i], centroids[c]);
+            if (d0 < bestD) {
+              bestD = d0;
+              best = c;
+            }
+          }
+          assign[i] = best;
+        }
+
+        // recompute centroids
+        const sums: Float32Array[] = Array.from({ length: k }, () => new Float32Array(feats[0].length));
+        const counts = new Array<number>(k).fill(0);
+        for (let i = 0; i < n; i++) {
+          const c = assign[i];
+          counts[c]++;
+          const s = sums[c];
+          const f = feats[i];
+          for (let j = 0; j < s.length; j++) s[j] += f[j];
+        }
+        for (let c = 0; c < k; c++) {
+          if (!counts[c]) continue;
+          const s = sums[c];
+          for (let j = 0; j < s.length; j++) s[j] /= counts[c];
+          centroids[c] = s;
+        }
+      }
+
+      // build clusters and choose representative
+      const groups: Array<{ id: number; members: number[]; rep: number }> = [];
+      for (let c = 0; c < k; c++) {
+        const members: number[] = [];
+        for (let i = 0; i < n; i++) if (assign[i] === c) members.push(i);
+        if (!members.length) continue;
+        let rep = members[0];
+        let repD = Number.POSITIVE_INFINITY;
+        for (const i of members) {
+          const d0 = dist(feats[i], centroids[c]);
+          if (d0 < repD) {
+            repD = d0;
+            rep = i;
+          }
+        }
+        groups.push({ id: c, members, rep });
+      }
+      groups.sort((a, b) => b.members.length - a.members.length);
+      if (token !== analyzeTokenRef.current) return;
+      setClusters(groups);
+      setActiveCluster(groups[0]?.id ?? null);
+    } catch (e) {
+      if (token !== analyzeTokenRef.current) return;
+      setAnalysisError(e instanceof Error ? e.message : String(e));
+    } finally {
+      if (token === analyzeTokenRef.current) setIsAnalyzing(false);
+    }
+  };
+
+  useEffect(() => {
+    // reset analysis results when selection changes
+    analyzeTokenRef.current++;
+    setIsAnalyzing(false);
+    setAnalysisError(null);
+    setSimilarOrder(null);
+    setClusters(null);
+    setActiveCluster(null);
+  }, [selectedChar]);
+
+  useEffect(() => {
+    if (occView === 'similar') void runSimilarity();
+    if (occView === 'clusters') void runClustering();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [occView, occIdx]);
+
+  // --- share ---
+  const shareUrl = useMemo(() => {
+    if (!selectedChar) return null;
+    try {
+      const u = new URL(window.location.origin + '/');
+      u.searchParams.set('inkflow', '1');
+      u.searchParams.set('page', 'study_deck');
+      u.searchParams.set('steleId', 'li_001');
+      u.searchParams.set('card', 'atlas');
+      u.searchParams.set('char', selectedChar);
+      if (selected?.index != null) u.searchParams.set('glyphId', String(selected.index));
+      return u.toString();
+    } catch {
+      return null;
+    }
+  }, [selectedChar, selected?.index]);
+
+  useEffect(() => {
+    if (!shareOpen) return;
+    if (!shareUrl) return;
+    let cancelled = false;
+    const run = async () => {
+      try {
+        const url = await QRCode.toDataURL(shareUrl, { margin: 1, width: 320, color: { dark: '#0a0a0a', light: '#00000000' } });
+        if (cancelled) return;
+        setShareQrUrl(url);
+      } catch {
+        if (cancelled) return;
+        setShareQrUrl(null);
+      }
+    };
+    setShareQrUrl(null);
+    setShareCopied(false);
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [shareOpen, shareUrl]);
+
+  const copyShareUrl = async () => {
+    if (!shareUrl) return;
+    try {
+      if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(shareUrl);
+      else {
+        const ta = document.createElement('textarea');
+        ta.value = shareUrl;
+        ta.style.position = 'fixed';
+        ta.style.left = '-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        ta.remove();
+      }
+      setShareCopied(true);
+      window.setTimeout(() => setShareCopied(false), 1200);
+    } catch {
+      // ignore
+    }
   };
 
   const renderThumb = (f: CharSliceIndexFile, active: boolean, onClick: () => void) => {
@@ -364,8 +712,53 @@ export function MasterpieceCharAtlasCard({
               {/* 当前选中字详情 */}
               {selectedChar && occurrences.length > 0 && selected && (
                 <div className="mt-5 flex-1 min-h-0">
-                  <div className="text-[10px] font-black tracking-[0.3em] text-stone-400 mb-3">
-                    「{selectedChar}」· {occurrences.length} 种写法
+                  <div className="flex items-center justify-between gap-3 mb-3">
+                    <div className="text-[10px] font-black tracking-[0.3em] text-stone-400">
+                      「{selectedChar}」· {occurrences.length} 种写法
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setOccView('grid')}
+                        className={`h-8 px-3 rounded-full text-[10px] font-black tracking-[0.18em] border transition ${
+                          occView === 'grid'
+                            ? 'bg-[#8B0000] text-[#F2E6CE] border-[#8B0000]/60'
+                            : 'bg-white/70 text-stone-700 border-stone-200/70'
+                        }`}
+                      >
+                        多例
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setOccView('similar')}
+                        className={`h-8 px-3 rounded-full text-[10px] font-black tracking-[0.18em] border transition ${
+                          occView === 'similar'
+                            ? 'bg-[#8B0000] text-[#F2E6CE] border-[#8B0000]/60'
+                            : 'bg-white/70 text-stone-700 border-stone-200/70'
+                        }`}
+                      >
+                        相似
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setOccView('clusters')}
+                        className={`h-8 px-3 rounded-full text-[10px] font-black tracking-[0.18em] border transition ${
+                          occView === 'clusters'
+                            ? 'bg-[#8B0000] text-[#F2E6CE] border-[#8B0000]/60'
+                            : 'bg-white/70 text-stone-700 border-stone-200/70'
+                        }`}
+                      >
+                        分组
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShareOpen(true)}
+                        className="h-8 w-8 rounded-full bg-white/70 border border-stone-200/70 text-stone-700 flex items-center justify-center"
+                        aria-label="Share"
+                      >
+                        <Share2 size={14} />
+                      </button>
+                    </div>
                   </div>
                   
                   <div className="flex gap-4 h-[calc(100%-2rem)] min-h-[200px]">
@@ -390,29 +783,81 @@ export function MasterpieceCharAtlasCard({
 
                     {/* 右侧网格 */}
                     <div className="flex-1 min-w-0 overflow-y-auto">
-                      <div className="grid grid-cols-4 gap-2">
-                        {occurrences.slice(0, 18).map((f, i) => (
-                          <button
-                            key={f.index}
-                            onClick={() => setSelectedOccIdx(i)}
-                            className={`aspect-square rounded-lg overflow-hidden border-2 transition ${
-                              i === occIdx
-                                ? 'border-[#8B0000] shadow-md'
-                                : 'border-stone-200 hover:border-stone-300'
-                            }`}
-                          >
-                            <img
-                              src={baseDir + f.file}
-                              alt={f.char}
-                              className="w-full h-full object-contain"
-                              loading={IMG_LOADING}
-                            />
-                          </button>
-                        ))}
-                      </div>
-                      {occurrences.length > 18 && (
-                        <div className="mt-2 text-[10px] text-stone-500 text-center">
-                          还有 {occurrences.length - 18} 个写法
+                      {isAnalyzing ? (
+                        <div className="text-[12px] text-stone-500">正在分析写法…</div>
+                      ) : analysisError ? (
+                        <div className="text-[12px] text-stone-500">分析失败：{analysisError}</div>
+                      ) : occView === 'clusters' && clusters ? (
+                        <>
+                          <div className="flex flex-wrap gap-2">
+                            {clusters.map((g, idx) => (
+                              <button
+                                key={g.id}
+                                type="button"
+                                onClick={() => setActiveCluster(g.id)}
+                                className={`h-8 px-3 rounded-full text-[10px] font-black tracking-[0.18em] border transition ${
+                                  activeCluster === g.id
+                                    ? 'bg-[#8B0000] text-[#F2E6CE] border-[#8B0000]/60'
+                                    : 'bg-white/70 text-stone-700 border-stone-200/70'
+                                }`}
+                              >
+                                组{idx + 1} · {g.members.length}
+                              </button>
+                            ))}
+                          </div>
+                          <div className="mt-3 grid grid-cols-4 gap-2">
+                            {(() => {
+                              const g = clusters.find((x) => x.id === activeCluster) || clusters[0];
+                              const list = g ? g.members : [];
+                              return list.map((i) => {
+                                const f = occurrences[i];
+                                const active = i === occIdx;
+                                return (
+                                  <button
+                                    key={f.index}
+                                    onClick={() => setSelectedOccIdx(i)}
+                                    className={`aspect-square rounded-lg overflow-hidden border-2 transition ${
+                                      active ? 'border-[#8B0000] shadow-md' : 'border-stone-200 hover:border-stone-300'
+                                    }`}
+                                  >
+                                    <img src={baseDir + f.file} alt={f.char} className="w-full h-full object-contain" loading={IMG_LOADING} />
+                                  </button>
+                                );
+                              });
+                            })()}
+                          </div>
+                        </>
+                      ) : occView === 'similar' && similarOrder ? (
+                        <div className="grid grid-cols-4 gap-2">
+                          {similarOrder.map((i) => {
+                            const f = occurrences[i];
+                            const active = i === occIdx;
+                            return (
+                              <button
+                                key={f.index}
+                                onClick={() => setSelectedOccIdx(i)}
+                                className={`aspect-square rounded-lg overflow-hidden border-2 transition ${
+                                  active ? 'border-[#8B0000] shadow-md' : 'border-stone-200 hover:border-stone-300'
+                                }`}
+                              >
+                                <img src={baseDir + f.file} alt={f.char} className="w-full h-full object-contain" loading={IMG_LOADING} />
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-4 gap-2">
+                          {occurrences.map((f, i) => (
+                            <button
+                              key={f.index}
+                              onClick={() => setSelectedOccIdx(i)}
+                              className={`aspect-square rounded-lg overflow-hidden border-2 transition ${
+                                i === occIdx ? 'border-[#8B0000] shadow-md' : 'border-stone-200 hover:border-stone-300'
+                              }`}
+                            >
+                              <img src={baseDir + f.file} alt={f.char} className="w-full h-full object-contain" loading={IMG_LOADING} />
+                            </button>
+                          ))}
                         </div>
                       )}
                     </div>
@@ -477,6 +922,82 @@ export function MasterpieceCharAtlasCard({
             </div>
           )}
         </div>
+
+        <AnimatePresence>
+          {shareOpen ? (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[450] bg-black/60 backdrop-blur-md flex items-end justify-center"
+              onClick={() => setShareOpen(false)}
+            >
+              <motion.div
+                initial={{ y: 30, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: 30, opacity: 0 }}
+                transition={{ type: 'spring', stiffness: 260, damping: 26 }}
+                className="w-full max-w-md rounded-t-[2rem] bg-[#F6F1E7] border-t border-stone-200/70 p-6"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="text-[12px] font-black tracking-[0.22em] text-stone-800">分享「{selectedChar}」多例</div>
+                  <button
+                    type="button"
+                    onClick={() => setShareOpen(false)}
+                    className="w-9 h-9 rounded-full bg-white/70 border border-stone-200/70 text-stone-700 flex items-center justify-center"
+                  >
+                    ×
+                  </button>
+                </div>
+
+                <div className="mt-4 grid grid-cols-2 gap-4">
+                  <div className="rounded-[1.5rem] bg-white/70 border border-stone-200/70 p-4 flex flex-col items-center justify-center">
+                    <div className="w-full aspect-square rounded-2xl bg-white border border-stone-200/70 flex items-center justify-center overflow-hidden">
+                      {shareQrUrl ? (
+                        <img src={shareQrUrl} alt="qr" className="w-full h-full object-contain" />
+                      ) : (
+                        <div className="text-[11px] font-sans text-stone-500 flex items-center gap-2">
+                          <QrCode size={16} /> 生成二维码…
+                        </div>
+                      )}
+                    </div>
+                    <div className="mt-3 text-[10px] font-mono text-stone-500 tracking-widest">扫码直达</div>
+                  </div>
+                  <div className="rounded-[1.5rem] bg-white/70 border border-stone-200/70 p-4">
+                    <div className="text-[10px] font-black tracking-[0.22em] text-stone-600">链接</div>
+                    <div className="mt-3 text-[10px] font-mono text-stone-600 break-all">
+                      {shareUrl || '—'}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={copyShareUrl}
+                      className="mt-4 w-full h-10 rounded-[1.25rem] bg-[#8B0000] text-[#F2E6CE] font-black tracking-[0.18em] text-[11px] flex items-center justify-center gap-2"
+                    >
+                      <Copy size={14} /> {shareCopied ? '已复制' : '复制链接'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (!shareUrl) return;
+                        const nav: any = navigator;
+                        if (!nav?.share) return;
+                        try {
+                          await nav.share({ title: `曹全碑 · ${selectedChar}`, text: `曹全碑「${selectedChar}」多例 · 原拓定位`, url: shareUrl });
+                        } catch {
+                          // ignore
+                        }
+                      }}
+                      className="mt-2 w-full h-10 rounded-[1.25rem] bg-white/70 border border-stone-200/70 text-stone-800 font-black tracking-[0.18em] text-[11px] flex items-center justify-center gap-2"
+                    >
+                      <Share2 size={14} /> 系统分享
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
       </div>
     </div>
   );

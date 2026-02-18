@@ -7,6 +7,10 @@ export type InkFlowLaunch = {
   steleId?: string;
   steleIndex?: number;
   steleSection?: number;
+  cardId?: string;
+  char?: string;
+  glyphId?: number;
+  point?: number;
 };
 
 export function newLaunchKey(): string {

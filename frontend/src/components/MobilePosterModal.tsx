@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Download, Share2, X } from 'lucide-react';
 import { type PosterKind, type PosterTemplate, INKGRID_QR_LABEL, renderPosterPng } from '../utils/poster';
@@ -53,7 +53,8 @@ export default function MobilePosterModal({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewBlob, setPreviewBlob] = useState<Blob | null>(null);
   const [tip, setTip] = useState<string | null>(null);
-  const [toastText, setToastText] = useState<string | null>(null);
+  const toastIdRef = useRef(0);
+  const [toast, setToast] = useState<null | { id: number; text: string }>(null);
   const [loadingIndex, setLoadingIndex] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -193,8 +194,12 @@ export default function MobilePosterModal({
     const isWeChat = /MicroMessenger\//i.test(ua);
 
     const showToast = (text: string) => {
-      setToastText(text);
-      window.setTimeout(() => setToastText(null), 1600);
+      toastIdRef.current += 1;
+      const id = toastIdRef.current;
+      setToast({ id, text });
+      window.setTimeout(() => {
+        setToast((prev) => (prev?.id === id ? null : prev));
+      }, 1600);
     };
 
     const blobToBase64 = (blob: Blob) =>
@@ -267,8 +272,12 @@ export default function MobilePosterModal({
       });
 
     const showToast = (text: string) => {
-      setToastText(text);
-      window.setTimeout(() => setToastText(null), 1600);
+      toastIdRef.current += 1;
+      const id = toastIdRef.current;
+      setToast({ id, text });
+      window.setTimeout(() => {
+        setToast((prev) => (prev?.id === id ? null : prev));
+      }, 1600);
     };
 
     if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android') {
@@ -481,9 +490,9 @@ export default function MobilePosterModal({
       )}
 
       <AnimatePresence>
-        {toastText ? (
+        {toast ? (
           <motion.div
-            key={toastText}
+            key={toast.id}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
@@ -491,7 +500,7 @@ export default function MobilePosterModal({
             className="fixed left-1/2 -translate-x-1/2 bottom-[calc(2rem+env(safe-area-inset-bottom))] z-[310]"
           >
             <div className="px-5 py-3 rounded-full bg-black/70 border border-white/10 text-[#F2E6CE] text-[12px] font-black tracking-[0.18em] shadow-[0_18px_50px_rgba(0,0,0,0.55)]">
-              {toastText}
+              {toast.text}
             </div>
           </motion.div>
         ) : null}

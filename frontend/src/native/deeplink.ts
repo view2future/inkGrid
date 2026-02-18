@@ -13,6 +13,13 @@ function parseIntOrUndefined(value: string | null): number | undefined {
   return Number.isFinite(n) ? n : undefined;
 }
 
+function firstChar(value: string | null): string | undefined {
+  if (!value) return undefined;
+  const t = String(value).trim();
+  if (!t) return undefined;
+  return Array.from(t)[0] || undefined;
+}
+
 function coercePage(value: string | null): InkFlowMobilePage {
   if (!value) return DEFAULT_PAGE;
   const v = value.toLowerCase();
@@ -51,6 +58,10 @@ export function parseInkgridDeepLink(url: string): Omit<InkFlowLaunch, 'key'> | 
   const steleIndex = parseIntOrUndefined(u.searchParams.get('steleIndex'));
   const steleSection = parseIntOrUndefined(u.searchParams.get('steleSection'));
   const steleId = u.searchParams.get('steleId') || u.searchParams.get('id') || undefined;
+  const cardId = u.searchParams.get('card') || u.searchParams.get('cardId') || undefined;
+  const char = firstChar(u.searchParams.get('char'));
+  const glyphId = parseIntOrUndefined(u.searchParams.get('glyphId'));
+  const point = parseIntOrUndefined(u.searchParams.get('point'));
 
   // Normalize to 0-based indexes.
   const normalizedIndex = typeof index === 'number' ? clampIndex(index, 0, 999999) : undefined;
@@ -63,5 +74,9 @@ export function parseInkgridDeepLink(url: string): Omit<InkFlowLaunch, 'key'> | 
     steleId,
     steleIndex: normalizedSteleIndex,
     steleSection: normalizedSteleSection,
+    cardId,
+    char,
+    glyphId,
+    point,
   };
 }
