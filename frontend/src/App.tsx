@@ -1,5 +1,5 @@
 // 嶧山刻石 - 追光背景与长卷详情精准恢复版
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Info, X, ChevronRight, ChevronLeft, Library } from 'lucide-react';
 import { App as CapacitorApp } from '@capacitor/app';
@@ -10,6 +10,8 @@ import Logo from './components/Logo';
 import GalleryCorridor from './components/GalleryCorridor';
 import InkFlow from './components/InkFlow';
 import CharCarousel from './components/CharCarousel';
+import { SteleAnnotator } from './components/SteleAnnotator';
+import { Workbench } from './components/Workbench';
 import { cn } from './utils/cn';
 import { useMediaQuery } from './utils/useMediaQuery';
 import { initWebAnalytics } from './utils/analytics';
@@ -22,6 +24,14 @@ const YISHAN2_IMAGE = "/steles/1-zhuanshu/1-yishankeshi/yishan2.jpg";
 const YISHAN_EXTRACTED_COUNT = 135;
 
 function App() {
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('mode') === 'annotator') {
+    return <SteleAnnotator />;
+  }
+  if (urlParams.get('mode') === 'workbench') {
+    return <Workbench />;
+  }
+
   const isMobile = useMediaQuery('(max-width: 768px)');
   const [imagePath, setImagePath] = useState<string | null>(null);
   const [showTracing, setShowTracing] = useState(false);
@@ -40,10 +50,11 @@ function App() {
   const [showGallery, setShowGallery] = useState(false);
   const [showInkFlow, setShowInkFlow] = useState(false);
   const [inkFlowLaunch, setInkFlowLaunch] = useState<InkFlowLaunch | null>(null);
-  const [showAndroidLaunch, setShowAndroidLaunch] = useState(false);
-   const [androidLaunchPhase, setAndroidLaunchPhase] = useState<0 | 1 | 2>(0);
+  const isNativeAndroid = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
+  const [showAndroidLaunch, setShowAndroidLaunch] = useState(isNativeAndroid);
+  const [androidLaunchPhase, setAndroidLaunchPhase] = useState<0 | 1 | 2>(0);
   const [androidLaunchClosing, setAndroidLaunchClosing] = useState(false);
-  const [androidLaunchRemaining, setAndroidLaunchRemaining] = useState(0);
+  const [androidLaunchRemaining, setAndroidLaunchRemaining] = useState(isNativeAndroid ? 12 : 0);
   const androidLaunchTimerRef = React.useRef<number | null>(null);
   const galleryRef = React.useRef<{ isInternalOpen: () => boolean; closeInternal: () => void }>(null);
   const inkFlowRef = React.useRef<{ isInternalOpen: () => boolean; closeInternal: () => void }>(null);
@@ -74,16 +85,25 @@ function App() {
     launchInkFlowFromUrl(window.location.href);
   }, [launchInkFlowFromUrl]);
 
-  useEffect(() => {
-    if (!Capacitor.isNativePlatform()) return;
-    if (Capacitor.getPlatform() !== 'android') return;
+  useLayoutEffect(() => {
+    if (!isNativeAndroid) {
+      setShowAndroidLaunch(false);
+      return;
+    }
 
     const KEY = 'inkgrid_android_launch_showcase_v2';
+    let shouldShow = true;
     try {
-      if (window.sessionStorage.getItem(KEY) === '1') return;
-      window.sessionStorage.setItem(KEY, '1');
+      if (window.sessionStorage.getItem(KEY) === '1') shouldShow = false;
+      else window.sessionStorage.setItem(KEY, '1');
     } catch {
       // ignore
+    }
+
+    if (!shouldShow) {
+      // Ensure we don't flash the homepage first.
+      setShowAndroidLaunch(false);
+      return;
     }
 
     const TOTAL_MS = 12_000;
@@ -102,11 +122,11 @@ function App() {
         exitAndroidLaunch();
         return;
       }
-       if (elapsed >= PHASE_SWITCH_MS_2) setAndroidLaunchPhase(2);
-       else if (elapsed >= PHASE_SWITCH_MS_1) setAndroidLaunchPhase(1);
-       const remainingMs = Math.max(0, TOTAL_MS - elapsed);
-       setAndroidLaunchRemaining(Math.ceil(remainingMs / 1000));
-     };
+      if (elapsed >= PHASE_SWITCH_MS_2) setAndroidLaunchPhase(2);
+      else if (elapsed >= PHASE_SWITCH_MS_1) setAndroidLaunchPhase(1);
+      const remainingMs = Math.max(0, TOTAL_MS - elapsed);
+      setAndroidLaunchRemaining(Math.ceil(remainingMs / 1000));
+    };
 
     tick();
     androidLaunchTimerRef.current = window.setInterval(tick, 200);
@@ -117,7 +137,7 @@ function App() {
         androidLaunchTimerRef.current = null;
       }
     };
-  }, [exitAndroidLaunch]);
+  }, [exitAndroidLaunch, isNativeAndroid]);
 
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
@@ -1031,6 +1051,9 @@ function AndroidLaunchShowcase({
   remaining: number;
   onExit: () => void;
 }) {
+  const [assetsReady, setAssetsReady] = useState(false);
+  const effectivePhase = assetsReady ? phase : 0;
+
   const yishan = [
     { ch: '登', src: '/steles/extracted_by_grid/char_0061.png' },
     { ch: '于', src: '/steles/extracted_by_grid/char_0062.png' },
@@ -1039,29 +1062,65 @@ function AndroidLaunchShowcase({
   ];
 
   const caoquan = [
-    { ch: '曹', src: '/steles/2-lishu/1-caoquanbei/chars_yang/caoquanbei_yang_0043_U66F9.png' },
-    { ch: '全', src: '/steles/2-lishu/1-caoquanbei/chars_yang/caoquanbei_yang_0003_U5168.png' },
-    { ch: '国', src: '/steles/2-lishu/1-caoquanbei/chars_yang/caoquanbei_yang_0044_U570B.png' },
+    { ch: '曹', src: '/steles/2-lishu/1-caoquanbei/chars_yang/caoquanbei_yang_0043_U66F9.webp' },
+    { ch: '全', src: '/steles/2-lishu/1-caoquanbei/chars_yang/caoquanbei_yang_0003_U5168.webp' },
+    { ch: '国', src: '/steles/2-lishu/1-caoquanbei/chars_yang/caoquanbei_yang_0044_U570B.webp' },
   ];
 
   const lanting = [
-    { ch: '仰', src: '/steles/4-xingshu/1-lantingjixu/chars_shenlong/lantingjixu_shenlong_0096_U4EF0.png' },
-    { ch: '觀', src: '/steles/4-xingshu/1-lantingjixu/chars_shenlong/lantingjixu_shenlong_0097_U89C0.png' },
-    { ch: '宇', src: '/steles/4-xingshu/1-lantingjixu/chars_shenlong/lantingjixu_shenlong_0098_U5B87.png' },
-    { ch: '宙', src: '/steles/4-xingshu/1-lantingjixu/chars_shenlong/lantingjixu_shenlong_0099_U5B99.png' },
-    { ch: '之', src: '/steles/4-xingshu/1-lantingjixu/chars_shenlong/lantingjixu_shenlong_0011_U4E4B.png' },
-    { ch: '大', src: '/steles/4-xingshu/1-lantingjixu/chars_shenlong/lantingjixu_shenlong_0101_U5927.png' },
-    { ch: '俯', src: '/steles/4-xingshu/1-lantingjixu/chars_shenlong/lantingjixu_shenlong_0102_U4FEF.png' },
-    { ch: '察', src: '/steles/4-xingshu/1-lantingjixu/chars_shenlong/lantingjixu_shenlong_0103_U5BDF.png' },
-    { ch: '品', src: '/steles/4-xingshu/1-lantingjixu/chars_shenlong/lantingjixu_shenlong_0104_U54C1.png' },
-    { ch: '類', src: '/steles/4-xingshu/1-lantingjixu/chars_shenlong/lantingjixu_shenlong_0105_U985E.png' },
-    { ch: '之', src: '/steles/4-xingshu/1-lantingjixu/chars_shenlong/lantingjixu_shenlong_0011_U4E4B.png' },
-    { ch: '盛', src: '/steles/4-xingshu/1-lantingjixu/chars_shenlong/lantingjixu_shenlong_0073_U76DB.png' },
+    { ch: '仰', src: '/steles/4-xingshu/1-lantingjixu/lanting-HCCG-CycleGAN/0096.jpg' },
+    { ch: '觀', src: '/steles/4-xingshu/1-lantingjixu/lanting-HCCG-CycleGAN/0097.jpg' },
+    { ch: '宇', src: '/steles/4-xingshu/1-lantingjixu/lanting-HCCG-CycleGAN/0098.jpg' },
+    { ch: '宙', src: '/steles/4-xingshu/1-lantingjixu/lanting-HCCG-CycleGAN/0099.jpg' },
+    { ch: '之', src: '/steles/4-xingshu/1-lantingjixu/lanting-HCCG-CycleGAN/0100.jpg' },
+    { ch: '大', src: '/steles/4-xingshu/1-lantingjixu/lanting-HCCG-CycleGAN/0101.jpg' },
+    { ch: '俯', src: '/steles/4-xingshu/1-lantingjixu/lanting-HCCG-CycleGAN/0102.jpg' },
+    { ch: '察', src: '/steles/4-xingshu/1-lantingjixu/lanting-HCCG-CycleGAN/0103.jpg' },
+    { ch: '品', src: '/steles/4-xingshu/1-lantingjixu/lanting-HCCG-CycleGAN/0104.jpg' },
+    { ch: '類', src: '/steles/4-xingshu/1-lantingjixu/lanting-HCCG-CycleGAN/0105.jpg' },
+    { ch: '之', src: '/steles/4-xingshu/1-lantingjixu/lanting-HCCG-CycleGAN/0106.jpg' },
+    { ch: '盛', src: '/steles/4-xingshu/1-lantingjixu/lanting-HCCG-CycleGAN/0107.jpg' },
   ];
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const preload = async (src: string) => {
+      const img = new Image();
+      img.decoding = 'async';
+      img.src = src;
+      try {
+        // decode() avoids "flash" when image swaps in.
+        await img.decode();
+      } catch {
+        // ignore; we'll still render a placeholder.
+      }
+    };
+
+    const run = async () => {
+      const urls = [
+        ...yishan.map((x) => x.src),
+        ...caoquan.map((x) => x.src),
+        '/steles/2-lishu/1-caoquanbei/thumbs/caoquanbei-001.jpg',
+        ...lanting.map((x) => x.src),
+        '/noise.png',
+      ];
+
+      await Promise.all(urls.map((u) => preload(u)));
+      if (!cancelled) setAssetsReady(true);
+    };
+
+    void run();
+    return () => {
+      cancelled = true;
+    };
+    // We intentionally run once.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <motion.div
-      initial={{ opacity: 0 }}
+      initial={false}
       animate={{ opacity: closing ? 0 : 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: closing ? 0.42 : 0.28, ease: 'easeOut' }}
@@ -1071,16 +1130,14 @@ function AndroidLaunchShowcase({
       <div className="absolute inset-0 opacity-[0.10] bg-[url('/noise.png')] mix-blend-overlay" />
 
       <div className="absolute inset-0 flex flex-col items-center justify-center px-8 pt-[max(env(safe-area-inset-top),32px)] pb-[max(env(safe-area-inset-bottom),16px)]">
-        <AnimatePresence mode="sync">
-          {phase === 0 ? (
-            <motion.div
-              key="yishan"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.55, ease: 'easeOut' }}
-              className="w-full max-w-md"
-            >
+        <div className="relative w-full max-w-md">
+          <motion.div
+            initial={false}
+            animate={{ opacity: effectivePhase === 0 ? 1 : 0, y: effectivePhase === 0 ? 0 : -10 }}
+            transition={{ duration: 0.38, ease: 'easeOut' }}
+            className="w-full"
+            style={{ pointerEvents: effectivePhase === 0 ? 'auto' : 'none' }}
+          >
               <div className="text-center">
                 <div className="text-[10px] font-black tracking-[0.6em] pl-[0.6em] text-stone-300/70">金石一瞬</div>
                 <div className="mt-3 text-3xl font-serif font-black tracking-[0.5em] pl-[0.5em] text-[#F2E6CE]">嶧山刻石</div>
@@ -1109,16 +1166,15 @@ function AndroidLaunchShowcase({
               </div>
 
               <div className="mt-6 text-center text-[10px] font-serif text-stone-400/70 tracking-[0.32em]">圆劲 · 中和 · 如玉</div>
-            </motion.div>
-          ) : phase === 1 ? (
-            <motion.div
-              key="caoquan"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.55, ease: 'easeOut' }}
-              className="w-full max-w-md"
-            >
+          </motion.div>
+
+          <motion.div
+            initial={false}
+            animate={{ opacity: effectivePhase === 1 ? 1 : 0, y: effectivePhase === 1 ? 0 : -10 }}
+            transition={{ duration: 0.38, ease: 'easeOut' }}
+            className="absolute inset-0 w-full"
+            style={{ pointerEvents: effectivePhase === 1 ? 'auto' : 'none' }}
+          >
               <div className="text-center">
                 <div className="text-[10px] font-black tracking-[0.6em] pl-[0.6em] text-stone-300/70">碑阳一页</div>
                 <div className="mt-3 text-3xl font-serif font-black tracking-[0.5em] pl-[0.5em] text-[#F2E6CE]">曹全碑</div>
@@ -1130,6 +1186,8 @@ function AndroidLaunchShowcase({
                     src="/steles/2-lishu/1-caoquanbei/thumbs/caoquanbei-001.jpg"
                     alt="曹全碑"
                     className="absolute inset-0 w-full h-full object-cover grayscale contrast-125 brightness-95"
+                    loading="eager"
+                    decoding="async"
                   />
                   <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/35 to-black/70" />
                   <div className="absolute inset-0 flex items-end justify-between p-5">
@@ -1153,22 +1211,27 @@ function AndroidLaunchShowcase({
                     style={{ transform: `rotate(${(i - 1) * 2.2}deg)` }}
                   >
                     <div className="w-20 h-20 rounded-2xl bg-white/5 border border-white/10 shadow-[0_18px_50px_rgba(0,0,0,0.45)] overflow-hidden">
-                      <img src={it.src} alt={it.ch} className="w-full h-full object-contain grayscale contrast-125 brightness-105" />
+                      <img
+                        src={it.src}
+                        alt={it.ch}
+                        className="w-full h-full object-contain grayscale contrast-125 brightness-105"
+                        loading="eager"
+                        decoding="async"
+                      />
                     </div>
                     <div className="mt-2 text-center text-[10px] font-serif text-stone-300/70 tracking-[0.45em] pl-[0.45em]">{it.ch}</div>
                   </motion.div>
                 ))}
               </div>
-            </motion.div>
-          ) : (
-            <motion.div
-              key="lanting"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.55, ease: 'easeOut' }}
-              className="w-full max-w-md"
-            >
+          </motion.div>
+
+          <motion.div
+            initial={false}
+            animate={{ opacity: effectivePhase === 2 ? 1 : 0, y: effectivePhase === 2 ? 0 : -10 }}
+            transition={{ duration: 0.38, ease: 'easeOut' }}
+            className="absolute inset-0 w-full"
+            style={{ pointerEvents: effectivePhase === 2 ? 'auto' : 'none' }}
+          >
               <div className="text-center">
                 <div className="text-[10px] font-black tracking-[0.6em] pl-[0.6em] text-stone-300/70">天下第一行书</div>
                 <div className="mt-3 text-3xl font-serif font-black tracking-[0.5em] pl-[0.5em] text-[#F2E6CE]">兰亭集序</div>
@@ -1185,16 +1248,21 @@ function AndroidLaunchShowcase({
                       className="relative"
                     >
                       <div className="w-full aspect-square rounded-2xl bg-white/5 border border-white/10 shadow-[0_18px_50px_rgba(0,0,0,0.45)] overflow-hidden">
-                        <img src={it.src} alt={it.ch} className="w-full h-full object-contain grayscale contrast-125 brightness-110" />
+                        <img
+                          src={it.src}
+                          alt={it.ch}
+                          className="w-full h-full object-contain grayscale contrast-125 brightness-110"
+                          loading="eager"
+                          decoding="async"
+                        />
                       </div>
                       <div className="mt-2 text-center text-[10px] font-serif text-stone-300/70 tracking-[0.35em] pl-[0.35em]">{it.ch}</div>
                     </motion.div>
                   ))}
                 </div>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+          </motion.div>
+        </div>
 
         <div className="mt-16 flex flex-col items-center">
           <div className="w-12 h-px bg-gradient-to-r from-transparent via-[#b8860b]/35 to-transparent" />

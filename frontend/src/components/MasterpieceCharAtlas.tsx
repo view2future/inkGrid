@@ -132,7 +132,11 @@ export function MasterpieceCharAtlasCard({
     const run = async () => {
       try {
         const res = await fetch(baseDir + 'analysis.json');
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        // analysis.json is optional; 404 should be silent.
+        if (!res.ok) {
+          if (res.status === 404) return;
+          throw new Error(`HTTP ${res.status}`);
+        }
         const json = (await res.json()) as CharAnalysis;
         if (cancelled) return;
         setOfflineAnalysis(json);
@@ -754,28 +758,6 @@ export function MasterpieceCharAtlasCard({
                       </button>
                       <button
                         type="button"
-                        onClick={() => setOccView('similar')}
-                        className={`h-8 px-3 rounded-full text-[10px] font-black tracking-[0.18em] border transition ${
-                          occView === 'similar'
-                            ? 'bg-[#8B0000] text-[#F2E6CE] border-[#8B0000]/60'
-                            : 'bg-white/70 text-stone-700 border-stone-200/70'
-                        }`}
-                      >
-                        相似
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setOccView('clusters')}
-                        className={`h-8 px-3 rounded-full text-[10px] font-black tracking-[0.18em] border transition ${
-                          occView === 'clusters'
-                            ? 'bg-[#8B0000] text-[#F2E6CE] border-[#8B0000]/60'
-                            : 'bg-white/70 text-stone-700 border-stone-200/70'
-                        }`}
-                      >
-                        分组
-                      </button>
-                      <button
-                        type="button"
                         onClick={() => setShareOpen(true)}
                         className="h-8 w-8 rounded-full bg-white/70 border border-stone-200/70 text-stone-700 flex items-center justify-center"
                         aria-label="Share"
@@ -928,9 +910,16 @@ export function MasterpieceCharAtlasCard({
                                     setSelectedOccIdx(idx >= 0 ? idx : 0);
                                     openInPage(f);
                                   }}
-                                  className="w-full aspect-square rounded bg-stone-50 flex items-center justify-center text-xs font-black text-stone-700 hover:bg-stone-100"
+                                  className="relative w-full aspect-square rounded overflow-hidden bg-white border border-stone-200/70 hover:border-stone-300/80 shadow-sm"
                                 >
-                                  {f.char}
+                                  <img
+                                    src={baseDir + f.file}
+                                    alt={String(f.char || '').trim()}
+                                    className="absolute inset-0 w-full h-full object-contain grayscale contrast-150"
+                                    loading={IMG_LOADING}
+                                    decoding={IMG_DECODING}
+                                  />
+                                  <div className="absolute inset-0 ring-1 ring-black/5" />
                                 </button>
                               ) : (
                                 <div key={row} className="w-full aspect-square" />

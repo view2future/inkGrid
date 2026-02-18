@@ -725,9 +725,9 @@ function getPracticeChars(stele: MasterpieceStele) {
   }
   if (stele.id === 'li_001' || stele.name.includes('曹全')) {
     return [
-      { char: '曹', hint: '秀逸不轻浮', image: '/steles/2-lishu/1-caoquanbei/chars_yang/caoquanbei_yang_0043_U66F9.png' },
-      { char: '全', hint: '波磔舒展', image: '/steles/2-lishu/1-caoquanbei/chars_yang/caoquanbei_yang_0003_U5168.png' },
-      { char: '國', hint: '横画主导', image: '/steles/2-lishu/1-caoquanbei/chars_yang/caoquanbei_yang_0044_U570B.png' },
+      { char: '曹', hint: '秀逸不轻浮', image: '/steles/2-lishu/1-caoquanbei/chars_yang/caoquanbei_yang_0043_U66F9.webp' },
+      { char: '全', hint: '波磔舒展', image: '/steles/2-lishu/1-caoquanbei/chars_yang/caoquanbei_yang_0003_U5168.webp' },
+      { char: '國', hint: '横画主导', image: '/steles/2-lishu/1-caoquanbei/chars_yang/caoquanbei_yang_0044_U570B.webp' },
     ];
   }
   if (stele.name.includes('峄山')) {
@@ -988,6 +988,7 @@ export function MobileMasterpieceStudyHub({
       .filter(Boolean) as MasterpieceStele[];
 
     // Safety: ensure the two flagships always exist.
+    const lanting = steles.find((s) => String(s.id) === 'xing_001' || s.name.includes('兰亭'));
     const yishan = steles.find((s) => String(s.id) === 'zhuan_003' || s.name.includes('峄山'));
     const caoquan = steles.find((s) => String(s.id) === 'li_001' || s.name.includes('曹全'));
     const addIfMissing = (s: MasterpieceStele | undefined) => {
@@ -997,14 +998,28 @@ export function MobileMasterpieceStudyHub({
     };
     addIfMissing(caoquan);
     addIfMissing(yishan);
+    addIfMissing(lanting);
     return ordered;
   }, [steles, level8.list]);
 
   const flagships = useMemo(() => {
+    const lanting = steles.find((s) => String(s.id) === 'xing_001' || s.name.includes('兰亭')) || null;
     const yishan = steles.find((s) => String(s.id) === 'zhuan_003' || s.name.includes('峄山')) || null;
     const caoquan = steles.find((s) => String(s.id) === 'li_001' || s.name.includes('曹全')) || null;
-    return { yishan, caoquan };
+    return { lanting, yishan, caoquan };
   }, [steles]);
+
+  const lantingProgress = useMemo(() => {
+    const s = flagships.lanting;
+    if (!s) return null;
+    return progressStore[String(s.id)] || null;
+  }, [flagships.lanting, progressStore]);
+
+  const lantingPct = useMemo(() => {
+    const p = lantingProgress;
+    if (!p || !p.totalCards) return 0;
+    return Math.min(1, Math.max(0, (Number(p.lastIndex) + 1) / Number(p.totalCards)));
+  }, [lantingProgress]);
 
   const caoquanProgress = useMemo(() => {
     const s = flagships.caoquan;
@@ -1179,16 +1194,31 @@ export function MobileMasterpieceStudyHub({
           <p className="text-sm font-serif text-stone-600 leading-relaxed tracking-wide">把一帖拆成一组卡片：看懂背景、抓住技法、带着任务去临。</p>
         </div>
 
-        {flagships.yishan || flagships.caoquan ? (
+        {flagships.lanting || flagships.yishan || flagships.caoquan ? (
           <div className="mt-6 rounded-[2rem] bg-white/55 border border-stone-200/70 shadow-[0_22px_70px_rgba(0,0,0,0.10)] overflow-hidden">
             <div className="relative p-6">
               <div className="absolute inset-0 opacity-[0.10] bg-[url('https://www.transparenttextures.com/patterns/handmade-paper.png')]" />
               <div className="relative">
                 <div className="flex items-center justify-between">
                   <div className="text-[10px] font-black tracking-[0.4em] text-stone-500 uppercase">标杆体验</div>
-                  <div className="text-[10px] font-mono text-stone-500 tracking-widest">2 入口</div>
+                  <div className="text-[10px] font-mono text-stone-500 tracking-widest">
+                    {[flagships.lanting, flagships.caoquan, flagships.yishan].filter(Boolean).length} 入口
+                  </div>
                 </div>
                 <div className="mt-4 grid grid-cols-1 gap-3">
+                  {flagships.lanting ? (
+                    <button
+                      type="button"
+                      onClick={() => onSelect(flagships.lanting!, { restoreLastPosition: true })}
+                      className="h-12 rounded-[1.25rem] bg-[#8B0000] border border-[#8B0000]/60 text-[#F2E6CE] font-black tracking-[0.16em] shadow-[0_18px_45px_rgba(139,0,0,0.22)] active:scale-[0.99] transition flex items-center justify-between px-5"
+                    >
+                      <span>兰亭序 · 行书气韵</span>
+                      <span className="text-[10px] font-mono text-[#F2E6CE]/85 tracking-widest">
+                        {lantingProgress ? `继续 · ${Math.round(lantingPct * 100)}%` : '开始'}
+                      </span>
+                    </button>
+                  ) : null}
+
                   {flagships.yishan ? (
                     <button
                       type="button"
@@ -1207,16 +1237,16 @@ export function MobileMasterpieceStudyHub({
                     <button
                       type="button"
                       onClick={() => onSelect(flagships.caoquan!, { restoreLastPosition: true })}
-                      className="h-12 rounded-[1.25rem] bg-[#8B0000] border border-[#8B0000]/60 text-[#F2E6CE] font-black tracking-[0.16em] shadow-[0_18px_45px_rgba(139,0,0,0.22)] active:scale-[0.99] transition flex items-center justify-between px-5"
+                      className="h-12 rounded-[1.25rem] bg-white/70 border border-stone-200/80 text-stone-800 font-black tracking-[0.18em] shadow-sm active:scale-[0.99] transition flex items-center justify-between px-5"
                     >
                       <span>曹全碑 · 学习闭环</span>
-                      <span className="text-[10px] font-mono text-[#F2E6CE]/85 tracking-widest">
+                      <span className="text-[10px] font-mono text-stone-500 tracking-widest">
                         {caoquanProgress ? `继续 · ${Math.round(caoquanPct * 100)}%` : '开始'}
                       </span>
                     </button>
                   ) : null}
                 </div>
-                <div className="mt-4 text-[11px] font-serif text-stone-600 leading-relaxed">推荐从「曹全碑」开始：同字多例 → 原拓定位 → 看语境。</div>
+                <div className="mt-4 text-[11px] font-serif text-stone-600 leading-relaxed">推荐从「兰亭序」开始：先读气韵与行气，再回到原拓语境。</div>
               </div>
             </div>
           </div>

@@ -39,6 +39,14 @@ interface Stele {
   content: string;
   description: string;
   story?: string;
+  assets?: {
+    cover?: string;
+    pages?: any;
+    pagesThumb?: any;
+    charIndex?: string;
+    charText?: string;
+    practice?: Array<{ char: string; hint: string; image: string }>;
+  };
   appreciation?: {
     summary: string;
     points: Array<{ tag: string; text: string }>;
@@ -49,6 +57,11 @@ interface Stele {
     };
   };
 }
+
+type CharSliceIndex = {
+  total_chars: number;
+  files: Array<{ index: number; char: string; file: string; source?: any }>;
+};
 
 interface InkFlowProps {
   isOpen: boolean;
@@ -488,8 +501,16 @@ const InkFlow = forwardRef(({ isOpen, onClose, launch, onOpenYishanAppreciation 
       appreciationById = new Map();
     }
 
+    const rankStele = (s: any) => {
+      const id = String(s?.id || '').trim();
+      if (id === 'xing_001') return -100;
+      return 0;
+    };
+
+    const ordered = [...(data.steles || [])].sort((a: any, b: any) => rankStele(a) - rankStele(b));
+
     setSteleCards(
-      (data.steles || []).map((s: any) => {
+      ordered.map((s: any) => {
         const a = appreciationById.get(String(s.id)) || null;
         const merged = a ? { ...s, appreciation: a } : s;
         return { id: `s_${s.id}`, type: 'stele' as CardType, data: merged };
@@ -1248,6 +1269,17 @@ const InkFlow = forwardRef(({ isOpen, onClose, launch, onOpenYishanAppreciation 
                 onNavigatePost={navigateStelePost}
                 onNavigateSection={navigateSteleSection}
                 onOpenFullText={() => setShowSteleFullText(true)}
+                onOpenStudyDeck={(opts) => {
+                  if (!currentStele) return;
+                  setStudyStele(currentStele);
+                  setStudyInitialCardId(opts?.initialCardId || null);
+                  setStudyRestoreLastPosition(false);
+                  setStudyDeckEntryKey((k) => k + 1);
+                  setStudyAtlasChar(null);
+                  setStudyAtlasGlyphId(null);
+                  setStudyKnowledgePoint(null);
+                  setMobilePage('study_deck');
+                }}
               />
             )}
           </div>
@@ -2528,6 +2560,7 @@ function MobileInkFlowSteleFeed({
   onNavigatePost,
   onNavigateSection,
   onOpenFullText,
+  onOpenStudyDeck,
 }: {
   stele: Stele | undefined;
   index: number;
@@ -2538,6 +2571,7 @@ function MobileInkFlowSteleFeed({
   onNavigatePost: (dir: number) => void;
   onNavigateSection: (dir: number) => void;
   onOpenFullText: () => void;
+  onOpenStudyDeck: (opts?: { initialCardId?: string }) => void;
 }) {
   const handleSectionDragEnd = (_: any, info: PanInfo) => {
     if (Math.abs(info.offset.x) < 70) return;
@@ -2558,6 +2592,56 @@ function MobileInkFlowSteleFeed({
   const quote = getExcerpt(stele.content, 88);
   const points = stele.appreciation?.points || [];
   const practiceTips = stele.appreciation?.practiceTips || [];
+
+  const charIndexUrl = String(stele.assets?.charIndex || '').trim();
+  const [charIndex, setCharIndex] = useState<CharSliceIndex | null>(null);
+  const [charIndexError, setCharIndexError] = useState<string | null>(null);
+  const [showAllChars, setShowAllChars] = useState(false);
+
+  const baseDirFromUrl = (url: string) => {
+    const parts = String(url || '').split('?')[0].split('#')[0].split('/');
+    if (parts.length <= 1) return '/';
+    parts.pop();
+    return parts.join('/') + '/';
+  };
+
+  const charBaseDir = useMemo(() => (charIndexUrl ? baseDirFromUrl(charIndexUrl) : '/'), [charIndexUrl]);
+
+  useEffect(() => {
+    setShowAllChars(false);
+  }, [stele.id]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const run = async () => {
+      if (!charIndexUrl) {
+        setCharIndex(null);
+        setCharIndexError(null);
+        return;
+      }
+
+      setCharIndex(null);
+      setCharIndexError(null);
+
+      try {
+        const res = await fetch(charIndexUrl);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = (await res.json()) as CharSliceIndex;
+        if (cancelled) return;
+        setCharIndex(json);
+      } catch (e) {
+        if (cancelled) return;
+        setCharIndex(null);
+        setCharIndexError(e instanceof Error ? e.message : String(e));
+      }
+    };
+
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [charIndexUrl]);
   const keywords = useMemo(() => getKeywords(stele.script_type), [stele.script_type]);
   const goldLine = useMemo(
     () => extractGoldLine({ summary: stele.appreciation?.summary || null, firstPointText: points[0]?.text || null }),
@@ -2788,6 +2872,59 @@ function MobileInkFlowSteleFeed({
                           ) : null}
                         </div>
                       </div>
+
+                      {charIndexUrl ? (
+                        <div className="mt-4 rounded-[1.5rem] bg-white/65 border border-stone-200/70 p-5 shadow-sm">
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="inline-flex items-center gap-3">
+                              <div className="w-1.5 h-1.5 bg-[#8B0000] rotate-45" />
+                              <span className="text-[10px] font-black tracking-[0.18em] text-stone-600">字图通读</span>
+                              <span className="text-[10px] font-mono text-stone-500 tracking-widest">
+                                {charIndex?.total_chars || stele.total_chars ? `${charIndex?.total_chars || stele.total_chars} 字` : '—'}
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => onOpenStudyDeck({ initialCardId: 'atlas' })}
+                              className="h-8 px-3 rounded-full bg-[#8B0000] border border-[#8B0000]/60 text-[#F2E6CE] text-[10px] font-black tracking-[0.18em] shadow-sm active:scale-95 transition"
+                            >
+                              去学习卡字库
+                            </button>
+                          </div>
+
+                          {charIndexError ? (
+                            <div className="mt-4 text-[12px] font-sans text-stone-600">字库加载失败：{charIndexError}</div>
+                          ) : !charIndex ? (
+                            <div className="mt-4 text-[12px] font-sans text-stone-600">正在加载字库…</div>
+                          ) : (
+                            <>
+                              <div className="mt-4 grid grid-cols-6 gap-2">
+                                {(showAllChars ? charIndex.files : charIndex.files.slice(0, 24)).map((f) => (
+                                  <div key={String(f.index)} className="rounded-xl overflow-hidden border border-stone-200/70 bg-white/70">
+                                    <img
+                                      src={charBaseDir + String(f.file)}
+                                      alt={String(f.char || '').trim()}
+                                      className="w-full aspect-square object-contain grayscale contrast-150"
+                                      loading="lazy"
+                                      decoding="async"
+                                    />
+                                  </div>
+                                ))}
+                              </div>
+
+                              {charIndex.files.length > 24 ? (
+                                <button
+                                  type="button"
+                                  onClick={() => setShowAllChars((v) => !v)}
+                                  className="mt-4 h-9 px-4 rounded-full bg-white/70 border border-stone-200/70 text-stone-800 text-[10px] font-black tracking-[0.18em] shadow-sm active:scale-95 transition"
+                                >
+                                  {showAllChars ? '收起' : `展开全部(${charIndex.files.length})`}
+                                </button>
+                              ) : null}
+                            </>
+                          )}
+                        </div>
+                      ) : null}
 
                       <div className="min-w-0 space-y-4">
                         <div className="rounded-[1.5rem] bg-white/55 border border-stone-200/70 p-5 shadow-sm">

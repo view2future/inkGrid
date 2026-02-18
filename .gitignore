@@ -92,3 +92,14 @@ processor/venv/lib/python3.14/site-packages/*
 
 # --- Safety net: exclude any file > 30MB (Git will ignore these automatically if they match patterns above)
 # Note: Git doesn't support size-based ignores directly, so we rely on pattern matching
+
+# --- Lantingjixu char annotations (keep latest only) ---
+# Keep only the newest iteration under steles/4-xingshu/1-lantingjixu.
+steles/4-xingshu/1-lantingjixu/chars_shenlong_v*/
+!steles/4-xingshu/1-lantingjixu/chars_shenlong_v18/
+steles/4-xingshu/1-lantingjixu/chars_shenlong---old/
+steles/4-xingshu/1-lantingjixu/old-chars/
+
+# Do not ship/commit iterative annotation outputs under frontend/public.
+frontend/public/steles/4-xingshu/1-lantingjixu/chars_shenlong_v*/
+frontend/public/steles/4-xingshu/1-lantingjixu/chars_shenlong---old/
