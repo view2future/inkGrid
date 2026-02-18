@@ -138,6 +138,20 @@ steles/unknown/<stele_slug>/
 
 ---
 
+## 5.1 页级编辑（专业体验重点）
+
+核心交互（鼠标优先）：
+- 在 Page Editor 中直接拖拽列线/行线。
+- **松手后重算预览**：触发 `preview_page` job，生成预览 overlays 与格子预览图。
+- 预览满意后再运行 `export_dataset` job 固化为 `chars_workbench_vN`。
+
+当前实现状态：
+- 已支持 `preview_page` job（单页预览输出到 `workbench/preview/<page>/`）。
+- 已支持把预览计算出的 layout 持久化写回 `workbench/pages.json`。
+- `workbench_build_dataset.py` 会优先使用 `pages.json` 中的 layout（因此手动调线能影响最终导出）。
+
+---
+
 ## 6. 命名规则与 index.json（墨阵可引用）
 
 ### 6.1 文件命名

@@ -112,9 +112,20 @@ class WorkbenchService:
         def __init__(self) -> None:
             super().__init__()
             self._buf: list[str] = []
+            self._skip_depth = 0
+
+        def handle_starttag(self, tag: str, attrs) -> None:  # type: ignore[override]
+            if tag in {"script", "style", "noscript"}:
+                self._skip_depth += 1
+
+        def handle_endtag(self, tag: str) -> None:  # type: ignore[override]
+            if tag in {"script", "style", "noscript"} and self._skip_depth > 0:
+                self._skip_depth -= 1
 
         def handle_data(self, data: str) -> None:
             if not data:
+                return
+            if self._skip_depth > 0:
                 return
             self._buf.append(data)
 
@@ -142,6 +153,47 @@ class WorkbenchService:
         t = re.sub(r"\n{3,}", "\n\n", t)
         t = t.strip()
         return t
+
+    def _filter_cjk_chars(self, text: str) -> str:
+        """Keep only CJK ideographs (best-effort).
+
+        This is intentionally conservative for V1: it helps convert noisy web page
+        extractions into a sequence that can be aligned to a fixed grid.
+        """
+
+        t = str(text or "")
+        # Unified ideographs + Ext-A + compatibility.
+        chars = re.findall(r"[\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF]", t)
+        return "".join(chars)
+
+    def _compute_total_cells(self, stele_slug: str) -> int:
+        paths = self._resolve_project_dir(stele_slug)
+        if not paths.project_json.exists():
+            raise FileNotFoundError("Missing project.json")
+
+        project = json.loads(paths.project_json.read_text(encoding="utf-8"))
+        grid = project.get("grid") or {}
+        default_cols = int(grid.get("cols") or 0)
+        default_rows = int(grid.get("rows") or 0)
+        if default_cols <= 0 or default_rows <= 0:
+            raise ValueError("Invalid default grid")
+
+        pages = {"pages": []}
+        if paths.pages_json.exists():
+            try:
+                pages = json.loads(paths.pages_json.read_text(encoding="utf-8"))
+            except Exception:
+                pages = {"pages": []}
+
+        total = 0
+        for p in pages.get("pages") or []:
+            override = (p or {}).get("override") if isinstance(p, dict) else None
+            cols = int((override or {}).get("cols") or default_cols)
+            rows = int((override or {}).get("rows") or default_rows)
+            if cols <= 0 or rows <= 0:
+                cols, rows = default_cols, default_rows
+            total += int(cols * rows)
+        return int(total)
 
     def _fetch_page_text(self, url: str) -> str:
         u = str(url or "").strip()
@@ -220,6 +272,8 @@ class WorkbenchService:
         datasets = []
         for p in paths.stele_dir.iterdir():
             if p.is_dir() and (p / "index.json").exists():
+                if p.name.startswith("workbench_"):
+                    continue
                 datasets.append(p.name)
         datasets.sort()
 
@@ -397,10 +451,12 @@ class WorkbenchService:
         paths = self._resolve_project_dir(stele_slug)
         paths.workbench_dir.mkdir(parents=True, exist_ok=True)
 
-        text_trad = str(payload.get("text_trad") or "")
+        text_trad_raw = str(payload.get("text_trad") or "")
+        text_trad = self._filter_cjk_chars(text_trad_raw)
         text_simp = str(payload.get("text_simp") or "")
         out = {
             "version": 1,
+            "text_trad_raw": text_trad_raw,
             "text_trad": text_trad,
             "text_simp": text_simp,
             "cells": payload.get("cells") or [],
@@ -496,7 +552,12 @@ class WorkbenchService:
             override = e.get("override")
             if override is not None and not isinstance(override, dict):
                 override = None
-            out_pages.append({"image": img, "override": override, "layout": None})
+
+            layout = e.get("layout")
+            if layout is not None and not isinstance(layout, dict):
+                layout = None
+
+            out_pages.append({"image": img, "override": override, "layout": layout})
 
         # Append any existing pages not mentioned.
         mentioned = {p["image"] for p in out_pages}
@@ -530,7 +591,7 @@ class WorkbenchService:
 
     def create_job(self, stele_slug: str, payload: Dict[str, Any]) -> Dict[str, Any]:
         job_type = str(payload.get("type") or "").strip()
-        if job_type not in {"auto_annotate", "export_dataset"}:
+        if job_type not in {"auto_annotate", "export_dataset", "preview_page"}:
             raise ValueError("Unsupported job type")
 
         paths = self._resolve_project_dir(stele_slug)
@@ -545,9 +606,17 @@ class WorkbenchService:
         if cols <= 0 or rows <= 0:
             raise ValueError("Invalid grid in project.json")
 
-        dataset_dir = self._next_dataset_dir(paths)
-        out_dir = (paths.stele_dir / dataset_dir).resolve()
-        out_dir.mkdir(parents=True, exist_ok=True)
+        if job_type == "preview_page":
+            page_image = str(payload.get("page") or "").strip()
+            if not page_image:
+                raise ValueError("Missing page image for preview_page")
+            dataset_dir = "workbench_preview"
+            out_dir = (paths.workbench_dir / "preview" / page_image).resolve()
+            out_dir.mkdir(parents=True, exist_ok=True)
+        else:
+            dataset_dir = self._next_dataset_dir(paths)
+            out_dir = (paths.stele_dir / dataset_dir).resolve()
+            out_dir.mkdir(parents=True, exist_ok=True)
 
         job_id = time.strftime("%Y%m%d_%H%M%S")
         job_path = paths.jobs_dir / f"{job_id}.json"
@@ -572,14 +641,25 @@ class WorkbenchService:
 
         def run() -> None:
             try:
-                self._run_job_build_dataset(
-                    stele_slug,
-                    job_path=job_path,
-                    out_dir=out_dir,
-                    cols=cols,
-                    rows=rows,
-                    direction=direction,
-                )
+                if job_type == "preview_page":
+                    self._run_job_preview_page(
+                        stele_slug,
+                        job_path=job_path,
+                        out_dir=out_dir,
+                        page=str(payload.get("page") or ""),
+                        cols=cols,
+                        rows=rows,
+                        direction=direction,
+                    )
+                else:
+                    self._run_job_build_dataset(
+                        stele_slug,
+                        job_path=job_path,
+                        out_dir=out_dir,
+                        cols=cols,
+                        rows=rows,
+                        direction=direction,
+                    )
             except Exception as e:
                 self._update_job(job_path, status="fail", stage="fail", log_tail=str(e))
 
@@ -644,10 +724,84 @@ class WorkbenchService:
     ) -> None:
         self._update_job(job_path, status="running", stage="start", progress=1)
 
+        # V1 auto-annotate: fetch text candidates and auto-fill alignment.json
+        # if it is currently empty. This keeps the one-click flow smooth.
+        try:
+            cur_job = json.loads(job_path.read_text(encoding="utf-8"))
+            job_type = str(cur_job.get("type") or "")
+        except Exception:
+            job_type = ""
+
+        if job_type == "auto_annotate":
+            self._update_job(job_path, stage="fetch_text", progress=6)
+            try:
+                candidates = self.fetch_text_candidates(stele_slug)
+                results = list(candidates.get("results") or [])
+                best_text = ""
+                best_url = None
+                for it in results:
+                    if not isinstance(it, dict):
+                        continue
+                    t = str(it.get("text_trad") or "")
+                    if len(t) > len(best_text):
+                        best_text = t
+                        best_url = it.get("url")
+
+                self._update_job(job_path, stage="normalize_text", progress=10)
+                filtered = self._filter_cjk_chars(best_text)
+                total_cells = 0
+                try:
+                    total_cells = self._compute_total_cells(stele_slug)
+                except Exception:
+                    total_cells = 0
+
+                if filtered and total_cells:
+                    if len(filtered) > total_cells:
+                        filtered = filtered[:total_cells]
+
+                    self.save_alignment_text(
+                        stele_slug,
+                        {
+                            "text_trad": filtered,
+                            "text_simp": "",
+                            "cells": [],
+                        },
+                    )
+
+                    # Update project metadata.
+                    paths = self._resolve_project_dir(stele_slug)
+                    try:
+                        proj = json.loads(paths.project_json.read_text(encoding="utf-8"))
+                        proj.setdefault("text", {})
+                        proj["text"]["status"] = "auto" if len(filtered) == total_cells else "partial"
+                        proj["text"]["selected_source_url"] = str(best_url or "") or None
+                        proj["text"]["confidence"] = None
+                        paths.project_json.write_text(
+                            json.dumps(proj, ensure_ascii=False, indent=2) + "\n",
+                            encoding="utf-8",
+                        )
+                    except Exception:
+                        pass
+
+                    if len(filtered) != total_cells:
+                        self._update_job(
+                            job_path,
+                            log_tail=(
+                                str(json.loads(job_path.read_text(encoding="utf-8")).get("log_tail") or "")
+                                + "\n"
+                                + f"[text] filtered_len={len(filtered)} total_cells={total_cells} (mismatch)"
+                            ).strip()[-6000:],
+                        )
+            except Exception:
+                # Don't block dataset build.
+                pass
+
         # Run a script so logic stays reusable.
         script = (self.base_dir / "scripts" / "workbench_build_dataset.py").resolve()
         if not script.exists():
             raise FileNotFoundError(f"Missing script: {script}")
+
+        self._update_job(job_path, stage="layout", progress=18)
 
         paths = self._resolve_project_dir(stele_slug)
         cmd = [
@@ -705,4 +859,106 @@ class WorkbenchService:
             outputs["zip_url"] = "/steles/" + "/".join(rel.parts)
         except Exception:
             outputs["zip_url"] = None
+
+        # Dataset URLs for quick linking.
+        try:
+            rel_ds = out_dir.resolve().relative_to(self.steles_dir.resolve())
+            outputs["dataset_url"] = "/steles/" + "/".join(rel_ds.parts)
+            outputs["index_url"] = outputs["dataset_url"] + "/index.json"
+            outputs["qa_summary_url"] = outputs["dataset_url"] + "/qa_summary.md"
+            outputs["overlays_url"] = outputs["dataset_url"] + "/overlays"
+        except Exception:
+            outputs["dataset_url"] = None
+            outputs["index_url"] = None
+            outputs["qa_summary_url"] = None
+            outputs["overlays_url"] = None
+
+        # Update project latest_dataset pointer.
+        try:
+            paths = self._resolve_project_dir(stele_slug)
+            proj = json.loads(paths.project_json.read_text(encoding="utf-8"))
+            proj["latest_dataset"] = {
+                "name": str(out_dir.name),
+                "created_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
+            }
+            paths.project_json.write_text(
+                json.dumps(proj, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+            )
+        except Exception:
+            pass
+
+        self._update_job(job_path, status="success", stage="done", progress=100, outputs=outputs)
+
+    def _run_job_preview_page(
+        self,
+        stele_slug: str,
+        *,
+        job_path: Path,
+        out_dir: Path,
+        page: str,
+        cols: int,
+        rows: int,
+        direction: str,
+    ) -> None:
+        self._update_job(job_path, status="running", stage="preview", progress=1)
+
+        script = (self.base_dir / "scripts" / "workbench_preview_page.py").resolve()
+        if not script.exists():
+            raise FileNotFoundError(f"Missing script: {script}")
+
+        paths = self._resolve_project_dir(stele_slug)
+        cmd = [
+            "python3",
+            str(script),
+            "--stele-slug",
+            stele_slug,
+            "--stele-dir",
+            str(paths.stele_dir),
+            "--pages-dir",
+            str(paths.pages_raw_dir),
+            "--page",
+            str(page),
+            "--out-dir",
+            str(out_dir),
+            "--direction",
+            direction,
+            "--cols",
+            str(int(cols)),
+            "--rows",
+            str(int(rows)),
+            "--job-file",
+            str(job_path),
+        ]
+
+        p = subprocess.Popen(
+            cmd,
+            cwd=str(self.base_dir),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+        )
+        tail_lines: list[str] = []
+        assert p.stdout is not None
+        for line in p.stdout:
+            tail_lines.append(line.rstrip("\n"))
+            tail_lines = tail_lines[-80:]
+            self._update_job(job_path, log_tail="\n".join(tail_lines))
+
+        rc = p.wait()
+        if rc != 0:
+            raise RuntimeError(f"workbench_preview_page failed with rc={rc}")
+
+        outputs = json.loads(job_path.read_text(encoding="utf-8")).get("outputs") or {}
+        # URL mapping
+        try:
+            rel = out_dir.resolve().relative_to(self.steles_dir.resolve())
+            base_url = "/steles/" + "/".join(rel.parts)
+            outputs["preview_url"] = base_url
+            outputs["overlays_url"] = base_url + "/overlays"
+            outputs["cells_url"] = base_url + "/cells.json"
+        except Exception:
+            outputs["preview_url"] = None
+            outputs["overlays_url"] = None
+            outputs["cells_url"] = None
+
         self._update_job(job_path, status="success", stage="done", progress=100, outputs=outputs)
