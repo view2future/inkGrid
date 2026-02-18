@@ -1,0 +1,30 @@
+{
+  "dataset": "lantingjixu_shenlong",
+  "notes": "Known problematic crops reported during algorithm iteration. Used for QA regression.",
+  "cases": [
+    {
+      "id": "initial_report_2026-02-18",
+      "files": [
+        "lantingjixu_shenlong_0011_U4E4B.png",
+        "lantingjixu_shenlong_0035_U5730.png",
+        "lantingjixu_shenlong_0036_U6709.png",
+        "lantingjixu_shenlong_0046_U6709.png",
+        "lantingjixu_shenlong_0047_U6E05.png",
+        "lantingjixu_shenlong_0051_U668E.png",
+        "lantingjixu_shenlong_0057_U70BA.png",
+        "lantingjixu_shenlong_0060_U66F2.png",
+        "lantingjixu_shenlong_0061_U6C34.png",
+        "lantingjixu_shenlong_0063_U5750.png",
+        "lantingjixu_shenlong_0064_U5176.png",
+        "lantingjixu_shenlong_0066_U96D6.png",
+        "lantingjixu_shenlong_0068_U7D72.png",
+        "lantingjixu_shenlong_0071_U5F26.png",
+        "lantingjixu_shenlong_0073_U76DB.png",
+        "lantingjixu_shenlong_0074_U4E00.png",
+        "lantingjixu_shenlong_0076_U4E00.png",
+        "lantingjixu_shenlong_0077_U8A60.png",
+        "lantingjixu_shenlong_0091_U6E05.png"
+      ]
+    }
+  ]
+}

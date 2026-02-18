@@ -1,11 +1,14 @@
 import os
-from fastapi import FastAPI, HTTPException
+import subprocess
+from fastapi import Depends, FastAPI, Header, HTTPException, UploadFile, File
 from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.services.alignment_service import AlignmentService
 from app.services.catalog_service import CatalogService
+from app.services.annotator_service import AnnotatorService
+from app.services.workbench_service import WorkbenchService
 from app.health import router as health_router
 
 app = FastAPI(title="墨阵 InkGrid API")
@@ -27,6 +30,216 @@ PUBLIC_DIR = os.path.join(BASE_DIR, "public")
 STELES_DIR = os.path.join(BASE_DIR, "steles")
 
 catalog_service = CatalogService(BASE_DIR, FRONTEND_DIR)
+annotator_service = AnnotatorService(BASE_DIR, STELES_DIR)
+workbench_service = WorkbenchService(BASE_DIR, STELES_DIR)
+
+
+def require_admin(x_inkgrid_admin_token: str | None = Header(default=None)) -> None:
+    expected = str(os.environ.get("INKGRID_ADMIN_TOKEN") or "").strip()
+    if not expected:
+        # Local dev fallback: allow access if token isn't configured.
+        return
+    if str(x_inkgrid_admin_token or "").strip() != expected:
+        raise HTTPException(status_code=401, detail="Invalid admin token")
+
+
+@app.get("/api/annotator/overrides/{stele_path:path}")
+async def get_annotator_overrides(stele_path: str, _: None = Depends(require_admin)):
+    try:
+        return annotator_service.get_overrides(stele_path)
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.post("/api/annotator/overrides/{stele_path:path}")
+async def save_annotator_overrides(
+    stele_path: str, payload: dict, _: None = Depends(require_admin)
+):
+    try:
+        return annotator_service.save_overrides(stele_path, payload)
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.post("/api/annotator/apply/{stele_path:path}")
+async def apply_annotator_overrides(
+    stele_path: str, payload: dict, _: None = Depends(require_admin)
+):
+    dataset_dir = str(payload.get("dataset_dir") or "").strip()
+    only_files = payload.get("only_files")
+    run_qa = bool(payload.get("run_qa", True))
+    if only_files is not None and not isinstance(only_files, list):
+        raise HTTPException(status_code=400, detail="only_files must be a list")
+
+    try:
+        return annotator_service.apply_overrides(
+            stele_path,
+            dataset_dir=dataset_dir,
+            only_files=[str(x) for x in (only_files or [])],
+            run_qa=run_qa,
+        )
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except subprocess.CalledProcessError as e:
+        raise HTTPException(status_code=500, detail=f"Command failed: {e}")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.get("/api/annotator/datasets/{stele_path:path}")
+async def list_annotator_datasets(stele_path: str, _: None = Depends(require_admin)):
+    try:
+        return annotator_service.list_datasets(stele_path)
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.get("/api/workbench/projects")
+async def list_workbench_projects(_: None = Depends(require_admin)):
+    return workbench_service.list_projects()
+
+
+@app.post("/api/workbench/projects")
+async def create_workbench_project(payload: dict, _: None = Depends(require_admin)):
+    try:
+        return workbench_service.create_project(payload)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.post("/api/workbench/projects/{stele_slug}/pages")
+async def upload_workbench_pages(
+    stele_slug: str,
+    files: list[UploadFile] = File(...),
+    _: None = Depends(require_admin),
+):
+    try:
+        paths = workbench_service._resolve_project_dir(stele_slug)
+        paths.pages_raw_dir.mkdir(parents=True, exist_ok=True)
+        saved: list[str] = []
+        # Determine next index based on existing files.
+        existing = sorted(
+            [p for p in paths.pages_raw_dir.iterdir() if p.is_file()], key=lambda p: p.name
+        )
+        next_i = len(existing) + 1
+        for f in files:
+            ext = os.path.splitext(f.filename or "")[1].lower() or ".jpg"
+            out_name = f"page_{next_i:02d}{ext}"
+            next_i += 1
+            out_path = paths.pages_raw_dir / out_name
+            content = await f.read()
+            out_path.write_bytes(content)
+            saved.append(out_name)
+        workbench_service.add_pages(stele_slug, saved)
+        return {"saved": saved}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.get("/api/workbench/projects/{stele_slug}")
+async def get_workbench_project(stele_slug: str, _: None = Depends(require_admin)):
+    try:
+        return workbench_service.get_project(stele_slug)
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.post("/api/workbench/projects/{stele_slug}")
+async def update_workbench_project(
+    stele_slug: str, payload: dict, _: None = Depends(require_admin)
+):
+    try:
+        return workbench_service.update_project(stele_slug, payload)
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.delete("/api/workbench/projects/{stele_slug}/pages/{image_name}")
+async def delete_workbench_page(
+    stele_slug: str, image_name: str, _: None = Depends(require_admin)
+):
+    try:
+        return workbench_service.delete_page(stele_slug, image_name)
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.post("/api/workbench/projects/{stele_slug}/pages/update")
+async def update_workbench_pages(
+    stele_slug: str, payload: dict, _: None = Depends(require_admin)
+):
+    try:
+        return workbench_service.update_pages(stele_slug, payload)
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.post("/api/workbench/projects/{stele_slug}/jobs")
+async def create_workbench_job(stele_slug: str, payload: dict, _: None = Depends(require_admin)):
+    try:
+        return workbench_service.create_job(stele_slug, payload)
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.post("/api/workbench/projects/{stele_slug}/text/fetch")
+async def fetch_workbench_text(stele_slug: str, _: None = Depends(require_admin)):
+    try:
+        return workbench_service.fetch_text_candidates(stele_slug)
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.post("/api/workbench/projects/{stele_slug}/alignment")
+async def save_workbench_alignment(
+    stele_slug: str, payload: dict, _: None = Depends(require_admin)
+):
+    try:
+        return workbench_service.save_alignment_text(stele_slug, payload)
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.get("/api/workbench/projects/{stele_slug}/jobs")
+async def list_workbench_jobs(stele_slug: str, _: None = Depends(require_admin)):
+    try:
+        return workbench_service.list_jobs(stele_slug)
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.get("/api/workbench/projects/{stele_slug}/jobs/{job_id}")
+async def get_workbench_job(
+    stele_slug: str, job_id: str, _: None = Depends(require_admin)
+):
+    try:
+        return workbench_service.get_job(stele_slug, job_id)
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @app.get("/api/steles")
