@@ -41,7 +41,7 @@ function App() {
   const [showInkFlow, setShowInkFlow] = useState(false);
   const [inkFlowLaunch, setInkFlowLaunch] = useState<InkFlowLaunch | null>(null);
   const [showAndroidLaunch, setShowAndroidLaunch] = useState(false);
-  const [androidLaunchPhase, setAndroidLaunchPhase] = useState<0 | 1>(0);
+   const [androidLaunchPhase, setAndroidLaunchPhase] = useState<0 | 1 | 2>(0);
   const [androidLaunchClosing, setAndroidLaunchClosing] = useState(false);
   const [androidLaunchRemaining, setAndroidLaunchRemaining] = useState(0);
   const androidLaunchTimerRef = React.useRef<number | null>(null);
@@ -86,8 +86,9 @@ function App() {
       // ignore
     }
 
-    const TOTAL_MS = 10_000;
-    const PHASE_SWITCH_MS = 5_000;
+    const TOTAL_MS = 12_000;
+    const PHASE_SWITCH_MS_1 = 4_000;
+    const PHASE_SWITCH_MS_2 = 8_000;
     const startedAt = Date.now();
 
     setShowAndroidLaunch(true);
@@ -101,10 +102,11 @@ function App() {
         exitAndroidLaunch();
         return;
       }
-      if (elapsed >= PHASE_SWITCH_MS) setAndroidLaunchPhase(1);
-      const remainingMs = Math.max(0, TOTAL_MS - elapsed);
-      setAndroidLaunchRemaining(Math.ceil(remainingMs / 1000));
-    };
+       if (elapsed >= PHASE_SWITCH_MS_2) setAndroidLaunchPhase(2);
+       else if (elapsed >= PHASE_SWITCH_MS_1) setAndroidLaunchPhase(1);
+       const remainingMs = Math.max(0, TOTAL_MS - elapsed);
+       setAndroidLaunchRemaining(Math.ceil(remainingMs / 1000));
+     };
 
     tick();
     androidLaunchTimerRef.current = window.setInterval(tick, 200);
@@ -1024,7 +1026,7 @@ function AndroidLaunchShowcase({
   remaining,
   onExit,
 }: {
-  phase: 0 | 1;
+  phase: 0 | 1 | 2;
   closing: boolean;
   remaining: number;
   onExit: () => void;
@@ -1040,6 +1042,21 @@ function AndroidLaunchShowcase({
     { ch: '曹', src: '/steles/2-lishu/1-caoquanbei/chars_yang/caoquanbei_yang_0043_U66F9.png' },
     { ch: '全', src: '/steles/2-lishu/1-caoquanbei/chars_yang/caoquanbei_yang_0003_U5168.png' },
     { ch: '国', src: '/steles/2-lishu/1-caoquanbei/chars_yang/caoquanbei_yang_0044_U570B.png' },
+  ];
+
+  const lanting = [
+    { ch: '仰', src: '/steles/4-xingshu/1-lantingjixu/chars_shenlong/lantingjixu_shenlong_0096_U4EF0.png' },
+    { ch: '觀', src: '/steles/4-xingshu/1-lantingjixu/chars_shenlong/lantingjixu_shenlong_0097_U89C0.png' },
+    { ch: '宇', src: '/steles/4-xingshu/1-lantingjixu/chars_shenlong/lantingjixu_shenlong_0098_U5B87.png' },
+    { ch: '宙', src: '/steles/4-xingshu/1-lantingjixu/chars_shenlong/lantingjixu_shenlong_0099_U5B99.png' },
+    { ch: '之', src: '/steles/4-xingshu/1-lantingjixu/chars_shenlong/lantingjixu_shenlong_0011_U4E4B.png' },
+    { ch: '大', src: '/steles/4-xingshu/1-lantingjixu/chars_shenlong/lantingjixu_shenlong_0101_U5927.png' },
+    { ch: '俯', src: '/steles/4-xingshu/1-lantingjixu/chars_shenlong/lantingjixu_shenlong_0102_U4FEF.png' },
+    { ch: '察', src: '/steles/4-xingshu/1-lantingjixu/chars_shenlong/lantingjixu_shenlong_0103_U5BDF.png' },
+    { ch: '品', src: '/steles/4-xingshu/1-lantingjixu/chars_shenlong/lantingjixu_shenlong_0104_U54C1.png' },
+    { ch: '類', src: '/steles/4-xingshu/1-lantingjixu/chars_shenlong/lantingjixu_shenlong_0105_U985E.png' },
+    { ch: '之', src: '/steles/4-xingshu/1-lantingjixu/chars_shenlong/lantingjixu_shenlong_0011_U4E4B.png' },
+    { ch: '盛', src: '/steles/4-xingshu/1-lantingjixu/chars_shenlong/lantingjixu_shenlong_0073_U76DB.png' },
   ];
 
   return (
@@ -1093,7 +1110,7 @@ function AndroidLaunchShowcase({
 
               <div className="mt-6 text-center text-[10px] font-serif text-stone-400/70 tracking-[0.32em]">圆劲 · 中和 · 如玉</div>
             </motion.div>
-          ) : (
+          ) : phase === 1 ? (
             <motion.div
               key="caoquan"
               initial={{ opacity: 0, y: 10 }}
@@ -1141,6 +1158,39 @@ function AndroidLaunchShowcase({
                     <div className="mt-2 text-center text-[10px] font-serif text-stone-300/70 tracking-[0.45em] pl-[0.45em]">{it.ch}</div>
                   </motion.div>
                 ))}
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="lanting"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.55, ease: 'easeOut' }}
+              className="w-full max-w-md"
+            >
+              <div className="text-center">
+                <div className="text-[10px] font-black tracking-[0.6em] pl-[0.6em] text-stone-300/70">天下第一行书</div>
+                <div className="mt-3 text-3xl font-serif font-black tracking-[0.5em] pl-[0.5em] text-[#F2E6CE]">兰亭集序</div>
+              </div>
+
+              <div className="mt-10 rounded-[2rem] overflow-hidden border border-white/10 bg-white/5 shadow-[0_30px_90px_rgba(0,0,0,0.55)] p-5">
+                <div className="grid grid-cols-6 gap-3">
+                  {lanting.map((it, i) => (
+                    <motion.div
+                      key={`${it.ch}_${i}`}
+                      initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      transition={{ delay: 0.03 * i, duration: 0.5, ease: 'easeOut' }}
+                      className="relative"
+                    >
+                      <div className="w-full aspect-square rounded-2xl bg-white/5 border border-white/10 shadow-[0_18px_50px_rgba(0,0,0,0.45)] overflow-hidden">
+                        <img src={it.src} alt={it.ch} className="w-full h-full object-contain grayscale contrast-125 brightness-110" />
+                      </div>
+                      <div className="mt-2 text-center text-[10px] font-serif text-stone-300/70 tracking-[0.35em] pl-[0.35em]">{it.ch}</div>
+                    </motion.div>
+                  ))}
+                </div>
               </div>
             </motion.div>
           )}

@@ -80,7 +80,7 @@ def main() -> int:
     parser.add_argument(
         "--bbox-ink-threshold",
         type=int,
-        default=145,
+        default=120,
         help="Grayscale threshold for ink bbox trimming (higher = more ink)",
     )
     parser.add_argument(
@@ -110,7 +110,7 @@ def main() -> int:
     parser.add_argument(
         "--ink-threshold",
         type=int,
-        default=92,
+        default=100,
         help="Grayscale threshold for ink mask (lower = darker)",
     )
     parser.add_argument(
@@ -144,6 +144,7 @@ def main() -> int:
         cols = detect_columns(ink)
         if not cols:
             raise SystemExit(f"Failed to detect columns for {p.name}")
+        cols = expand_columns(cols, img.width, pad_ratio=float(args.col_pad))
         col_boxes_by_page.append(cols)
 
     detected_total_cols = sum(len(x) for x in col_boxes_by_page)
@@ -405,12 +406,15 @@ def ink_mask(arr: np.ndarray, ink_threshold: int) -> np.ndarray:
     g = arr[..., 1].astype(np.int16)
     b = arr[..., 2].astype(np.int16)
 
-    # Red seal heuristic.
-    red = (r > 120) & ((r - g) > 40) & ((r - b) > 40)
-
     gray = (0.299 * r + 0.587 * g + 0.114 * b).astype(np.float32)
+
+    # Red seal heuristic.
+    # Important: keep *dark* red pixels (ink under seal), only suppress seal-like reds.
+    redish = (r > 120) & ((r - g) > 40) & ((r - b) > 40)
+    seal = redish & (gray > 82)
+
     ink = gray < float(ink_threshold)
-    return ink & (~red)
+    return ink & (~seal)
 
 
 def _smooth_1d(x: np.ndarray, win: int) -> np.ndarray:
@@ -457,6 +461,43 @@ def detect_columns(ink: np.ndarray) -> list[ColumnBox]:
         out.append(ColumnBox(int(a), int(b)))
 
     return out
+
+
+def expand_columns(
+    cols: list[ColumnBox], img_width: int, *, pad_ratio: float
+) -> list[ColumnBox]:
+    if not cols:
+        return cols
+
+    cols_sorted = sorted(cols, key=lambda b: b.x0)
+    widths = [max(1, c.x1 - c.x0) for c in cols_sorted]
+    med = float(np.median(np.array(widths, dtype=np.float32)))
+    pad = int(round(max(0.0, float(pad_ratio)) * med))
+    pad = max(0, min(pad, int(med * 0.55)))
+
+    out = [
+        ColumnBox(x0=max(0, c.x0 - pad), x1=min(int(img_width), c.x1 + pad))
+        for c in cols_sorted
+    ]
+
+    # Prevent overlaps by clamping to midpoints between original columns.
+    for i in range(len(out) - 1):
+        left_orig = cols_sorted[i]
+        right_orig = cols_sorted[i + 1]
+        mid = int(round((left_orig.x1 + right_orig.x0) / 2.0))
+        # Ensure a small gap.
+        out[i].x1 = min(out[i].x1, mid)
+        out[i + 1].x0 = max(out[i + 1].x0, mid)
+
+    # Make sure all are valid.
+    fixed: list[ColumnBox] = []
+    for c in out:
+        x0 = int(max(0, c.x0))
+        x1 = int(min(img_width, c.x1))
+        if x1 <= x0 + 1:
+            continue
+        fixed.append(ColumnBox(x0=x0, x1=x1))
+    return fixed
 
 
 def segments_1d(on: np.ndarray, min_len: int) -> list[tuple[int, int]]:
@@ -528,34 +569,57 @@ def split_column_into_chars(
     proj = _smooth_1d(proj, max(9, int(round(step * 0.18)) | 1))
 
     min_cell = max(14, int(round(step * max(0.10, float(min_cell_ratio)))))
-    win = max(10, int(round(step * 0.45)))
+    center_win = max(10, int(round(step * 0.60)))
 
-    boundaries: list[int] = [y_top]
-    prev = y_top
-    for i in range(1, expected_count):
-        y_expect = y_top + int(round(step * i))
-
-        low = prev + min_cell
-        high = y_bottom - (expected_count - i) * min_cell
-        if high <= low:
-            y_cut = int(max(prev + 1, min(y_expect, y_bottom - 1)))
-            boundaries.append(y_cut)
-            prev = y_cut
+    # 1) Find per-character centers by snapping to local maxima.
+    centers: list[int] = []
+    for i in range(expected_count):
+        y_expect = y_top + int(round(step * (i + 0.5)))
+        a = max(y_top, y_expect - center_win)
+        b = min(y_bottom, y_expect + center_win)
+        if b - a <= 3:
+            centers.append(int(max(y_top, min(y_expect, y_bottom - 1))))
             continue
 
-        a = max(low, y_expect - win)
-        b = min(high, y_expect + win)
-        if b - a <= 3:
-            y_cut = int(max(low, min(y_expect, high)))
-        else:
+        local = proj[(a - y_top) : (b - y_top)]
+        y_rel = int(np.argmax(local))
+        centers.append(int(a + y_rel))
+
+    # 2) Enforce monotonic centers with a minimum spacing.
+    half = max(3, min_cell // 2)
+    centers[0] = max(centers[0], y_top + half)
+    centers[-1] = min(centers[-1], y_bottom - half)
+    for i in range(1, expected_count):
+        centers[i] = max(centers[i], centers[i - 1] + min_cell)
+    for i in range(expected_count - 2, -1, -1):
+        centers[i] = min(centers[i], centers[i + 1] - min_cell)
+    centers[0] = max(centers[0], y_top + half)
+    centers[-1] = min(centers[-1], y_bottom - half)
+
+    # 3) Build boundaries at midpoints between centers.
+    boundaries: list[int] = [y_top]
+    for i in range(1, expected_count):
+        boundaries.append(int(round((centers[i - 1] + centers[i]) / 2.0)))
+    boundaries.append(y_bottom)
+
+    # 4) Refine boundaries to nearby local minima (between neighbors).
+    refine_win = max(8, int(round(step * 0.35)))
+    for i in range(1, expected_count):
+        mid = boundaries[i]
+        low = boundaries[i - 1] + min_cell
+        high = boundaries[i + 1] - min_cell
+        if high <= low:
+            boundaries[i] = int(
+                max(boundaries[i - 1] + 1, min(mid, boundaries[i + 1] - 1))
+            )
+            continue
+        a = max(low, mid - refine_win)
+        b = min(high, mid + refine_win)
+        if b - a > 3:
             local = proj[(a - y_top) : (b - y_top)]
             y_rel = int(np.argmin(local))
-            y_cut = a + y_rel
-            y_cut = int(max(low, min(y_cut, high)))
-
-        boundaries.append(y_cut)
-        prev = y_cut
-    boundaries.append(y_bottom)
+            mid = int(a + y_rel)
+        boundaries[i] = int(max(low, min(mid, high)))
 
     out: list[CharBox] = []
     for i in range(expected_count):
@@ -592,16 +656,12 @@ def trim_glyph(
 
     region_area = float(h * w)
     min_area = max(36, int(region_area * 0.002))
-    max_area = int(region_area * 0.35)
 
     comps: list[tuple[float, int, int, int, int, int, float, float]] = []
     exp_x, exp_y = expected_center
     for i in range(1, int(num)):
         area = int(stats[i, cv2.CC_STAT_AREA])
         if area < min_area:
-            continue
-        if area > max_area:
-            # likely occlusion block
             continue
 
         x = int(stats[i, cv2.CC_STAT_LEFT])
@@ -611,11 +671,45 @@ def trim_glyph(
         cx = float(centroids[i][0])
         cy = float(centroids[i][1])
 
+        fill = float(area) / max(1.0, float(ww * hh))
+        area_ratio = float(area) / max(1.0, region_area)
+
+        # Complexity: occlusion blocks are usually "solid" with low perimeter/area.
+        per_area = 0.0
+        try:
+            comp = (labels == i).astype(np.uint8) * 255
+            contours, _ = cv2.findContours(
+                comp, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+            )
+            per = 0.0
+            for cnt in contours:
+                per += float(cv2.arcLength(cnt, True))
+            per_area = per / max(1.0, float(area))
+        except Exception:
+            per_area = 0.0
+
+        # Drop obvious occlusion blocks.
+        if area_ratio >= 0.40 and fill >= 0.62 and per_area > 0 and per_area <= 0.052:
+            continue
+
         dx = abs(cx - exp_x) / max(1.0, float(w))
         dy = abs(cy - exp_y) / max(1.0, float(h))
         dist = dx + dy
-        size_bonus = min(1.0, float(area) / max(1.0, region_area * 0.08))
-        score = dist - 0.35 * size_bonus
+
+        size_bonus = min(1.0, float(area) / max(1.0, region_area * 0.10))
+
+        # Penalize overly blocky components.
+        block_penalty = 0.0
+        if fill >= 0.70 and per_area > 0 and per_area <= 0.060:
+            block_penalty += 0.18
+        if area_ratio >= 0.65:
+            block_penalty += 0.10
+
+        # Penalize components that hug the crop edges.
+        touch = int(x <= 1) + int(y <= 1) + int(x + ww >= w - 2) + int(y + hh >= h - 2)
+        edge_penalty = 0.06 * float(touch)
+
+        score = dist - 0.42 * size_bonus + block_penalty + edge_penalty
         comps.append((score, i, x, y, ww, hh, cx, cy))
 
     if not comps:
@@ -635,7 +729,7 @@ def trim_glyph(
     best_x1, best_y1 = bx + bww, by + bhh
 
     # Include nearby components that belong to the same glyph.
-    expand = max(6, int(round(min(w, h) * 0.06)))
+    expand = max(8, int(round(min(w, h) * 0.10)))
     sel = []
     ex0 = max(0, best_x0 - expand)
     ex1 = min(w, best_x1 + expand)

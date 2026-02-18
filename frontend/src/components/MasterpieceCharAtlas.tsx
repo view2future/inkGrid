@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { BookOpen, Copy, QrCode, Search, Share2 } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
 import QRCode from 'qrcode';
+import { getShareBaseUrls } from '../utils/shareBase';
 
 const IS_NATIVE_ANDROID = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
 const IMG_LOADING: 'eager' | 'lazy' = IS_NATIVE_ANDROID ? 'eager' : 'lazy';
@@ -519,7 +520,8 @@ export function MasterpieceCharAtlasCard({
   const shareUrl = useMemo(() => {
     if (!selectedChar) return null;
     try {
-      const u = new URL(window.location.origin + '/');
+      const base = getShareBaseUrls().prod;
+      const u = new URL(base + '/');
       u.searchParams.set('inkflow', '1');
       u.searchParams.set('page', 'study_deck');
       u.searchParams.set('steleId', 'li_001');
@@ -530,6 +532,27 @@ export function MasterpieceCharAtlasCard({
     } catch {
       return null;
     }
+  }, [selectedChar, selected?.index]);
+
+  const shareUrls = useMemo(() => {
+    const base = getShareBaseUrls();
+    if (!selectedChar) return { prod: '', local: '' };
+    const build = (baseUrl: string) => {
+      if (!baseUrl) return '';
+      try {
+        const u = new URL(baseUrl + '/');
+        u.searchParams.set('inkflow', '1');
+        u.searchParams.set('page', 'study_deck');
+        u.searchParams.set('steleId', 'li_001');
+        u.searchParams.set('card', 'atlas');
+        u.searchParams.set('char', selectedChar);
+        if (selected?.index != null) u.searchParams.set('glyphId', String(selected.index));
+        return u.toString();
+      } catch {
+        return '';
+      }
+    };
+    return { prod: build(base.prod), local: base.local ? build(base.local) : '' };
   }, [selectedChar, selected?.index]);
 
   useEffect(() => {
@@ -555,12 +578,13 @@ export function MasterpieceCharAtlasCard({
   }, [shareOpen, shareUrl]);
 
   const copyShareUrl = async () => {
-    if (!shareUrl) return;
+    const url = shareUrls.prod;
+    if (!url) return;
     try {
-      if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(shareUrl);
+      if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(url);
       else {
         const ta = document.createElement('textarea');
-        ta.value = shareUrl;
+        ta.value = url;
         ta.style.position = 'fixed';
         ta.style.left = '-9999px';
         document.body.appendChild(ta);
@@ -967,7 +991,7 @@ export function MasterpieceCharAtlasCard({
                   <div className="rounded-[1.5rem] bg-white/70 border border-stone-200/70 p-4">
                     <div className="text-[10px] font-black tracking-[0.22em] text-stone-600">链接</div>
                     <div className="mt-3 text-[10px] font-mono text-stone-600 break-all">
-                      {shareUrl || '—'}
+                      {shareUrls.prod || '—'}
                     </div>
                     <button
                       type="button"
@@ -976,6 +1000,21 @@ export function MasterpieceCharAtlasCard({
                     >
                       <Copy size={14} /> {shareCopied ? '已复制' : '复制链接'}
                     </button>
+                    {shareUrls.local ? (
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          try {
+                            if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(shareUrls.local);
+                          } catch {
+                            // ignore
+                          }
+                        }}
+                        className="mt-2 w-full h-10 rounded-[1.25rem] bg-white/70 border border-stone-200/70 text-stone-800 font-black tracking-[0.18em] text-[11px] flex items-center justify-center"
+                      >
+                        复制本地链接
+                      </button>
+                    ) : null}
                     <button
                       type="button"
                       onClick={async () => {

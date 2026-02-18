@@ -63,10 +63,7 @@ const Logo: React.FC<LogoProps> = ({ size = 32 }) => {
          />
       </div>
 
-      {/* 4. 数字化坐标文本（装饰） */}
-      <div className="absolute -bottom-2 -right-2 text-[6px] font-mono text-amber-500/30 tracking-tighter uppercase leading-none">
-         Grid_Align_v6.0
-      </div>
+       {/* 4. 数字化坐标文本（装饰） */}
     </motion.div>
   );
 };

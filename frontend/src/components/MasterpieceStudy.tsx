@@ -6,6 +6,7 @@ import { TransformComponent, TransformWrapper } from 'react-zoom-pan-pinch';
 import QRCode from 'qrcode';
 
 import { extractGoldLine, getKeywords, highlightText, splitLeadSentence } from '../utils/readingEnhance';
+import { getShareBaseUrls } from '../utils/shareBase';
 
 const IS_NATIVE_ANDROID = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
 const IMG_LOADING: 'eager' | 'lazy' = IS_NATIVE_ANDROID ? 'eager' : 'lazy';
@@ -365,8 +366,25 @@ function CaoquanKnowledgeCard({
   }, [stele.id]);
 
   const buildShareUrl = (pointIndex: number) => {
+    const base = getShareBaseUrls().prod;
     try {
-      const u = new URL(window.location.origin + '/');
+      const u = new URL(base + '/');
+      u.searchParams.set('inkflow', '1');
+      u.searchParams.set('page', 'study_deck');
+      u.searchParams.set('steleId', 'li_001');
+      u.searchParams.set('card', 'knowledge');
+      u.searchParams.set('point', String(pointIndex));
+      return u.toString();
+    } catch {
+      return '';
+    }
+  };
+
+  const buildLocalShareUrl = (pointIndex: number) => {
+    const base = getShareBaseUrls().local;
+    if (!base) return '';
+    try {
+      const u = new URL(base + '/');
       u.searchParams.set('inkflow', '1');
       u.searchParams.set('page', 'study_deck');
       u.searchParams.set('steleId', 'li_001');
@@ -438,25 +456,28 @@ function CaoquanKnowledgeCard({
                         </div>
                       </div>
 
-                      <button
-                        type="button"
-                        disabled={!hasEv}
-                        onClick={() => setOpenPoint(i)}
-                        className="shrink-0 h-10 px-4 rounded-[1.25rem] bg-[#8B0000] border border-[#8B0000]/60 text-[#F2E6CE] text-[10px] font-black tracking-[0.18em] shadow-sm disabled:opacity-35"
-                      >
-                        看例
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSharePoint(i);
-                          setShareQrUrl(null);
-                          setShareCopied(false);
-                        }}
-                        className="shrink-0 h-10 px-3 rounded-[1.25rem] bg-white/70 border border-stone-200/70 text-stone-800 text-[10px] font-black tracking-[0.18em] shadow-sm"
-                      >
-                        分享
-                      </button>
+                      <div className="shrink-0 flex items-center gap-2">
+                        <button
+                          type="button"
+                          disabled={!hasEv}
+                          onClick={() => setOpenPoint(i)}
+                          className="h-10 px-4 rounded-[1.25rem] bg-[#8B0000] border border-[#8B0000]/60 text-[#F2E6CE] text-[10px] font-black tracking-[0.18em] shadow-sm disabled:opacity-35"
+                        >
+                          看例
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSharePoint(i);
+                            setShareQrUrl(null);
+                            setShareCopied(false);
+                          }}
+                          className="h-10 w-10 rounded-[1.25rem] bg-white/70 border border-stone-200/70 text-stone-800 text-[12px] font-black shadow-sm"
+                          aria-label="Share"
+                        >
+                          ⋯
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );
@@ -515,7 +536,7 @@ function CaoquanKnowledgeCard({
                 </button>
               </div>
 
-              <div className="mt-4 grid grid-cols-4 gap-2">
+              <div className="mt-4 grid grid-cols-3 min-[420px]:grid-cols-4 gap-2">
                 {(() => {
                   const ev = pointEvidence[String(openPoint)] || null;
                   const glyphIds = ev?.glyphIds || [];
@@ -570,7 +591,7 @@ function CaoquanKnowledgeCard({
                 </button>
               </div>
 
-              <div className="mt-4 grid grid-cols-2 gap-4">
+              <div className="mt-4 grid grid-cols-1 min-[420px]:grid-cols-2 gap-4">
                 <div className="rounded-[1.5rem] bg-white/70 border border-stone-200/70 p-4 flex flex-col items-center justify-center">
                   <div className="w-full aspect-square rounded-2xl bg-white border border-stone-200/70 flex items-center justify-center overflow-hidden">
                     {shareQrUrl ? (
@@ -583,7 +604,9 @@ function CaoquanKnowledgeCard({
                 </div>
                 <div className="rounded-[1.5rem] bg-white/70 border border-stone-200/70 p-4">
                   <div className="text-[10px] font-black tracking-[0.22em] text-stone-600">链接</div>
-                  <div className="mt-3 text-[10px] font-mono text-stone-600 break-all">{buildShareUrl(sharePoint)}</div>
+                  <div className="mt-3 rounded-xl bg-white/70 border border-stone-200/70 px-3 py-2 text-[10px] font-mono text-stone-600 overflow-x-auto whitespace-nowrap">
+                    {buildShareUrl(sharePoint)}
+                  </div>
                   <button
                     type="button"
                     onClick={async () => {
@@ -601,6 +624,24 @@ function CaoquanKnowledgeCard({
                   >
                     {shareCopied ? '已复制' : '复制链接'}
                   </button>
+
+                  {buildLocalShareUrl(sharePoint) ? (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const url = buildLocalShareUrl(sharePoint);
+                        if (!url) return;
+                        try {
+                          if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(url);
+                        } catch {
+                          // ignore
+                        }
+                      }}
+                      className="mt-2 w-full h-10 rounded-[1.25rem] bg-white/70 border border-stone-200/70 text-stone-800 font-black tracking-[0.18em] text-[11px] flex items-center justify-center"
+                    >
+                      复制本地链接
+                    </button>
+                  ) : null}
                 </div>
               </div>
             </motion.div>
