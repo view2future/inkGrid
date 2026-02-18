@@ -12,6 +12,7 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         SplashScreen.installSplashScreen(this);
+        setTheme(R.style.AppTheme_NoActionBar);
         super.onCreate(savedInstanceState);
         registerPlugin(InkgridNotificationsPlugin.class);
         registerPlugin(InkgridMediaPlugin.class);
