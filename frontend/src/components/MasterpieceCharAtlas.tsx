@@ -408,10 +408,20 @@ export function MasterpieceCharAtlasCard({
     if (!selectedChar) return;
     const el = occGridRef.current;
     if (!el) return;
-    const target = el.querySelector(`[data-occ-idx="${occIdx}"]`);
-    if (target instanceof HTMLElement) {
-      target.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-    }
+    const raf = window.requestAnimationFrame(() => {
+      const target = el.querySelector(`[data-occ-idx="${occIdx}"]`);
+      if (!(target instanceof HTMLElement)) return;
+      try {
+        const c = el.getBoundingClientRect();
+        const t = target.getBoundingClientRect();
+        const pad = 8;
+        const inView = t.top >= c.top + pad && t.bottom <= c.bottom - pad;
+        if (!inView) target.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      } catch {
+        target.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      }
+    });
+    return () => window.cancelAnimationFrame(raf);
   }, [tab, selectedChar, occIdx]);
 
   const didApplyInitialGlyphRef = useRef(false);

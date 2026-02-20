@@ -1,0 +1,3860 @@
+{
+  "version": 1,
+  "by_char": {
+    "赤": {
+      "count": 5,
+      "glyphIds": [
+        1,
+        20,
+        542,
+        671,
+        850
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "壁": {
+      "count": 5,
+      "glyphIds": [
+        2,
+        21,
+        543,
+        672,
+        851
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "赋": {
+      "count": 3,
+      "glyphIds": [
+        3,
+        279,
+        544
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "壬": {
+      "count": 1,
+      "glyphIds": [
+        4
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "戌": {
+      "count": 1,
+      "glyphIds": [
+        5
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "之": {
+      "count": 48,
+      "glyphIds": [
+        6,
+        22,
+        39,
+        44,
+        53,
+        60,
+        73,
+        79,
+        119,
+        156,
+        181,
+        187,
+        222,
+        245,
+        284,
+        301,
+        313,
+        331,
+        337,
+        343,
+        409,
+        426,
+        444,
+        453,
+        465,
+        471,
+        476,
+        482,
+        487,
+        491,
+        498,
+        507,
+        538,
+        549,
+        567,
+        588,
+        632,
+        652,
+        660,
+        673,
+        694,
+        726,
+        732,
+        843,
+        852,
+        870,
+        874,
+        897
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "秋": {
+      "count": 1,
+      "glyphIds": [
+        7
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "七": {
+      "count": 1,
+      "glyphIds": [
+        8
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "月": {
+      "count": 12,
+      "glyphIds": [
+        9,
+        38,
+        48,
+        209,
+        354,
+        379,
+        473,
+        548,
+        584,
+        605,
+        685,
+        693
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "既": {
+      "count": 4,
+      "glyphIds": [
+        10,
+        521,
+        539,
+        571
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "望": {
+      "count": 5,
+      "glyphIds": [
+        11,
+        139,
+        226,
+        230,
+        550
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "苏": {
+      "count": 3,
+      "glyphIds": [
+        12,
+        190,
+        370
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "子": {
+      "count": 7,
+      "glyphIds": [
+        13,
+        191,
+        295,
+        371,
+        506,
+        657,
+        883
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "与": {
+      "count": 8,
+      "glyphIds": [
+        14,
+        294,
+        378,
+        429,
+        468,
+        505,
+        528,
+        666
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "客": {
+      "count": 12,
+      "glyphIds": [
+        15,
+        35,
+        146,
+        200,
+        207,
+        373,
+        511,
+        561,
+        598,
+        614,
+        737,
+        826
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "泛": {
+      "count": 1,
+      "glyphIds": [
+        16
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "舟": {
+      "count": 6,
+      "glyphIds": [
+        17,
+        186,
+        315,
+        532,
+        778,
+        820
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "游": {
+      "count": 4,
+      "glyphIds": [
+        18,
+        351,
+        669,
+        853
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "于": {
+      "count": 11,
+      "glyphIds": [
+        19,
+        50,
+        57,
+        109,
+        247,
+        298,
+        325,
+        367,
+        557,
+        662,
+        670
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "下": {
+      "count": 4,
+      "glyphIds": [
+        23,
+        257,
+        674,
+        844
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "清": {
+      "count": 3,
+      "glyphIds": [
+        24,
+        466,
+        608
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "风": {
+      "count": 6,
+      "glyphIds": [
+        25,
+        89,
+        369,
+        467,
+        607,
+        754
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "徐": {
+      "count": 1,
+      "glyphIds": [
+        26
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "来": {
+      "count": 2,
+      "glyphIds": [
+        27,
+        805
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "水": {
+      "count": 5,
+      "glyphIds": [
+        28,
+        66,
+        377,
+        687,
+        756
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "波": {
+      "count": 1,
+      "glyphIds": [
+        29
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "不": {
+      "count": 14,
+      "glyphIds": [
+        30,
+        91,
+        174,
+        359,
+        414,
+        421,
+        492,
+        534,
+        658,
+        700,
+        738,
+        771,
+        862,
+        898
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "兴": {
+      "count": 1,
+      "glyphIds": [
+        31
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "举": {
+      "count": 3,
+      "glyphIds": [
+        32,
+        316,
+        620
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "酒": {
+      "count": 8,
+      "glyphIds": [
+        33,
+        112,
+        274,
+        600,
+        602,
+        638,
+        650,
+        665
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "属": {
+      "count": 2,
+      "glyphIds": [
+        34,
+        321
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "诵": {
+      "count": 1,
+      "glyphIds": [
+        36
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "明": {
+      "count": 6,
+      "glyphIds": [
+        37,
+        129,
+        210,
+        353,
+        472,
+        583
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "诗": {
+      "count": 3,
+      "glyphIds": [
+        40,
+        223,
+        280
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "歌": {
+      "count": 5,
+      "glyphIds": [
+        41,
+        118,
+        120,
+        153,
+        590
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "窈": {
+      "count": 1,
+      "glyphIds": [
+        42
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "窕": {
+      "count": 1,
+      "glyphIds": [
+        43
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "章": {
+      "count": 1,
+      "glyphIds": [
+        45
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "少": {
+      "count": 1,
+      "glyphIds": [
+        46
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "焉": {
+      "count": 3,
+      "glyphIds": [
+        47,
+        741,
+        789
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "出": {
+      "count": 2,
+      "glyphIds": [
+        49,
+        690
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "东": {
+      "count": 5,
+      "glyphIds": [
+        51,
+        229,
+        263,
+        536,
+        804
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "山": {
+      "count": 6,
+      "glyphIds": [
+        52,
+        233,
+        469,
+        683,
+        699,
+        750
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "上": {
+      "count": 4,
+      "glyphIds": [
+        54,
+        302,
+        464,
+        710
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "徘": {
+      "count": 1,
+      "glyphIds": [
+        55
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "徊": {
+      "count": 1,
+      "glyphIds": [
+        56
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "斗": {
+      "count": 2,
+      "glyphIds": [
+        58,
+        649
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "牛": {
+      "count": 1,
+      "glyphIds": [
+        59
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "间": {
+      "count": 3,
+      "glyphIds": [
+        61,
+        445,
+        470
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "白": {
+      "count": 3,
+      "glyphIds": [
+        62,
+        540,
+        606
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "露": {
+      "count": 2,
+      "glyphIds": [
+        63,
+        570
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "横": {
+      "count": 3,
+      "glyphIds": [
+        64,
+        277,
+        802
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "江": {
+      "count": 10,
+      "glyphIds": [
+        65,
+        258,
+        276,
+        299,
+        342,
+        463,
+        631,
+        675,
+        698,
+        803
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "光": {
+      "count": 2,
+      "glyphIds": [
+        67,
+        133
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "接": {
+      "count": 1,
+      "glyphIds": [
+        68
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "天": {
+      "count": 5,
+      "glyphIds": [
+        69,
+        143,
+        326,
+        411,
+        442
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "纵": {
+      "count": 1,
+      "glyphIds": [
+        70
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "一": {
+      "count": 8,
+      "glyphIds": [
+        71,
+        144,
+        282,
+        311,
+        332,
+        417,
+        457,
+        833
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "苇": {
+      "count": 1,
+      "glyphIds": [
+        72
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "所": {
+      "count": 6,
+      "glyphIds": [
+        74,
+        94,
+        454,
+        508,
+        636,
+        785
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "如": {
+      "count": 13,
+      "glyphIds": [
+        75,
+        85,
+        99,
+        162,
+        164,
+        166,
+        168,
+        176,
+        383,
+        393,
+        609,
+        629,
+        807
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "凌": {
+      "count": 1,
+      "glyphIds": [
+        76
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "万": {
+      "count": 1,
+      "glyphIds": [
+        77
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "顷": {
+      "count": 1,
+      "glyphIds": [
+        78
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "茫": {
+      "count": 1,
+      "glyphIds": [
+        80
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "然": {
+      "count": 8,
+      "glyphIds": [
+        81,
+        161,
+        193,
+        205,
+        743,
+        761,
+        765,
+        815
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "浩": {
+      "count": 2,
+      "glyphIds": [
+        82,
+        83
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "乎": {
+      "count": 13,
+      "glyphIds": [
+        84,
+        98,
+        224,
+        238,
+        251,
+        361,
+        380,
+        439,
+        531,
+        639,
+        769,
+        780,
+        855
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "冯": {
+      "count": 2,
+      "glyphIds": [
+        86,
+        730
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "虚": {
+      "count": 2,
+      "glyphIds": [
+        87,
+        391
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "御": {
+      "count": 1,
+      "glyphIds": [
+        88
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "而": {
+      "count": 32,
+      "glyphIds": [
+        90,
+        106,
+        117,
+        154,
+        198,
+        262,
+        287,
+        306,
+        355,
+        385,
+        395,
+        407,
+        424,
+        435,
+        459,
+        477,
+        483,
+        503,
+        513,
+        586,
+        594,
+        641,
+        697,
+        709,
+        762,
+        766,
+        776,
+        787,
+        821,
+        847,
+        861,
+        878
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "知": {
+      "count": 5,
+      "glyphIds": [
+        92,
+        358,
+        375,
+        535,
+        869
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "其": {
+      "count": 10,
+      "glyphIds": [
+        93,
+        157,
+        204,
+        253,
+        404,
+        420,
+        770,
+        784,
+        857,
+        900
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "止": {
+      "count": 2,
+      "glyphIds": [
+        95,
+        786
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "飘": {
+      "count": 2,
+      "glyphIds": [
+        96,
+        97
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "遗": {
+      "count": 2,
+      "glyphIds": [
+        100,
+        365
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "世": {
+      "count": 2,
+      "glyphIds": [
+        101,
+        283
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "独": {
+      "count": 1,
+      "glyphIds": [
+        102
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "立": {
+      "count": 1,
+      "glyphIds": [
+        103
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "羽": {
+      "count": 2,
+      "glyphIds": [
+        104,
+        836
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "化": {
+      "count": 1,
+      "glyphIds": [
+        105
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "登": {
+      "count": 3,
+      "glyphIds": [
+        107,
+        720,
+        777
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "仙": {
+      "count": 2,
+      "glyphIds": [
+        108,
+        348
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "是": {
+      "count": 4,
+      "glyphIds": [
+        110,
+        494,
+        545,
+        663
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "饮": {
+      "count": 1,
+      "glyphIds": [
+        111
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "乐": {
+      "count": 3,
+      "glyphIds": [
+        113,
+        587,
+        854
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "甚": {
+      "count": 1,
+      "glyphIds": [
+        114
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "扣": {
+      "count": 1,
+      "glyphIds": [
+        115
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "舷": {
+      "count": 1,
+      "glyphIds": [
+        116
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "曰": {
+      "count": 8,
+      "glyphIds": [
+        121,
+        201,
+        208,
+        372,
+        596,
+        615,
+        646,
+        849
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "桂": {
+      "count": 1,
+      "glyphIds": [
+        122
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "棹": {
+      "count": 1,
+      "glyphIds": [
+        123
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "兮": {
+      "count": 4,
+      "glyphIds": [
+        124,
+        130,
+        136,
+        142
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "兰": {
+      "count": 1,
+      "glyphIds": [
+        125
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "桨": {
+      "count": 1,
+      "glyphIds": [
+        126
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "击": {
+      "count": 1,
+      "glyphIds": [
+        127
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "空": {
+      "count": 2,
+      "glyphIds": [
+        128,
+        272
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "溯": {
+      "count": 1,
+      "glyphIds": [
+        131
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "流": {
+      "count": 4,
+      "glyphIds": [
+        132,
+        261,
+        676,
+        782
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "渺": {
+      "count": 3,
+      "glyphIds": [
+        134,
+        135,
+        328
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "予": {
+      "count": 8,
+      "glyphIds": [
+        137,
+        563,
+        705,
+        758,
+        819,
+        828,
+        846,
+        890
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "怀": {
+      "count": 1,
+      "glyphIds": [
+        138
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "美": {
+      "count": 1,
+      "glyphIds": [
+        140
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "人": {
+      "count": 2,
+      "glyphIds": [
+        141,
+        577
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "方": {
+      "count": 3,
+      "glyphIds": [
+        145,
+        252,
+        537
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "有": {
+      "count": 8,
+      "glyphIds": [
+        147,
+        448,
+        455,
+        597,
+        601,
+        648,
+        677,
+        799
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "吹": {
+      "count": 1,
+      "glyphIds": [
+        148
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "洞": {
+      "count": 1,
+      "glyphIds": [
+        149
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "箫": {
+      "count": 1,
+      "glyphIds": [
+        150
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "者": {
+      "count": 9,
+      "glyphIds": [
+        151,
+        250,
+        382,
+        392,
+        406,
+        423,
+        497,
+        617,
+        881
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "倚": {
+      "count": 1,
+      "glyphIds": [
+        152
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "和": {
+      "count": 1,
+      "glyphIds": [
+        155
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "声": {
+      "count": 3,
+      "glyphIds": [
+        158,
+        479,
+        678
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "呜": {
+      "count": 3,
+      "glyphIds": [
+        159,
+        160,
+        864
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "怨": {
+      "count": 1,
+      "glyphIds": [
+        163
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "慕": {
+      "count": 1,
+      "glyphIds": [
+        165
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "泣": {
+      "count": 2,
+      "glyphIds": [
+        167,
+        184
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "诉": {
+      "count": 1,
+      "glyphIds": [
+        169
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "余": {
+      "count": 1,
+      "glyphIds": [
+        170
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "音": {
+      "count": 1,
+      "glyphIds": [
+        171
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "袅": {
+      "count": 2,
+      "glyphIds": [
+        172,
+        173
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "绝": {
+      "count": 1,
+      "glyphIds": [
+        175
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "缕": {
+      "count": 1,
+      "glyphIds": [
+        177
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "舞": {
+      "count": 1,
+      "glyphIds": [
+        178
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "幽": {
+      "count": 2,
+      "glyphIds": [
+        179,
+        733
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "壑": {
+      "count": 1,
+      "glyphIds": [
+        180
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "潜": {
+      "count": 1,
+      "glyphIds": [
+        182
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "蛟": {
+      "count": 1,
+      "glyphIds": [
+        183
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "孤": {
+      "count": 2,
+      "glyphIds": [
+        185,
+        800
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "嫠": {
+      "count": 1,
+      "glyphIds": [
+        188
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "妇": {
+      "count": 3,
+      "glyphIds": [
+        189,
+        644,
+        645
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "愀": {
+      "count": 1,
+      "glyphIds": [
+        192
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "正": {
+      "count": 1,
+      "glyphIds": [
+        194
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "襟": {
+      "count": 1,
+      "glyphIds": [
+        195
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "危": {
+      "count": 2,
+      "glyphIds": [
+        196,
+        727
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "坐": {
+      "count": 1,
+      "glyphIds": [
+        197
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "问": {
+      "count": 2,
+      "glyphIds": [
+        199,
+        856
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "何": {
+      "count": 4,
+      "glyphIds": [
+        202,
+        437,
+        613,
+        696
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "为": {
+      "count": 2,
+      "glyphIds": [
+        203,
+        478
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "也": {
+      "count": 10,
+      "glyphIds": [
+        206,
+        264,
+        286,
+        389,
+        400,
+        434,
+        502,
+        774,
+        823,
+        884
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "星": {
+      "count": 1,
+      "glyphIds": [
+        211
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "稀": {
+      "count": 1,
+      "glyphIds": [
+        212
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "乌": {
+      "count": 1,
+      "glyphIds": [
+        213
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "鹊": {
+      "count": 1,
+      "glyphIds": [
+        214
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "南": {
+      "count": 1,
+      "glyphIds": [
+        215
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "飞": {
+      "count": 3,
+      "glyphIds": [
+        216,
+        347,
+        876
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "此": {
+      "count": 3,
+      "glyphIds": [
+        217,
+        241,
+        610
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "非": {
+      "count": 4,
+      "glyphIds": [
+        218,
+        242,
+        451,
+        882
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "曹": {
+      "count": 1,
+      "glyphIds": [
+        219
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "孟": {
+      "count": 2,
+      "glyphIds": [
+        220,
+        243
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "德": {
+      "count": 2,
+      "glyphIds": [
+        221,
+        244
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "西": {
+      "count": 2,
+      "glyphIds": [
+        225,
+        822
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "夏": {
+      "count": 1,
+      "glyphIds": [
+        227
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "口": {
+      "count": 2,
+      "glyphIds": [
+        228,
+        625
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "武": {
+      "count": 1,
+      "glyphIds": [
+        231
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "昌": {
+      "count": 1,
+      "glyphIds": [
+        232
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "川": {
+      "count": 1,
+      "glyphIds": [
+        234
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "相": {
+      "count": 4,
+      "glyphIds": [
+        235,
+        320,
+        527,
+        591
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "缪": {
+      "count": 1,
+      "glyphIds": [
+        236
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "郁": {
+      "count": 1,
+      "glyphIds": [
+        237
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "苍": {
+      "count": 2,
+      "glyphIds": [
+        239,
+        240
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "困": {
+      "count": 1,
+      "glyphIds": [
+        246
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "周": {
+      "count": 1,
+      "glyphIds": [
+        248
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "郎": {
+      "count": 1,
+      "glyphIds": [
+        249
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "破": {
+      "count": 1,
+      "glyphIds": [
+        254
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "荆": {
+      "count": 1,
+      "glyphIds": [
+        255
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "州": {
+      "count": 1,
+      "glyphIds": [
+        256
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "陵": {
+      "count": 1,
+      "glyphIds": [
+        259
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "顺": {
+      "count": 1,
+      "glyphIds": [
+        260
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "舳": {
+      "count": 1,
+      "glyphIds": [
+        265
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "舻": {
+      "count": 1,
+      "glyphIds": [
+        266
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "千": {
+      "count": 2,
+      "glyphIds": [
+        267,
+        681
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "里": {
+      "count": 1,
+      "glyphIds": [
+        268
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "旌": {
+      "count": 1,
+      "glyphIds": [
+        269
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "旗": {
+      "count": 1,
+      "glyphIds": [
+        270
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "蔽": {
+      "count": 1,
+      "glyphIds": [
+        271
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "酾": {
+      "count": 1,
+      "glyphIds": [
+        273
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "临": {
+      "count": 3,
+      "glyphIds": [
+        275,
+        558,
+        841
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "槊": {
+      "count": 1,
+      "glyphIds": [
+        278
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "固": {
+      "count": 1,
+      "glyphIds": [
+        281
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "雄": {
+      "count": 1,
+      "glyphIds": [
+        285
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "今": {
+      "count": 2,
+      "glyphIds": [
+        288,
+        616
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "安": {
+      "count": 2,
+      "glyphIds": [
+        289,
+        635
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "在": {
+      "count": 2,
+      "glyphIds": [
+        290,
+        579
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "哉": {
+      "count": 1,
+      "glyphIds": [
+        291
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "况": {
+      "count": 1,
+      "glyphIds": [
+        292
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "吾": {
+      "count": 4,
+      "glyphIds": [
+        293,
+        335,
+        452,
+        504
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "渔": {
+      "count": 1,
+      "glyphIds": [
+        296
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "樵": {
+      "count": 1,
+      "glyphIds": [
+        297
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "渚": {
+      "count": 1,
+      "glyphIds": [
+        300
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "侣": {
+      "count": 1,
+      "glyphIds": [
+        303
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "鱼": {
+      "count": 3,
+      "glyphIds": [
+        304,
+        623,
+        667
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "虾": {
+      "count": 1,
+      "glyphIds": [
+        305
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "友": {
+      "count": 1,
+      "glyphIds": [
+        307
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "麋": {
+      "count": 1,
+      "glyphIds": [
+        308
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "鹿": {
+      "count": 1,
+      "glyphIds": [
+        309
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "驾": {
+      "count": 1,
+      "glyphIds": [
+        310
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "叶": {
+      "count": 2,
+      "glyphIds": [
+        312,
+        574
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "扁": {
+      "count": 1,
+      "glyphIds": [
+        314
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "匏": {
+      "count": 1,
+      "glyphIds": [
+        317
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "樽": {
+      "count": 1,
+      "glyphIds": [
+        318
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "以": {
+      "count": 4,
+      "glyphIds": [
+        319,
+        349,
+        416,
+        655
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "寄": {
+      "count": 1,
+      "glyphIds": [
+        322
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "蜉": {
+      "count": 1,
+      "glyphIds": [
+        323
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "蝣": {
+      "count": 1,
+      "glyphIds": [
+        324
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "地": {
+      "count": 4,
+      "glyphIds": [
+        327,
+        412,
+        443,
+        580
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "沧": {
+      "count": 1,
+      "glyphIds": [
+        329
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "海": {
+      "count": 1,
+      "glyphIds": [
+        330
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "粟": {
+      "count": 1,
+      "glyphIds": [
+        333
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "哀": {
+      "count": 1,
+      "glyphIds": [
+        334
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "生": {
+      "count": 1,
+      "glyphIds": [
+        336
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "须": {
+      "count": 2,
+      "glyphIds": [
+        338,
+        824
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "臾": {
+      "count": 2,
+      "glyphIds": [
+        339,
+        825
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "羡": {
+      "count": 2,
+      "glyphIds": [
+        340,
+        438
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "长": {
+      "count": 5,
+      "glyphIds": [
+        341,
+        356,
+        399,
+        744,
+        816
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "无": {
+      "count": 6,
+      "glyphIds": [
+        344,
+        432,
+        488,
+        499,
+        599,
+        603
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "穷": {
+      "count": 1,
+      "glyphIds": [
+        345
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "挟": {
+      "count": 1,
+      "glyphIds": [
+        346
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "遨": {
+      "count": 1,
+      "glyphIds": [
+        350
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "抱": {
+      "count": 1,
+      "glyphIds": [
+        352
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "终": {
+      "count": 1,
+      "glyphIds": [
+        357
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "可": {
+      "count": 3,
+      "glyphIds": [
+        360,
+        701,
+        772
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "骤": {
+      "count": 1,
+      "glyphIds": [
+        362
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "得": {
+      "count": 4,
+      "glyphIds": [
+        363,
+        475,
+        622,
+        637
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "托": {
+      "count": 1,
+      "glyphIds": [
+        364
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "响": {
+      "count": 1,
+      "glyphIds": [
+        366
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "悲": {
+      "count": 2,
+      "glyphIds": [
+        368,
+        763
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "亦": {
+      "count": 4,
+      "glyphIds": [
+        374,
+        759,
+        829,
+        891
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "夫": {
+      "count": 2,
+      "glyphIds": [
+        376,
+        441
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "逝": {
+      "count": 1,
+      "glyphIds": [
+        381
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "斯": {
+      "count": 1,
+      "glyphIds": [
+        384
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "未": {
+      "count": 1,
+      "glyphIds": [
+        386
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "尝": {
+      "count": 1,
+      "glyphIds": [
+        387
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "往": {
+      "count": 1,
+      "glyphIds": [
+        388
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "盈": {
+      "count": 1,
+      "glyphIds": [
+        390
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "彼": {
+      "count": 1,
+      "glyphIds": [
+        394
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "卒": {
+      "count": 1,
+      "glyphIds": [
+        396
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "莫": {
+      "count": 2,
+      "glyphIds": [
+        397,
+        460
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "消": {
+      "count": 1,
+      "glyphIds": [
+        398
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "盖": {
+      "count": 2,
+      "glyphIds": [
+        401,
+        735
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "将": {
+      "count": 3,
+      "glyphIds": [
+        402,
+        555,
+        792
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "自": {
+      "count": 3,
+      "glyphIds": [
+        403,
+        419,
+        552
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "变": {
+      "count": 2,
+      "glyphIds": [
+        405,
+        422
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "观": {
+      "count": 2,
+      "glyphIds": [
+        408,
+        425
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "则": {
+      "count": 2,
+      "glyphIds": [
+        410,
+        427
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "曾": {
+      "count": 2,
+      "glyphIds": [
+        413,
+        691
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "能": {
+      "count": 2,
+      "glyphIds": [
+        415,
+        739
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "瞬": {
+      "count": 1,
+      "glyphIds": [
+        418
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "物": {
+      "count": 3,
+      "glyphIds": [
+        428,
+        446,
+        496
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "我": {
+      "count": 4,
+      "glyphIds": [
+        430,
+        647,
+        868,
+        880
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "皆": {
+      "count": 1,
+      "glyphIds": [
+        431
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "尽": {
+      "count": 4,
+      "glyphIds": [
+        433,
+        500,
+        522,
+        575
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "又": {
+      "count": 1,
+      "glyphIds": [
+        436
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "且": {
+      "count": 1,
+      "glyphIds": [
+        440
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "各": {
+      "count": 1,
+      "glyphIds": [
+        447
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "主": {
+      "count": 1,
+      "glyphIds": [
+        449
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "苟": {
+      "count": 1,
+      "glyphIds": [
+        450
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "虽": {
+      "count": 1,
+      "glyphIds": [
+        456
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "毫": {
+      "count": 1,
+      "glyphIds": [
+        458
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "取": {
+      "count": 2,
+      "glyphIds": [
+        461,
+        486
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "惟": {
+      "count": 1,
+      "glyphIds": [
+        462
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "耳": {
+      "count": 1,
+      "glyphIds": [
+        474
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "目": {
+      "count": 1,
+      "glyphIds": [
+        480
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "遇": {
+      "count": 1,
+      "glyphIds": [
+        481
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "成": {
+      "count": 1,
+      "glyphIds": [
+        484
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "色": {
+      "count": 1,
+      "glyphIds": [
+        485
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "禁": {
+      "count": 1,
+      "glyphIds": [
+        489
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "用": {
+      "count": 1,
+      "glyphIds": [
+        490
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "竭": {
+      "count": 1,
+      "glyphIds": [
+        493
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "造": {
+      "count": 1,
+      "glyphIds": [
+        495
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "藏": {
+      "count": 2,
+      "glyphIds": [
+        501,
+        651
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "共": {
+      "count": 1,
+      "glyphIds": [
+        509
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "适": {
+      "count": 2,
+      "glyphIds": [
+        510,
+        798
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "喜": {
+      "count": 1,
+      "glyphIds": [
+        512
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "笑": {
+      "count": 2,
+      "glyphIds": [
+        514,
+        889
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "洗": {
+      "count": 1,
+      "glyphIds": [
+        515
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "盏": {
+      "count": 1,
+      "glyphIds": [
+        516
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "更": {
+      "count": 1,
+      "glyphIds": [
+        517
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "酌": {
+      "count": 1,
+      "glyphIds": [
+        518
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "肴": {
+      "count": 2,
+      "glyphIds": [
+        519,
+        604
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "核": {
+      "count": 1,
+      "glyphIds": [
+        520
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "杯": {
+      "count": 1,
+      "glyphIds": [
+        523
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "盘": {
+      "count": 1,
+      "glyphIds": [
+        524
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "狼": {
+      "count": 1,
+      "glyphIds": [
+        525
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "籍": {
+      "count": 1,
+      "glyphIds": [
+        526
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "枕": {
+      "count": 1,
+      "glyphIds": [
+        529
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "藉": {
+      "count": 1,
+      "glyphIds": [
+        530
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "中": {
+      "count": 2,
+      "glyphIds": [
+        533,
+        781
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "后": {
+      "count": 1,
+      "glyphIds": [
+        541
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "岁": {
+      "count": 1,
+      "glyphIds": [
+        546
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "十": {
+      "count": 1,
+      "glyphIds": [
+        547
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "步": {
+      "count": 1,
+      "glyphIds": [
+        551
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "雪": {
+      "count": 1,
+      "glyphIds": [
+        553
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "堂": {
+      "count": 1,
+      "glyphIds": [
+        554
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "归": {
+      "count": 2,
+      "glyphIds": [
+        556,
+        640
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "皋": {
+      "count": 2,
+      "glyphIds": [
+        559,
+        842
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "二": {
+      "count": 2,
+      "glyphIds": [
+        560,
+        736
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "从": {
+      "count": 2,
+      "glyphIds": [
+        562,
+        740
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "过": {
+      "count": 3,
+      "glyphIds": [
+        564,
+        840,
+        879
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "黄": {
+      "count": 1,
+      "glyphIds": [
+        565
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "泥": {
+      "count": 1,
+      "glyphIds": [
+        566
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "坂": {
+      "count": 1,
+      "glyphIds": [
+        568
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "霜": {
+      "count": 1,
+      "glyphIds": [
+        569
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "降": {
+      "count": 1,
+      "glyphIds": [
+        572
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "木": {
+      "count": 2,
+      "glyphIds": [
+        573,
+        747
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "脱": {
+      "count": 1,
+      "glyphIds": [
+        576
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "影": {
+      "count": 1,
+      "glyphIds": [
+        578
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "仰": {
+      "count": 1,
+      "glyphIds": [
+        581
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "见": {
+      "count": 2,
+      "glyphIds": [
+        582,
+        899
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "顾": {
+      "count": 4,
+      "glyphIds": [
+        585,
+        634,
+        795,
+        888
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "行": {
+      "count": 1,
+      "glyphIds": [
+        589
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "答": {
+      "count": 2,
+      "glyphIds": [
+        592,
+        863
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "已": {
+      "count": 1,
+      "glyphIds": [
+        593
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "叹": {
+      "count": 1,
+      "glyphIds": [
+        595
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "良": {
+      "count": 1,
+      "glyphIds": [
+        611
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "夜": {
+      "count": 3,
+      "glyphIds": [
+        612,
+        791,
+        875
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "薄": {
+      "count": 1,
+      "glyphIds": [
+        618
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "暮": {
+      "count": 1,
+      "glyphIds": [
+        619
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "网": {
+      "count": 1,
+      "glyphIds": [
+        621
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "巨": {
+      "count": 1,
+      "glyphIds": [
+        624
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "细": {
+      "count": 1,
+      "glyphIds": [
+        626
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "鳞": {
+      "count": 1,
+      "glyphIds": [
+        627
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "状": {
+      "count": 1,
+      "glyphIds": [
+        628
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "松": {
+      "count": 1,
+      "glyphIds": [
+        630
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "鲈": {
+      "count": 1,
+      "glyphIds": [
+        633
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "谋": {
+      "count": 1,
+      "glyphIds": [
+        642
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "诸": {
+      "count": 1,
+      "glyphIds": [
+        643
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "久": {
+      "count": 1,
+      "glyphIds": [
+        653
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "矣": {
+      "count": 3,
+      "glyphIds": [
+        654,
+        704,
+        871
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "待": {
+      "count": 1,
+      "glyphIds": [
+        656
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "时": {
+      "count": 2,
+      "glyphIds": [
+        659,
+        790
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "需": {
+      "count": 1,
+      "glyphIds": [
+        661
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "携": {
+      "count": 1,
+      "glyphIds": [
+        664
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "复": {
+      "count": 2,
+      "glyphIds": [
+        668,
+        702
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "断": {
+      "count": 1,
+      "glyphIds": [
+        679
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "岸": {
+      "count": 1,
+      "glyphIds": [
+        680
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "尺": {
+      "count": 1,
+      "glyphIds": [
+        682
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "高": {
+      "count": 1,
+      "glyphIds": [
+        684
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "小": {
+      "count": 1,
+      "glyphIds": [
+        686
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "落": {
+      "count": 1,
+      "glyphIds": [
+        688
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "石": {
+      "count": 1,
+      "glyphIds": [
+        689
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "日": {
+      "count": 1,
+      "glyphIds": [
+        692
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "几": {
+      "count": 1,
+      "glyphIds": [
+        695
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "识": {
+      "count": 1,
+      "glyphIds": [
+        703
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "乃": {
+      "count": 1,
+      "glyphIds": [
+        706
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "摄": {
+      "count": 1,
+      "glyphIds": [
+        707
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "衣": {
+      "count": 3,
+      "glyphIds": [
+        708,
+        813,
+        837
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "履": {
+      "count": 1,
+      "glyphIds": [
+        711
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "巉": {
+      "count": 1,
+      "glyphIds": [
+        712
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "岩": {
+      "count": 1,
+      "glyphIds": [
+        713
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "披": {
+      "count": 1,
+      "glyphIds": [
+        714
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "蒙": {
+      "count": 1,
+      "glyphIds": [
+        715
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "茸": {
+      "count": 1,
+      "glyphIds": [
+        716
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "踞": {
+      "count": 1,
+      "glyphIds": [
+        717
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "虎": {
+      "count": 1,
+      "glyphIds": [
+        718
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "豹": {
+      "count": 1,
+      "glyphIds": [
+        719
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "虬": {
+      "count": 1,
+      "glyphIds": [
+        721
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "龙": {
+      "count": 1,
+      "glyphIds": [
+        722
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "攀": {
+      "count": 1,
+      "glyphIds": [
+        723
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "栖": {
+      "count": 1,
+      "glyphIds": [
+        724
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "鹘": {
+      "count": 1,
+      "glyphIds": [
+        725
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "巢": {
+      "count": 1,
+      "glyphIds": [
+        728
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "俯": {
+      "count": 2,
+      "glyphIds": [
+        729,
+        860
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "夷": {
+      "count": 1,
+      "glyphIds": [
+        731
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "宫": {
+      "count": 1,
+      "glyphIds": [
+        734
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "划": {
+      "count": 1,
+      "glyphIds": [
+        742
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "啸": {
+      "count": 1,
+      "glyphIds": [
+        745
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "草": {
+      "count": 1,
+      "glyphIds": [
+        746
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "震": {
+      "count": 1,
+      "glyphIds": [
+        748
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "动": {
+      "count": 1,
+      "glyphIds": [
+        749
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "鸣": {
+      "count": 3,
+      "glyphIds": [
+        751,
+        817,
+        877
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "谷": {
+      "count": 1,
+      "glyphIds": [
+        752
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "应": {
+      "count": 1,
+      "glyphIds": [
+        753
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "起": {
+      "count": 1,
+      "glyphIds": [
+        755
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "涌": {
+      "count": 1,
+      "glyphIds": [
+        757
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "悄": {
+      "count": 1,
+      "glyphIds": [
+        760
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "肃": {
+      "count": 1,
+      "glyphIds": [
+        764
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "恐": {
+      "count": 1,
+      "glyphIds": [
+        767
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "凛": {
+      "count": 1,
+      "glyphIds": [
+        768
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "留": {
+      "count": 1,
+      "glyphIds": [
+        773
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "反": {
+      "count": 1,
+      "glyphIds": [
+        775
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "放": {
+      "count": 1,
+      "glyphIds": [
+        779
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "听": {
+      "count": 1,
+      "glyphIds": [
+        783
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "休": {
+      "count": 1,
+      "glyphIds": [
+        788
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "半": {
+      "count": 1,
+      "glyphIds": [
+        793
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "四": {
+      "count": 1,
+      "glyphIds": [
+        794
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "寂": {
+      "count": 1,
+      "glyphIds": [
+        796
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "寥": {
+      "count": 1,
+      "glyphIds": [
+        797
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "鹤": {
+      "count": 1,
+      "glyphIds": [
+        801
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "翅": {
+      "count": 1,
+      "glyphIds": [
+        806
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "车": {
+      "count": 1,
+      "glyphIds": [
+        808
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "轮": {
+      "count": 1,
+      "glyphIds": [
+        809
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "玄": {
+      "count": 1,
+      "glyphIds": [
+        810
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "裳": {
+      "count": 1,
+      "glyphIds": [
+        811
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "缟": {
+      "count": 1,
+      "glyphIds": [
+        812
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "戛": {
+      "count": 1,
+      "glyphIds": [
+        814
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "掠": {
+      "count": 1,
+      "glyphIds": [
+        818
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "去": {
+      "count": 1,
+      "glyphIds": [
+        827
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "就": {
+      "count": 1,
+      "glyphIds": [
+        830
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "睡": {
+      "count": 1,
+      "glyphIds": [
+        831
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "梦": {
+      "count": 1,
+      "glyphIds": [
+        832
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "道": {
+      "count": 2,
+      "glyphIds": [
+        834,
+        886
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "士": {
+      "count": 2,
+      "glyphIds": [
+        835,
+        887
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "蹁": {
+      "count": 1,
+      "glyphIds": [
+        838
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "跹": {
+      "count": 1,
+      "glyphIds": [
+        839
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "揖": {
+      "count": 1,
+      "glyphIds": [
+        845
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "言": {
+      "count": 1,
+      "glyphIds": [
+        848
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "姓": {
+      "count": 1,
+      "glyphIds": [
+        858
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "名": {
+      "count": 1,
+      "glyphIds": [
+        859
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "呼": {
+      "count": 1,
+      "glyphIds": [
+        865
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "噫": {
+      "count": 1,
+      "glyphIds": [
+        866
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "嘻": {
+      "count": 1,
+      "glyphIds": [
+        867
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "畴": {
+      "count": 1,
+      "glyphIds": [
+        872
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "昔": {
+      "count": 1,
+      "glyphIds": [
+        873
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "邪": {
+      "count": 1,
+      "glyphIds": [
+        885
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "惊": {
+      "count": 1,
+      "glyphIds": [
+        892
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "寤": {
+      "count": 1,
+      "glyphIds": [
+        893
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "开": {
+      "count": 1,
+      "glyphIds": [
+        894
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "户": {
+      "count": 1,
+      "glyphIds": [
+        895
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "视": {
+      "count": 1,
+      "glyphIds": [
+        896
+      ],
+      "similar": {},
+      "clusters": []
+    },
+    "处": {
+      "count": 1,
+      "glyphIds": [
+        901
+      ],
+      "similar": {},
+      "clusters": []
+    }
+  }
+}

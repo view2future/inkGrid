@@ -1,0 +1,81 @@
+{
+  "version": 1,
+  "workId": "kai_021",
+  "title": "前后赤壁赋 · 文徵明小楷",
+  "note": "前赋与后赋相距二十五年：可用时间轴跳转到题识处；亦可开启寻印模式，按鉴藏印巡游全卷。",
+  "timeline": [
+    {
+      "id": "qian_colophon_top",
+      "title": "庚寅六月六日（前赋题识·右上）",
+      "pageIndex": 0,
+      "cropBox": [
+        621,
+        50,
+        981,
+        545
+      ],
+      "note": "前赋题识位于第一页右上（粗略框选；可用 guide_annotator 精细标注）。"
+    },
+    {
+      "id": "qian_colophon_bottom",
+      "title": "庚寅六月六日（前赋题识·右下）",
+      "pageIndex": 0,
+      "cropBox": [
+        621,
+        1783,
+        981,
+        2426
+      ],
+      "note": "前赋题识补记位于第一页右下（粗略框选；可用 guide_annotator 精细标注）。"
+    },
+    {
+      "id": "hou_colophon",
+      "title": "甲寅二月十日（后赋题识·左下）",
+      "pageIndex": 6,
+      "cropBox": [
+        19,
+        1832,
+        386,
+        2426
+      ],
+      "note": "后赋题识位于第七页左下（粗略框选；可用 guide_annotator 精细标注）。"
+    }
+  ],
+  "seals": [
+    {
+      "id": "seal_xiangshengyanfu",
+      "label": "香生眼福",
+      "kind": "朱文",
+      "pageIndex": 6,
+      "cropBox": null
+    },
+    {
+      "id": "seal_zhangjixiong",
+      "label": "张吉熊",
+      "kind": "白文",
+      "pageIndex": 6,
+      "cropBox": null
+    },
+    {
+      "id": "seal_dingfu",
+      "label": "定父",
+      "kind": "朱文",
+      "pageIndex": 6,
+      "cropBox": null
+    },
+    {
+      "id": "seal_yue",
+      "label": "曰",
+      "kind": "朱文",
+      "pageIndex": 6,
+      "cropBox": null
+    },
+    {
+      "id": "seal_zao",
+      "label": "藻",
+      "kind": "朱文",
+      "pageIndex": 6,
+      "cropBox": null
+    }
+  ]
+}
