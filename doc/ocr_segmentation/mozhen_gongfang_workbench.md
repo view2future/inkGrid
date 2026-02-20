@@ -20,7 +20,7 @@
 
 ### 2.1 使用约束
 - 运行环境：`localhost`。
-- 鉴权：接受 token 保护。
+- 鉴权：当前默认无（本地工具）。如需可后续补 token 校验。
 - 端侧：必须为 PC Web 端使用（移动端不支持）。
 - 任务耗时：10 分钟级可接受，因此需要后台任务（Job）+ 进度展示。
 
@@ -45,9 +45,12 @@
   - `/?mode=workbench`：项目/上传/任务/导出（新增）。
   - `/?mode=annotator&stele=...&dataset=...`：逐字队列与微调（复用已有 `SteleAnnotator`）。
 
+补充：为提升可用性，也支持更直观的路径入口：
+- `/workshop`（推荐入口）
+
 ### 3.2 后端整合（FastAPI）
 - 在现有 `backend/app/main.py` 中追加 `/api/workbench/*`。
-- 对 `/api/workbench/*` 与 `/api/annotator/*` 增加 token 校验（同一套 header）。
+- `/api/workbench/*` 与 `/api/annotator/*` 当前不做 token 校验（本地工具优先跑通）。
 - 数据资产继续放在 `steles/` 下，利用现有静态挂载 `/steles` 直接访问。
 
 ### 3.3 复用已有闭环
@@ -150,6 +153,9 @@ steles/unknown/<stele_slug>/
 - 已支持把预览计算出的 layout 持久化写回 `workbench/pages.json`。
 - `workbench_build_dataset.py` 会优先使用 `pages.json` 中的 layout（因此手动调线能影响最终导出）。
 
+后续专业化迭代工作清单详见：
+- `doc/workbench/workshop_requirements.md`
+
 ---
 
 ## 6. 命名规则与 index.json（墨阵可引用）
@@ -234,8 +240,7 @@ OCR（单格识读）返回 JSON：
 
 ## 10. 环境变量（V1）
 
-鉴权（可选；不设置则本地放行）：
-- `INKGRID_ADMIN_TOKEN`: 工坊与标注 API 的 token。
+鉴权：当前未启用（代码里不再读取 `INKGRID_ADMIN_TOKEN`）。
 
 释文搜索（可选；不设置则需要手动粘贴释文）：
 - `INKGRID_SEARCH_ENDPOINT`: HTTP 搜索接口地址，使用 query 参数 `q`。
@@ -262,7 +267,7 @@ OCR（单格识读）返回 JSON：
 ## 9. V1 里程碑
 
 M1（跑通）
-- Workbench 新建项目/上传/token
+- Workbench 新建项目/上传
 - 一键 Job：fetch text → layout → align → crop/render → QA → overlay → export
 - 跳转 `SteleAnnotator` 进行逐字微调
 

@@ -59,6 +59,7 @@ __pycache__/
 # --- IDE and Editor Files ---
 .vscode/
 idea/
+.DS_Store
 *.swp
 *.swo
 *.backup
@@ -69,6 +70,9 @@ idea/
 *.log
 *.tmp
 *.temp
+backend/.backend.pid
+frontend/.frontend.pid
+*.sqlite3
 debug_*.txt
 *.json.lock
 
@@ -100,6 +104,43 @@ steles/4-xingshu/1-lantingjixu/chars_shenlong_v*/
 steles/4-xingshu/1-lantingjixu/chars_shenlong---old/
 steles/4-xingshu/1-lantingjixu/old-chars/
 
+# --- Local stele assets (very large) ---
+# These are often personal datasets and can be multi-GB.
+# Remove these rules if you intend to commit them (or use git-lfs).
+steles/3-kaishu/1-jiuchenggongliquanming/
+steles/3-kaishu/3-nikuanzan/
+steles/4-xingshu/2-jizhiwengao/
+
 # Do not ship/commit iterative annotation outputs under frontend/public.
 frontend/public/steles/4-xingshu/1-lantingjixu/chars_shenlong_v*/
 frontend/public/steles/4-xingshu/1-lantingjixu/chars_shenlong---old/
+
+# --- Qianhouchibifu local old assets ---
+steles/3-kaishu/4-qianhouchibifu/old/
+
+# --- Local WIP tools / prototypes (not required to run app) ---
+backend/app/services/track4_service.py
+frontend/src/components/GuideAnnotator.tsx
+frontend/src/components/Track4.tsx
+frontend/src/components/workbench/
+
+# --- Local scripts (one-off data work) ---
+scripts/qianhouchibifu/
+scripts/jiuchenggong/
+scripts/annotate_qianhouchibifu_*.py
+scripts/debug_qianhouchibifu_*.py
+scripts/extract_nikuanzan_*.py
+scripts/fix_qianhouchibifu_*.py
+scripts/process_nikuanzan_*.py
+scripts/rebuild_qianhouchibifu_*.py
+scripts/relabel_nikuanzan_*.py
+scripts/remove_yc8_watermark*.py
+scripts/reprocess_qianhouchibifu*.py
+scripts/restore_qianhouchibifu_*.py
+scripts/test_ocr_*.py
+scripts/test_paddleocr_*.py
+scripts/validate_nikuanzan_*.py
+
+# --- Local stele assets (very large) ---
+steles/3-kaishu/4-qianhouchibifu/
+steles/4-xingshu/1-lantingjixu/*.jpg
