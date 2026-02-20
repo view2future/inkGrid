@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Search, SlidersHorizontal, Star, X } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
@@ -26,6 +26,7 @@ export type MasterpieceStele = {
   total_chars: number;
   content: string;
   description: string;
+  famousLine?: string;
   story?: string;
   knowledge_id?: string;
   assets?: {
@@ -49,7 +50,29 @@ export type MasterpieceStele = {
     practice?: Array<{ char: string; hint: string; image: string }>;
     charIndex?: string;
     charText?: string;
+    guide?: string;
   };
+};
+
+type SteleGuide = {
+  version: number;
+  workId?: string;
+  title?: string;
+  note?: string;
+  timeline?: Array<{
+    id: string;
+    title: string;
+    pageIndex: number;
+    cropBox?: [number, number, number, number] | null;
+    note?: string;
+  }>;
+  seals?: Array<{
+    id: string;
+    label: string;
+    kind?: string;
+    pageIndex: number;
+    cropBox?: [number, number, number, number] | null;
+  }>;
 };
 
 type SteleKnowledge = {
@@ -298,18 +321,23 @@ function CaoquanKnowledgeCard({
   }, [indexData]);
 
   const goldLine = useMemo(() => {
+    const famous = String(stele.famousLine || '').trim();
+    if (famous) return famous;
     return extractGoldLine({ summary: app?.summary || null, firstPointText: app?.points?.[0]?.text || null });
-  }, [app?.summary, app?.points]);
+  }, [stele.famousLine, app?.summary, app?.points]);
 
   useEffect(() => {
     let cancelled = false;
     const run = async () => {
       setError(null);
       try {
+        const idxUrlWithCache = IS_NATIVE_ANDROID
+          ? charIndexUrl
+          : charIndexUrl + (charIndexUrl.includes('?') ? '&' : '?') + '_t=' + Date.now();
         const [appRes, evRes, idxRes] = await Promise.all([
           fetch('/data/stele_appreciations.json'),
           fetch(evidenceUrl),
-          fetch(charIndexUrl),
+          fetch(idxUrlWithCache, { cache: 'no-store' }),
         ]);
         if (!appRes.ok) throw new Error(`appreciations HTTP ${appRes.status}`);
         if (!evRes.ok) throw new Error(`evidence HTTP ${evRes.status}`);
@@ -660,6 +688,20 @@ function getSteleCover(stele: MasterpieceStele) {
   return null as string | null;
 }
 
+function watermarkClipStyle(src: string) {
+  const s = String(src || '').trim();
+  // Prefer leaving a bit of watermark rather than editing source images.
+  // Only apply to the 7 page images (not the scroll).
+  if (
+    s.includes('/steles/3-kaishu/4-qianhouchibifu/qianhouchibifu-') &&
+    (s.endsWith('.jpg') || s.endsWith('.webp'))
+  ) {
+    // Watermark sits at the very bottom. Clip the bottom strip.
+    return { clipPath: 'inset(0 0 3.5% 0)' } as const;
+  }
+  return undefined;
+}
+
 function hasSteleAssets(stele: MasterpieceStele) {
   const assets = stele.assets || {};
   const cover = String(assets.cover || '').trim();
@@ -1006,7 +1048,9 @@ export function MobileMasterpieceStudyHub({
     const lanting = steles.find((s) => String(s.id) === 'xing_001' || s.name.includes('兰亭')) || null;
     const yishan = steles.find((s) => String(s.id) === 'zhuan_003' || s.name.includes('峄山')) || null;
     const caoquan = steles.find((s) => String(s.id) === 'li_001' || s.name.includes('曹全')) || null;
-    return { lanting, yishan, caoquan };
+    const chibi =
+      steles.find((s) => String(s.id) === 'kai_021' || s.name.includes('赤壁')) || null;
+    return { lanting, yishan, caoquan, chibi };
   }, [steles]);
 
   const lantingProgress = useMemo(() => {
@@ -1032,6 +1076,18 @@ export function MobileMasterpieceStudyHub({
     if (!p || !p.totalCards) return 0;
     return Math.min(1, Math.max(0, (Number(p.lastIndex) + 1) / Number(p.totalCards)));
   }, [caoquanProgress]);
+
+  const chibiProgress = useMemo(() => {
+    const s = flagships.chibi;
+    if (!s) return null;
+    return progressStore[String(s.id)] || null;
+  }, [flagships.chibi, progressStore]);
+
+  const chibiPct = useMemo(() => {
+    const p = chibiProgress;
+    if (!p || !p.totalCards) return 0;
+    return Math.min(1, Math.max(0, (Number(p.lastIndex) + 1) / Number(p.totalCards)));
+  }, [chibiProgress]);
 
   const pathStats = useMemo(() => {
     const total = mustLearn.length;
@@ -1194,7 +1250,7 @@ export function MobileMasterpieceStudyHub({
           <p className="text-sm font-serif text-stone-600 leading-relaxed tracking-wide">把一帖拆成一组卡片：看懂背景、抓住技法、带着任务去临。</p>
         </div>
 
-        {flagships.lanting || flagships.yishan || flagships.caoquan ? (
+        {flagships.lanting || flagships.yishan || flagships.caoquan || flagships.chibi ? (
           <div className="mt-6 rounded-[2rem] bg-white/55 border border-stone-200/70 shadow-[0_22px_70px_rgba(0,0,0,0.10)] overflow-hidden">
             <div className="relative p-6">
               <div className="absolute inset-0 opacity-[0.10] bg-[url('https://www.transparenttextures.com/patterns/handmade-paper.png')]" />
@@ -1202,51 +1258,126 @@ export function MobileMasterpieceStudyHub({
                 <div className="flex items-center justify-between">
                   <div className="text-[10px] font-black tracking-[0.4em] text-stone-500 uppercase">标杆体验</div>
                   <div className="text-[10px] font-mono text-stone-500 tracking-widest">
-                    {[flagships.lanting, flagships.caoquan, flagships.yishan].filter(Boolean).length} 入口
+                    {[flagships.lanting, flagships.caoquan, flagships.yishan, flagships.chibi].filter(Boolean).length} 入口
                   </div>
                 </div>
-                <div className="mt-4 grid grid-cols-1 gap-3">
+
+                <div className="mt-4 space-y-3">
                   {flagships.lanting ? (
                     <button
                       type="button"
                       onClick={() => onSelect(flagships.lanting!, { restoreLastPosition: true })}
-                      className="h-12 rounded-[1.25rem] bg-[#8B0000] border border-[#8B0000]/60 text-[#F2E6CE] font-black tracking-[0.16em] shadow-[0_18px_45px_rgba(139,0,0,0.22)] active:scale-[0.99] transition flex items-center justify-between px-5"
+                      className="relative w-full overflow-hidden rounded-[1.75rem] border border-[#8B0000]/35 bg-[#8B0000]/10 shadow-[0_22px_70px_rgba(139,0,0,0.14)] active:scale-[0.995] transition text-left"
                     >
-                      <span>兰亭序 · 行书气韵</span>
-                      <span className="text-[10px] font-mono text-[#F2E6CE]/85 tracking-widest">
-                        {lantingProgress ? `继续 · ${Math.round(lantingPct * 100)}%` : '开始'}
-                      </span>
+                      {flagships.lanting.assets?.cover ? (
+                        <img
+                          src={flagships.lanting.assets.cover}
+                          alt={flagships.lanting.name}
+                          className="absolute inset-0 w-full h-full object-cover grayscale contrast-125 opacity-35"
+                          loading={IMG_LOADING}
+                          decoding={IMG_DECODING}
+                        />
+                      ) : null}
+                      <div className="absolute inset-0 bg-gradient-to-r from-white/90 via-white/75 to-[#F1E8DA]/80" />
+                      <div className="relative p-5 flex items-end justify-between gap-4">
+                        <div className="min-w-0">
+                          <div className="text-[10px] font-black tracking-[0.35em] text-stone-500 uppercase">主线推荐</div>
+                          <div className="mt-2 text-2xl font-serif font-black tracking-[0.22em] pl-[0.22em] text-stone-950 truncate">兰亭序</div>
+                          <div className="mt-1 text-[12px] font-serif text-stone-700 tracking-wide">行书气韵</div>
+                        </div>
+                        <div className="shrink-0 text-right">
+                          <div className="text-[10px] font-mono text-stone-600 tracking-widest">
+                            {lantingProgress ? `继续 · ${Math.round(lantingPct * 100)}%` : '开始'}
+                          </div>
+                          <div className="mt-1 text-[9px] font-serif text-stone-500 tracking-wide">读气韵与行气</div>
+                        </div>
+                      </div>
                     </button>
                   ) : null}
 
-                  {flagships.yishan ? (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (onOpenYishanAppreciation) onOpenYishanAppreciation();
-                        else onSelect(flagships.yishan!);
-                      }}
-                      className="h-12 rounded-[1.25rem] bg-white/70 border border-stone-200/80 text-stone-800 font-black tracking-[0.18em] shadow-sm active:scale-[0.99] transition flex items-center justify-between px-5"
-                    >
-                      <span>嶧山刻石 · 长卷观赏</span>
-                      <span className="text-[10px] font-mono text-stone-500 tracking-widest">鉴赏</span>
-                    </button>
-                  ) : null}
+                  <div className="grid grid-cols-1 min-[520px]:grid-cols-3 gap-3">
+                    {flagships.yishan ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (onOpenYishanAppreciation) onOpenYishanAppreciation();
+                          else onSelect(flagships.yishan!);
+                        }}
+                        className="relative overflow-hidden rounded-[1.5rem] bg-white/70 border border-stone-200/80 text-stone-900 shadow-sm p-4 active:scale-[0.995] transition text-left"
+                      >
+                        {getSteleCover(flagships.yishan) ? (
+                          <img
+                            src={getSteleCover(flagships.yishan)!}
+                            alt={flagships.yishan.name}
+                            className="absolute inset-0 w-full h-full object-cover grayscale contrast-125 opacity-30"
+                            loading={IMG_LOADING}
+                            decoding={IMG_DECODING}
+                          />
+                        ) : null}
+                        <div className="absolute inset-0 bg-gradient-to-b from-white/85 via-white/70 to-[#F1E8DA]/65" />
+                        <div className="relative">
+                          <div className="text-[13px] font-serif font-black leading-snug">峄山刻石</div>
+                          <div className="mt-1 text-[11px] font-serif text-stone-600 tracking-wide">篆书法度</div>
+                          <div className="mt-3 text-[10px] font-mono text-stone-500 tracking-widest">鉴赏</div>
+                        </div>
+                      </button>
+                    ) : null}
 
-                  {flagships.caoquan ? (
-                    <button
-                      type="button"
-                      onClick={() => onSelect(flagships.caoquan!, { restoreLastPosition: true })}
-                      className="h-12 rounded-[1.25rem] bg-white/70 border border-stone-200/80 text-stone-800 font-black tracking-[0.18em] shadow-sm active:scale-[0.99] transition flex items-center justify-between px-5"
-                    >
-                      <span>曹全碑 · 学习闭环</span>
-                      <span className="text-[10px] font-mono text-stone-500 tracking-widest">
-                        {caoquanProgress ? `继续 · ${Math.round(caoquanPct * 100)}%` : '开始'}
-                      </span>
-                    </button>
-                  ) : null}
+                    {flagships.caoquan ? (
+                      <button
+                        type="button"
+                        onClick={() => onSelect(flagships.caoquan!, { restoreLastPosition: true })}
+                        className="relative overflow-hidden rounded-[1.5rem] bg-white/70 border border-stone-200/80 text-stone-900 shadow-sm p-4 active:scale-[0.995] transition text-left"
+                      >
+                        {getSteleCover(flagships.caoquan) ? (
+                          <img
+                            src={getSteleCover(flagships.caoquan)!}
+                            alt={flagships.caoquan.name}
+                            className="absolute inset-0 w-full h-full object-cover grayscale contrast-125 opacity-30"
+                            loading={IMG_LOADING}
+                            decoding={IMG_DECODING}
+                          />
+                        ) : null}
+                        <div className="absolute inset-0 bg-gradient-to-b from-white/85 via-white/70 to-[#F1E8DA]/65" />
+                        <div className="relative">
+                          <div className="text-[13px] font-serif font-black leading-snug">曹全碑</div>
+                          <div className="mt-1 text-[11px] font-serif text-stone-600 tracking-wide">隶书波磔</div>
+                          <div className="mt-3 text-[10px] font-mono text-stone-500 tracking-widest">
+                            {caoquanProgress ? `继续 · ${Math.round(caoquanPct * 100)}%` : '开始'}
+                          </div>
+                        </div>
+                      </button>
+                    ) : null}
+
+                    {flagships.chibi ? (
+                      <button
+                        type="button"
+                        onClick={() => onSelect(flagships.chibi!, { restoreLastPosition: true })}
+                        className="relative overflow-hidden rounded-[1.5rem] bg-white/70 border border-stone-200/80 text-stone-900 shadow-sm p-4 active:scale-[0.995] transition text-left"
+                      >
+                        {getSteleCover(flagships.chibi) ? (
+                          <img
+                            src={getSteleCover(flagships.chibi)!}
+                            alt={flagships.chibi.name}
+                            className="absolute inset-0 w-full h-full object-cover grayscale contrast-125 opacity-30"
+                            loading={IMG_LOADING}
+                            decoding={IMG_DECODING}
+                          />
+                        ) : null}
+                        <div className="absolute inset-0 bg-gradient-to-b from-white/85 via-white/70 to-[#F1E8DA]/65" />
+                        <div className="relative">
+                          <div className="text-[13px] font-serif font-black leading-snug">前后赤壁赋</div>
+                          <div className="mt-1 text-[11px] font-serif text-stone-600 tracking-wide">小楷清劲</div>
+                          <div className="mt-3 text-[10px] font-mono text-stone-500 tracking-widest">
+                            {chibiProgress ? `继续 · ${Math.round(chibiPct * 100)}%` : '开始'}
+                          </div>
+                        </div>
+                      </button>
+                    ) : null}
+                  </div>
                 </div>
-                <div className="mt-4 text-[11px] font-serif text-stone-600 leading-relaxed">推荐从「兰亭序」开始：先读气韵与行气，再回到原拓语境。</div>
+
+                <div className="mt-4 text-[11px] font-serif text-stone-600 leading-relaxed">先从「兰亭序」读通行气，再回到原拓语境。</div>
               </div>
             </div>
           </div>
@@ -1772,6 +1903,32 @@ export function MobileMasterpieceStudyDeck({
   const pageThumbs = useMemo(() => getStelePageThumbs(stele), [stele]);
   const practice = useMemo(() => getPracticeChars(stele), [stele]);
   const charIndexUrl = useMemo(() => getSteleCharIndexUrl(stele), [stele]);
+  const guideUrl = useMemo(() => String(stele.assets?.guide || '').trim() || null, [stele]);
+
+  const [guide, setGuide] = useState<SteleGuide | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      if (!guideUrl) {
+        setGuide(null);
+        return;
+      }
+      try {
+        const res = await fetch(`${guideUrl}?ts=${Date.now()}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = (await res.json()) as SteleGuide;
+        if (cancelled) return;
+        setGuide(json);
+      } catch {
+        if (cancelled) return;
+        setGuide(null);
+      }
+    };
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [guideUrl, stele.id]);
 
   const doneTimerRef = useRef<number | null>(null);
   useEffect(() => {
@@ -1795,6 +1952,17 @@ export function MobileMasterpieceStudyDeck({
     setViewerNaturalSize(null);
     setViewerBoxSize(null);
   }, [stele.id]);
+
+  const [sealHunt, setSealHunt] = useState(false);
+  useEffect(() => {
+    setSealHunt(false);
+  }, [stele.id]);
+
+  const sealsForViewer = useMemo(() => {
+    if (!viewer) return [] as NonNullable<SteleGuide['seals']>;
+    const all = guide?.seals || [];
+    return all.filter((s) => typeof s?.pageIndex === 'number' && s.pageIndex === viewer.index && s.cropBox);
+  }, [guide?.seals, viewer]);
 
   useEffect(() => {
     const el = viewerBoxRef.current;
@@ -1844,6 +2012,43 @@ export function MobileMasterpieceStudyDeck({
     return { left, top, width, height };
   }, [viewer, viewer?.highlight, viewerNaturalSize, viewerBoxSize]);
 
+  const toViewerRect = useCallback(
+    (cropBox: [number, number, number, number]) => {
+      if (!viewerNaturalSize || !viewerBoxSize) return null;
+      const [x1, y1, x2, y2] = cropBox;
+      const naturalW = viewerNaturalSize.w;
+      const naturalH = viewerNaturalSize.h;
+      const boxW = viewerBoxSize.w;
+      const boxH = viewerBoxSize.h;
+      if (!naturalW || !naturalH || !boxW || !boxH) return null;
+
+      const scale = Math.min(boxW / naturalW, boxH / naturalH);
+      const drawW = naturalW * scale;
+      const drawH = naturalH * scale;
+      const offsetX = (boxW - drawW) / 2;
+      const offsetY = (boxH - drawH) / 2;
+      const left = offsetX + x1 * scale;
+      const top = offsetY + y1 * scale;
+      const width = Math.max(0, (x2 - x1) * scale);
+      const height = Math.max(0, (y2 - y1) * scale);
+      return { left, top, width, height };
+    },
+    [viewerNaturalSize, viewerBoxSize]
+  );
+
+  const sealMarkers = useMemo(() => {
+    if (!sealHunt) return [] as Array<{ id: string; label: string; rect: { left: number; top: number; width: number; height: number } }>
+    const out: Array<{ id: string; label: string; rect: { left: number; top: number; width: number; height: number } }> = [];
+    for (const s of sealsForViewer || []) {
+      if (!s?.cropBox) continue;
+      const rect = toViewerRect(s.cropBox);
+      if (!rect) continue;
+      const label = `${String(s.label || '').trim() || '印'}${s.kind ? `（${String(s.kind)}）` : ''}`;
+      out.push({ id: String(s.id || label), label, rect });
+    }
+    return out;
+  }, [sealHunt, sealsForViewer, toViewerRect]);
+
   type ConfettiParticle = {
     id: string;
     left: number;
@@ -1859,6 +2064,7 @@ export function MobileMasterpieceStudyDeck({
   const [celebration, setCelebration] = useState<null | { key: string; particles: ConfettiParticle[] }>(null);
 
   const originalText = String(stele.content || '').trim();
+  const famousLine = String(stele.famousLine || '').trim();
   const quoteSource = originalText || knowledge?.history || knowledge?.appreciation || '';
   const excerptSource = originalText || knowledge?.history || knowledge?.technique || knowledge?.appreciation || '';
   const quote = pickQuote(quoteSource, 70);
@@ -1882,7 +2088,14 @@ export function MobileMasterpieceStudyDeck({
           {cover ? (
             <>
               <div className="absolute inset-0">
-              <img src={cover} alt={stele.name} className="w-full h-full object-cover grayscale contrast-125" loading={IMG_LOADING} decoding={IMG_DECODING} />
+              <img
+                src={cover}
+                alt={stele.name}
+                className="w-full h-full object-cover grayscale contrast-125"
+                style={watermarkClipStyle(cover)}
+                loading={IMG_LOADING}
+                decoding={IMG_DECODING}
+              />
               </div>
               <div className="absolute inset-0 bg-gradient-to-b from-white/85 via-white/55 to-[#F1E8DA]" />
             </>
@@ -1905,6 +2118,12 @@ export function MobileMasterpieceStudyDeck({
                 {stele.dynasty} · {formatAuthor(stele.author)} · {stele.script_type}
               </div>
               <div className="mt-5 text-[15px] font-sans text-stone-800 leading-relaxed">{stele.description || '先看懂，再去临。'}</div>
+              {famousLine ? (
+                <div className="mt-6 rounded-[1.25rem] bg-white/65 border border-stone-200/70 p-4">
+                  <div className="text-[11px] font-black tracking-[0.35em] text-stone-500 underline decoration-[#8B0000]/25 underline-offset-4">金句</div>
+                  <div className="mt-2 text-[15px] font-serif font-semibold text-stone-950 leading-relaxed">“{famousLine}”</div>
+                </div>
+              ) : null}
               {quote ? (
                 <div className="mt-6 rounded-[1.25rem] bg-white/60 border border-stone-200/70 p-4">
                   <div className="text-[11px] font-black tracking-[0.35em] text-stone-500 underline decoration-[#8B0000]/25 underline-offset-4">摘句</div>
@@ -1942,10 +2161,103 @@ export function MobileMasterpieceStudyDeck({
                   <div className="text-[11px] font-black tracking-[0.35em] text-stone-500 underline decoration-[#8B0000]/25 underline-offset-4">一句话</div>
                   <div className="mt-2 text-[16px] font-sans font-medium text-stone-800 leading-relaxed">{stele.description || '先看气韵，再读背景，再抓技法。'}</div>
                 </div>
+
+                {famousLine ? (
+                  <div className="rounded-[1.5rem] bg-white/60 border border-stone-200/70 p-5">
+                    <div className="text-[11px] font-black tracking-[0.35em] text-stone-500 underline decoration-[#8B0000]/25 underline-offset-4">金句</div>
+                    <div className="mt-2 text-[16px] font-serif font-semibold text-stone-950 leading-relaxed">“{famousLine}”</div>
+                  </div>
+                ) : null}
                 {history ? (
                   <div className="rounded-[1.5rem] bg-white/60 border border-stone-200/70 p-5">
                     <div className="text-[11px] font-black tracking-[0.35em] text-stone-500 underline decoration-[#8B0000]/25 underline-offset-4">背景</div>
                     <div className="mt-2 text-[16px] font-sans text-stone-800 leading-relaxed">{history}</div>
+                  </div>
+                ) : null}
+
+                {guide?.timeline?.length ? (
+                  <div className="rounded-[1.5rem] bg-white/60 border border-stone-200/70 p-5">
+                    <div className="text-[11px] font-black tracking-[0.35em] text-stone-500 underline decoration-[#8B0000]/25 underline-offset-4">时间对照</div>
+                    <div className="mt-3 space-y-2">
+                      {guide.timeline.slice(0, 6).map((t) => {
+                        const pageIndex = typeof t.pageIndex === 'number' ? t.pageIndex : 0;
+                        const label = String(t.title || '').trim() || '题识';
+                        const cropBox = t.cropBox || null;
+                        return (
+                          <button
+                            key={t.id}
+                            type="button"
+                            onClick={() => {
+                              setViewerNaturalSize(null);
+                              setViewerError(null);
+                              setViewer({
+                                index: Math.max(0, Math.min(pages.length - 1, pageIndex)),
+                                highlight: cropBox ? { cropBox, label } : null,
+                              });
+                            }}
+                            className="w-full text-left rounded-[1.25rem] bg-white/70 border border-stone-200/70 px-4 py-3"
+                          >
+                            <div className="text-[13px] font-black tracking-[0.08em] text-stone-900">{label}</div>
+                            {t.note ? (
+                              <div className="mt-1 text-[12px] font-sans text-stone-600 leading-relaxed">{t.note}</div>
+                            ) : (
+                              <div className="mt-1 text-[12px] font-sans text-stone-600">跳转到第 {pageIndex + 1} 张</div>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {guide.note ? (
+                      <div className="mt-3 text-[12px] font-sans text-stone-600 leading-relaxed">{guide.note}</div>
+                    ) : null}
+                  </div>
+                ) : null}
+
+                {guide?.seals?.length ? (
+                  <div className="rounded-[1.5rem] bg-white/60 border border-stone-200/70 p-5">
+                    <div className="flex items-center justify-between">
+                      <div className="text-[11px] font-black tracking-[0.35em] text-stone-500 underline decoration-[#8B0000]/25 underline-offset-4">鉴藏印 · 寻宝</div>
+                      <button
+                        type="button"
+                        onClick={() => setSealHunt((v) => !v)}
+                        className={`h-9 px-4 rounded-full text-[10px] font-black tracking-[0.22em] border transition ${
+                          sealHunt
+                            ? 'bg-[#8B0000] text-[#F2E6CE] border-[#8B0000]/60'
+                            : 'bg-white/70 text-stone-700 border-stone-200/70'
+                        }`}
+                      >
+                        {sealHunt ? '已开启：寻印' : '开启寻印'}
+                      </button>
+                    </div>
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      {guide.seals.slice(0, 10).map((s) => {
+                        const pageIndex = typeof s.pageIndex === 'number' ? s.pageIndex : 0;
+                        const label = `${String(s.label || '').trim() || '印'}${s.kind ? `（${String(s.kind)}）` : ''}`;
+                        const cropBox = s.cropBox || null;
+                        return (
+                          <button
+                            key={s.id}
+                            type="button"
+                            onClick={() => {
+                              setViewerNaturalSize(null);
+                              setViewerError(null);
+                              setViewer({
+                                index: Math.max(0, Math.min(pages.length - 1, pageIndex)),
+                                highlight: cropBox ? { cropBox, label } : null,
+                              });
+                              setSealHunt(true);
+                            }}
+                            className="rounded-[1.25rem] bg-white/70 border border-stone-200/70 px-4 py-3 text-left"
+                          >
+                            <div className="text-[13px] font-black tracking-[0.08em] text-stone-900 truncate">{label}</div>
+                            <div className="mt-1 text-[11px] font-mono text-stone-500 tracking-widest">第 {pageIndex + 1} 张</div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div className="mt-3 text-[12px] font-sans text-stone-600 leading-relaxed">
+                      提示：开启寻印后，原拓页上会显示印章标记（已标注坐标的印章）。
+                    </div>
                   </div>
                 ) : null}
               </div>
@@ -2077,6 +2389,7 @@ export function MobileMasterpieceStudyDeck({
                         src={src}
                         alt="page"
                         className="w-full h-full object-contain grayscale contrast-150"
+                        style={watermarkClipStyle(src)}
                         loading={IMG_LOADING}
                         decoding={IMG_DECODING}
                         onError={() => {
@@ -2451,10 +2764,10 @@ export function MobileMasterpieceStudyDeck({
               animate={{ y: 0, opacity: 1, scale: 1 }}
               exit={{ y: 16, opacity: 0, scale: 0.98 }}
               transition={{ type: 'spring', stiffness: 260, damping: 26 }}
-              className="absolute inset-x-0 top-[max(env(safe-area-inset-top),32px)] bottom-[env(safe-area-inset-bottom)] flex flex-col"
+              className="absolute inset-0 flex flex-col min-h-0 pt-8 pb-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="px-5 pt-4 pb-3 flex items-center justify-between">
+              <div className="px-5 pt-4 pb-3 flex items-center justify-between shrink-0">
                 <div className="min-w-0">
                   <div className="text-[11px] font-black tracking-[0.18em] text-[#F2E6CE] truncate">{stele.name}</div>
                   <div className="mt-1 text-[10px] font-mono text-stone-400 tracking-widest">第 {viewer.index + 1} / {pages.length} 张</div>
@@ -2464,32 +2777,69 @@ export function MobileMasterpieceStudyDeck({
                     </div>
                   ) : null}
                 </div>
-                <button
-                  onClick={() => {
-                    setViewer(null);
-                    setViewerError(null);
-                    setViewerNaturalSize(null);
-                    setViewerBoxSize(null);
-                  }}
-                  className="w-10 h-10 rounded-full bg-white/10 border border-white/10 flex items-center justify-center text-stone-200"
-                  aria-label="Close"
-                >
-                  <X size={18} />
-                </button>
+                <div className="flex items-center gap-2">
+                  {guide?.seals?.length ? (
+                    <button
+                      type="button"
+                      onClick={() => setSealHunt((v) => !v)}
+                      className={`h-10 px-4 rounded-full text-[10px] font-black tracking-[0.22em] border transition ${
+                        sealHunt
+                          ? 'bg-[#8B0000] text-[#F2E6CE] border-[#8B0000]/60'
+                          : 'bg-white/10 text-stone-200 border-white/10'
+                      }`}
+                    >
+                      寻印
+                    </button>
+                  ) : null}
+                  <button
+                    onClick={() => {
+                      setViewer(null);
+                      setViewerError(null);
+                      setViewerNaturalSize(null);
+                      setViewerBoxSize(null);
+                    }}
+                    className="w-10 h-10 rounded-full bg-white/10 border border-white/10 flex items-center justify-center text-stone-200"
+                    aria-label="Close"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
               </div>
 
-              <div className="flex-1 px-5 pb-5">
-                <div className="h-full rounded-[1.75rem] bg-black/30 border border-white/10 overflow-hidden">
-                  <TransformWrapper initialScale={1} minScale={1} maxScale={4} centerOnInit>
+              <div className="flex-1 min-h-0 px-5 pb-5">
+                <div className="h-full min-h-0 rounded-[1.75rem] bg-black/30 border border-white/10 overflow-hidden">
+                  <TransformWrapper
+                    key={viewer.index}
+                    initialScale={1}
+                    minScale={1}
+                    maxScale={4}
+                  >
                     <TransformComponent
-                      wrapperStyle={{ width: '100%', height: '100%' }}
-                      contentStyle={{ width: '100%', height: '100%' }}
+                      wrapperStyle={{
+                        width: '100%',
+                        height: '100%',
+                        minHeight: 0,
+                        overflow: 'hidden',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                      contentStyle={{
+                        width: '100%',
+                        height: '100%',
+                        minHeight: 0,
+                        overflow: 'hidden',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
                     >
-                      <div ref={viewerBoxRef} className="relative w-full h-full">
+                      <div ref={viewerBoxRef} className="relative w-full h-full min-h-0 flex items-center justify-center">
                         <img
                           src={pages[viewer.index]}
                           alt="page"
-                          className="w-full h-full object-contain"
+                          className="max-w-full max-h-full object-contain"
+                          style={watermarkClipStyle(pages[viewer.index] || '')}
                           draggable={false}
                           loading={IMG_LOADING}
                           decoding={IMG_DECODING}
@@ -2542,13 +2892,42 @@ export function MobileMasterpieceStudyDeck({
                             transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
                           />
                         ) : null}
+
+                        {sealHunt && sealMarkers.length ? (
+                          <div className="absolute inset-0">
+                            {sealMarkers.map((m) => {
+                              const cx = m.rect.left + m.rect.width / 2;
+                              const cy = m.rect.top + m.rect.height / 2;
+                              return (
+                                <button
+                                  key={m.id}
+                                  type="button"
+                                  onClick={() => {
+                                    // When seal is clicked, highlight the bbox.
+                                    const s = (sealsForViewer || []).find((x) => String(x.id || '') === String(m.id)) || null;
+                                    const cropBox = s?.cropBox;
+                                    if (!cropBox) return;
+                                    setViewer((v) => (v ? { ...v, highlight: { cropBox, label: m.label } } : v));
+                                  }}
+                                  className="absolute -translate-x-1/2 -translate-y-1/2"
+                                  style={{ left: `${cx}px`, top: `${cy}px` }}
+                                  aria-label={m.label}
+                                >
+                                  <span className="inline-flex items-center justify-center w-9 h-9 rounded-2xl bg-[#8B0000]/85 border border-[#F2E6CE]/30 shadow-[0_18px_60px_rgba(139,0,0,0.35)]">
+                                    <Star size={14} className="text-[#F2E6CE]" />
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        ) : null}
                       </div>
                     </TransformComponent>
                   </TransformWrapper>
                 </div>
               </div>
 
-              <div className="px-5 pb-5 flex items-center justify-between gap-3">
+              <div className="px-5 pb-5 flex items-center justify-between gap-3 shrink-0">
                 <button
                   onClick={() => {
                     setViewerNaturalSize(null);

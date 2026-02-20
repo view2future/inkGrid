@@ -21,6 +21,10 @@ export type CharSliceIndexFile = {
     pos_in_chunk: number;
     grid: { col: number; row: number };
     crop_box: [number, number, number, number];
+    ocr_guess?: string;
+    ocr_score?: number;
+    align_gold_index?: number;
+    body_v3_source?: string;
   };
 };
 
@@ -29,6 +33,9 @@ export type CharSliceIndex = {
   total_images: number;
   total_chars: number;
   skipped_chunk?: { chunk_index: number; text: string };
+  note?: string;
+  gold_text?: string;
+  alignment?: { matched?: number; missing?: number; extras?: number; missing_positions?: number[] };
   files: CharSliceIndexFile[];
 };
 
@@ -71,6 +78,34 @@ function splitIntoColumns<T>(items: T[], rowsPerCol: number) {
   return cols;
 }
 
+function normalizeOcrToken(input: string) {
+  const ch = toChar(input);
+  const map: Record<string, string> = {
+    '縦': '纵',
+    '後': '后',
+    '賦': '赋',
+    '與': '与',
+    '蘇': '苏',
+    '鶴': '鹤',
+    '烏': '乌',
+    '顧': '顾',
+    '耶': '邪',
+    '俛': '俯',
+    '悟': '寤',
+    '翩': '蹁',
+    '返': '反',
+  };
+  return map[ch] || ch;
+}
+
+function ocrCompatible(expectedChar: string, ocrGuess: string) {
+  const exp = normalizeOcrToken(expectedChar);
+  const ocr = normalizeOcrToken(ocrGuess);
+  // Common OCR confusion in this stele.
+  if (exp === '予' && ocr === '余') return true;
+  return exp === ocr;
+}
+
 function chunkWithHighlight(chunk: string, index: number) {
   const chars = Array.from(String(chunk || ''));
   if (!chars.length) return [] as Array<{ ch: string; active: boolean }>;
@@ -92,6 +127,24 @@ export function MasterpieceCharAtlasCard({
     label: string;
   }) => void;
 }) {
+  const debugEnabled = useMemo(() => {
+    try {
+      const qs = new URLSearchParams(window.location.search);
+      const fromQuery = qs.get('charatlas_debug') === '1' || qs.get('inkgrid_charatlas_debug') === '1';
+      const fromStorage = Boolean(window.localStorage.getItem('inkgrid_charatlas_debug'));
+      return fromQuery || fromStorage;
+    } catch {
+      return false;
+    }
+  }, []);
+
+  useEffect(() => {
+    console.log('[CharAtlas] debugEnabled', {
+      debugEnabled,
+      hint: 'set localStorage inkgrid_charatlas_debug=1 or add ?charatlas_debug=1',
+    });
+  }, [debugEnabled]);
+
   const [tab, setTab] = useState<Tab>('search');
   const [query, setQuery] = useState('');
   const [data, setData] = useState<CharSliceIndex | null>(null);
@@ -158,7 +211,11 @@ export function MasterpieceCharAtlasCard({
       setError(null);
       try {
         console.debug('[CharAtlas] loading index', { indexUrl });
-        const res = await fetch(indexUrl);
+        // Cache-busting query params can break some native asset servers.
+        const urlForFetch = IS_NATIVE_ANDROID
+          ? indexUrl
+          : indexUrl + (indexUrl.includes('?') ? '&' : '?') + '_t=' + Date.now();
+        const res = await fetch(urlForFetch, { cache: 'no-store' });
         if (!res.ok) {
           let detail = '';
           try {
@@ -177,6 +234,26 @@ export function MasterpieceCharAtlasCard({
           totalChars: json?.total_chars,
           files: json?.files?.length,
         });
+        if (debugEnabled && json?.files?.length) {
+          console.log(
+            '[CharAtlas DEBUG] index摘要:',
+            {
+              first: json.files.slice(0, 5).map((f) => ({ idx: f.index, char: f.char, file: f.file })),
+              last: json.files.slice(-5).map((f) => ({ idx: f.index, char: f.char, file: f.file })),
+            }
+          );
+          console.log('[CharAtlas DEBUG] index元信息:', {
+            indexUrl,
+            baseDir,
+            name: json?.name,
+            note: (json as any)?.note,
+            alignment: (json as any)?.alignment,
+          });
+          const zhiCount = json.files.filter((f) => f.char === '之').length;
+          const erCount = json.files.filter((f) => f.char === '而').length;
+          const ruCount = json.files.filter((f) => f.char === '如').length;
+          console.log('[CharAtlas DEBUG] 关键字统计:', { '之': zhiCount, '而': erCount, '如': ruCount });
+        }
       } catch (err) {
         if (cancelled) return;
         const msg = err instanceof Error ? err.message : String(err);
@@ -202,8 +279,19 @@ export function MasterpieceCharAtlasCard({
       if (list) list.push(f);
       else map.set(ch, [f]);
     }
+    if (debugEnabled) {
+      console.log('[CharAtlas DEBUG] byChar分组统计:', {
+        '之': map.get('之')?.length || 0,
+        '而': map.get('而')?.length || 0,
+        '如': map.get('如')?.length || 0,
+        '总唯一字符': map.size,
+      });
+      const items = Array.from(map.entries()).map(([char, list]) => ({ char, count: list.length }));
+      items.sort((a, b) => b.count - a.count);
+      console.log('[CharAtlas DEBUG] 前10高频字:', items.slice(0, 10).map((x) => `${x.char}:${x.count}`).join(', '));
+    }
     return map;
-  }, [data]);
+  }, [data, debugEnabled]);
 
   const stats = useMemo(() => {
     const total = data?.files?.length || 0;
@@ -219,10 +307,12 @@ export function MasterpieceCharAtlasCard({
 
   useEffect(() => {
     if (!data) return;
-    const init = toChar(initialChar || query) || (topChars[0]?.char || '');
+    const explicit = toChar(initialChar || query);
+    const preferZhi = (byChar.get('之') || []).length ? '之' : '';
+    const init = explicit || preferZhi || (topChars[0]?.char || '');
     if (!init) return;
     setSelectedChar((prev) => prev || init);
-  }, [data, initialChar, query, topChars]);
+  }, [data, initialChar, query, topChars, byChar]);
 
   // Only sync from query when user types in the input box (not from button clicks)
   const handleQueryChange = (newQuery: string) => {
@@ -237,11 +327,92 @@ export function MasterpieceCharAtlasCard({
   const occurrences = useMemo(() => {
     const ch = String(selectedChar || '').trim();
     if (!ch) return [] as CharSliceIndexFile[];
-    return byChar.get(ch) || [];
-  }, [byChar, selectedChar]);
+    const result = byChar.get(ch) || [];
+    if (debugEnabled && ch && result.length > 0) {
+      const withOcr = result
+        .map((f) => {
+          const src = (f as any)?.source || {};
+          const ocr = toChar(src.ocr_guess || '');
+          const score = Number(src.ocr_score || 0);
+          return {
+            index: f.index,
+            char: f.char,
+            file: f.file,
+            page: src.image_index,
+            grid: src.grid,
+            ocr,
+            score,
+            align_gold_index: src.align_gold_index,
+            body_v3_source: src.body_v3_source,
+            body_v4_source: src.body_v4_source,
+            body_v5_source: src.body_v5_source,
+            body_v6_source: src.body_v6_source,
+            body_v7_source: src.body_v7_source,
+            body_v8_source: src.body_v8_source,
+            body_v9_source: src.body_v9_source,
+            body_v10_source: src.body_v10_source,
+            body_v11_source: src.body_v11_source,
+            body_v12_source: src.body_v12_source,
+            body_v13_source: src.body_v13_source,
+          };
+        })
+        .filter((x) => x.ocr);
+      const mismatch = withOcr.filter((x) => {
+        // For recropped slots, OCR metadata no longer matches the new image.
+        if (
+          x.body_v4_source ||
+          x.body_v5_source ||
+          x.body_v6_source ||
+          x.body_v7_source ||
+          x.body_v8_source ||
+          x.body_v9_source ||
+          x.body_v10_source ||
+          x.body_v11_source
+          || x.body_v12_source
+          || x.body_v13_source
+        )
+          return false;
+        return !ocrCompatible(ch, x.ocr);
+      });
+      console.log(
+        `[CharAtlas DEBUG] 选中字"${ch}"，找到${result.length}个（含OCR=${withOcr.length}，OCR不符=${mismatch.length}）`,
+        {
+          sample: withOcr.slice(0, 12),
+          mismatch: mismatch.slice(0, 20),
+        }
+      );
+      const v4 = withOcr.filter((x) => x.body_v4_source).length;
+      if (v4) console.log('[CharAtlas DEBUG] recrop slots in this char:', { char: ch, count: v4 });
+    }
+    return result;
+  }, [byChar, selectedChar, debugEnabled]);
 
   const occIdx = clamp(selectedOccIdx, 0, Math.max(0, occurrences.length - 1));
   const selected = occurrences.length ? occurrences[occIdx] : null;
+
+  const occGridRef = useRef<HTMLDivElement | null>(null);
+  // Autoplay: cycle through occurrences, 1.5s each.
+  useEffect(() => {
+    if (tab !== 'search') return;
+    if (occView !== 'grid') return;
+    if (!selectedChar) return;
+    if (occurrences.length < 2) return;
+    const timer = window.setInterval(() => {
+      setSelectedOccIdx((i) => (i + 1) % occurrences.length);
+    }, 1500);
+    return () => window.clearInterval(timer);
+  }, [tab, occView, selectedChar, occurrences.length]);
+
+  useEffect(() => {
+    if (tab !== 'search') return;
+    if (!selectedChar) return;
+    const el = occGridRef.current;
+    if (!el) return;
+    const target = el.querySelector(`[data-occ-idx="${occIdx}"]`);
+    if (target instanceof HTMLElement) {
+      target.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    }
+  }, [tab, selectedChar, occIdx]);
 
   const didApplyInitialGlyphRef = useRef(false);
   useEffect(() => {
@@ -292,6 +463,35 @@ export function MasterpieceCharAtlasCard({
   }, [data]);
 
   const openInPage = (f: CharSliceIndexFile) => {
+    if (debugEnabled) {
+      const src = (f as any)?.source || {};
+      const ocr = toChar(src.ocr_guess || '');
+      const score = Number(src.ocr_score || 0);
+      console.log('[CharAtlas DEBUG] 点击字形:', {
+        selectedChar,
+        index: f.index,
+        labeledChar: f.char,
+        file: f.file,
+        page: src.image_index,
+        image: src.image,
+        grid: src.grid,
+        crop_box: src.crop_box,
+        ocr_guess: ocr,
+        ocr_score: score,
+        align_gold_index: src.align_gold_index,
+        body_v3_source: src.body_v3_source,
+        body_v4_source: src.body_v4_source,
+        body_v5_source: src.body_v5_source,
+        body_v6_source: src.body_v6_source,
+        body_v7_source: src.body_v7_source,
+        body_v8_source: src.body_v8_source,
+        body_v9_source: src.body_v9_source,
+        body_v10_source: src.body_v10_source,
+        body_v11_source: src.body_v11_source,
+        body_v12_source: src.body_v12_source,
+        body_v13_source: src.body_v13_source,
+      });
+    }
     const pageIndex = Math.max(0, Number(f?.source?.image_index || 1) - 1);
     const cropBox = f?.source?.crop_box;
     if (!cropBox || cropBox.length !== 4) return;
@@ -605,6 +805,9 @@ export function MasterpieceCharAtlasCard({
 
   const renderThumb = (f: CharSliceIndexFile, active: boolean, onClick: () => void) => {
     const src = baseDir + f.file;
+    if (debugEnabled && f.char === '之' && f.index <= 10) {
+      console.log(`[CharAtlas DEBUG] thumb: char="${f.char}", index=${f.index}, src="${src}"`);
+    }
     return (
       <button
         key={f.index}
@@ -770,7 +973,7 @@ export function MasterpieceCharAtlasCard({
                   <div className="flex gap-4 h-[calc(100%-2rem)] min-h-[200px]">
                     {/* 左侧大图 */}
                     <div className="w-32 shrink-0 flex flex-col gap-2">
-                      <div className="flex-1 rounded-xl bg-white border border-stone-200 overflow-hidden">
+                      <div className="aspect-square rounded-xl bg-white border border-stone-200 overflow-hidden">
                         <img
                           src={baseDir + selected.file}
                           alt={selected.char}
@@ -788,7 +991,7 @@ export function MasterpieceCharAtlasCard({
                     </div>
 
                     {/* 右侧网格 */}
-                    <div className="flex-1 min-w-0 overflow-y-auto">
+                    <div ref={occGridRef} className="flex-1 min-w-0 overflow-y-auto">
                       {isAnalyzing ? (
                         <div className="text-[12px] text-stone-500">正在分析写法…</div>
                       ) : analysisError ? (
@@ -811,27 +1014,28 @@ export function MasterpieceCharAtlasCard({
                               </button>
                             ))}
                           </div>
-                          <div className="mt-3 grid grid-cols-4 gap-2">
-                            {(() => {
-                              const g = clusters.find((x) => x.id === activeCluster) || clusters[0];
-                              const list = g ? g.members : [];
-                              return list.map((i) => {
-                                const f = occurrences[i];
-                                const active = i === occIdx;
-                                return (
-                                  <button
-                                    key={f.index}
-                                    onClick={() => setSelectedOccIdx(i)}
-                                    className={`aspect-square rounded-lg overflow-hidden border-2 transition ${
-                                      active ? 'border-[#8B0000] shadow-md' : 'border-stone-200 hover:border-stone-300'
-                                    }`}
-                                  >
-                                    <img src={baseDir + f.file} alt={f.char} className="w-full h-full object-contain" loading={IMG_LOADING} />
-                                  </button>
-                                );
-                              });
-                            })()}
-                          </div>
+                           <div className="mt-3 grid grid-cols-4 gap-2">
+                             {(() => {
+                               const g = clusters.find((x) => x.id === activeCluster) || clusters[0];
+                               const list = g ? g.members : [];
+                               return list.map((i) => {
+                                 const f = occurrences[i];
+                                 const active = i === occIdx;
+                                 return (
+                                   <button
+                                     key={f.index}
+                                     onClick={() => setSelectedOccIdx(i)}
+                                     data-occ-idx={i}
+                                     className={`aspect-square rounded-lg overflow-hidden border-2 transition ${
+                                       active ? 'border-[#8B0000] shadow-md' : 'border-stone-200 hover:border-stone-300'
+                                     }`}
+                                   >
+                                     <img src={baseDir + f.file} alt={f.char} className="w-full h-full object-contain" loading={IMG_LOADING} />
+                                   </button>
+                                 );
+                               });
+                             })()}
+                           </div>
                         </>
                       ) : occView === 'similar' && similarOrder ? (
                         <div className="grid grid-cols-4 gap-2">
@@ -842,6 +1046,7 @@ export function MasterpieceCharAtlasCard({
                               <button
                                 key={f.index}
                                 onClick={() => setSelectedOccIdx(i)}
+                                data-occ-idx={i}
                                 className={`aspect-square rounded-lg overflow-hidden border-2 transition ${
                                   active ? 'border-[#8B0000] shadow-md' : 'border-stone-200 hover:border-stone-300'
                                 }`}
@@ -857,6 +1062,7 @@ export function MasterpieceCharAtlasCard({
                             <button
                               key={f.index}
                               onClick={() => setSelectedOccIdx(i)}
+                              data-occ-idx={i}
                               className={`aspect-square rounded-lg overflow-hidden border-2 transition ${
                                 i === occIdx ? 'border-[#8B0000] shadow-md' : 'border-stone-200 hover:border-stone-300'
                               }`}
@@ -901,17 +1107,17 @@ export function MasterpieceCharAtlasCard({
                             {[0, 1, 2, 3, 4, 5].map((row) => {
                               const f = p.grid[row]?.[col];
                               return f ? (
-                                <button
-                                  key={f.index}
-                                  onClick={() => {
-                                    selectChar(String(f.char));
-                                    const list = byChar.get(String(f.char)) || [];
-                                    const idx = list.findIndex((x) => x.index === f.index);
-                                    setSelectedOccIdx(idx >= 0 ? idx : 0);
-                                    openInPage(f);
-                                  }}
-                                  className="relative w-full aspect-square rounded overflow-hidden bg-white border border-stone-200/70 hover:border-stone-300/80 shadow-sm"
-                                >
+                                 <button
+                                   key={`g-${f.index}`}
+                                   onClick={() => {
+                                     selectChar(String(f.char));
+                                     const list = byChar.get(String(f.char)) || [];
+                                     const idx = list.findIndex((x) => x.index === f.index);
+                                     setSelectedOccIdx(idx >= 0 ? idx : 0);
+                                     openInPage(f);
+                                   }}
+                                   className="relative w-full aspect-square rounded overflow-hidden bg-white border border-stone-200/70 hover:border-stone-300/80 shadow-sm"
+                                 >
                                   <img
                                     src={baseDir + f.file}
                                     alt={String(f.char || '').trim()}
@@ -922,7 +1128,7 @@ export function MasterpieceCharAtlasCard({
                                   <div className="absolute inset-0 ring-1 ring-black/5" />
                                 </button>
                               ) : (
-                                <div key={row} className="w-full aspect-square" />
+                                <div key={`e-${row}`} className="w-full aspect-square" />
                               );
                             })}
                           </div>

@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect, useCallback, useMemo, forwardRef, useImperativeHandle } from 'react';
 import { motion, AnimatePresence, type PanInfo, useDragControls } from 'framer-motion';
 import { X, BookOpen, Info, Share2, Scroll, Sparkles, MapPin, Download, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Search, Shuffle } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
 import Logo from './Logo';
 import { useMediaQuery } from '../utils/useMediaQuery';
 import MobilePosterModal from './MobilePosterModal';
@@ -38,6 +39,7 @@ interface Stele {
   total_chars: number;
   content: string;
   description: string;
+  famousLine?: string;
   story?: string;
   assets?: {
     cover?: string;
@@ -45,6 +47,7 @@ interface Stele {
     pagesThumb?: any;
     charIndex?: string;
     charText?: string;
+    guide?: string;
     practice?: Array<{ char: string; hint: string; image: string }>;
   };
   appreciation?: {
@@ -76,11 +79,24 @@ type MobilePage = 'hub' | FlowMode | 'posters' | 'study' | 'study_deck';
 
 const YISHAN_EXTRACTED_COUNT = 135;
 
+const IS_NATIVE_ANDROID = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
+
 const ENABLE_GESTURE_NAV = false;
 
 const CHAR_LAST_KEY = 'inkgrid_inkflow_chars_last_v1';
 const STELE_LAST_KEY = 'inkgrid_inkflow_steles_last_v1';
 const STELE_SEEN_KEY = 'inkgrid_inkflow_steles_seen_v1';
+
+function watermarkClipStyle(src: string) {
+  const s = String(src || '').trim();
+  if (
+    s.includes('/steles/3-kaishu/4-qianhouchibifu/qianhouchibifu-') &&
+    (s.endsWith('.jpg') || s.endsWith('.webp'))
+  ) {
+    return { clipPath: 'inset(0 0 3.5% 0)' } as const;
+  }
+  return undefined;
+}
 
 type CharLastState = {
   index: number;
@@ -231,7 +247,11 @@ function SharePoster({ data, type, onClose }: { data: any; type: CardType; onClo
                  <div className="flex-1 flex flex-col items-center justify-center relative py-10">
                     <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none"><span className="text-[18rem] font-serif font-black">篆</span></div>
                     <div className="w-72 h-72 flex items-center justify-center relative z-10 scale-[1.6]">
-                      <img src={data.image} className="max-w-full max-h-full object-contain filter contrast-150 brightness-105 mix-blend-multiply" />
+                      <img
+                        src={data.image}
+                        className="max-w-full max-h-full object-contain filter contrast-150 brightness-105 mix-blend-multiply"
+                        style={watermarkClipStyle(String(data.image || ''))}
+                      />
                     </div>
                     <div className="absolute top-0 -right-4 flex flex-col items-center gap-2">
                        <div className="w-20 h-20 border border-stone-800 rounded-full flex items-center justify-center bg-white/40 backdrop-blur-sm shadow-sm">
@@ -313,7 +333,13 @@ function SharePoster({ data, type, onClose }: { data: any; type: CardType; onClo
             <div className="flex-1 flex flex-col px-12 pt-20 text-center items-center">
                {type === 'char' ? (
                  <>
-                    <div className="w-64 h-64 flex items-center justify-center mb-16 relative"><img src={data.image} className="max-w-full max-h-full object-contain filter contrast-125 grayscale" /></div>
+                     <div className="w-64 h-64 flex items-center justify-center mb-16 relative">
+                       <img
+                         src={data.image}
+                         className="max-w-full max-h-full object-contain filter contrast-125 grayscale"
+                         style={watermarkClipStyle(String(data.image || ''))}
+                       />
+                     </div>
                     <div className="space-y-4">
                        <h3 className="text-5xl font-serif text-stone-950 tracking-[0.2em] font-black">{data.simplified}</h3>
                        <p className="text-sm text-stone-400 tracking-[0.1em]">-{data.pinyin}-</p>
@@ -571,12 +597,14 @@ const InkFlow = forwardRef(({ isOpen, onClose, launch, onOpenYishanAppreciation 
   }, []);
 
   const loadSteles = useCallback(async () => {
-    const [res, appRes] = await Promise.all([
+    const [res, appRes, famousRes] = await Promise.all([
       fetch('/data/steles.json'),
       fetch('/data/stele_appreciations.json'),
+      fetch('/data/stele_famous_lines.json'),
     ]);
     const data = await res.json();
     let appreciationById = new Map<string, any>();
+    let famousById = new Map<string, string>();
     try {
       if (!appRes.ok) throw new Error(`HTTP ${appRes.status}`);
       const app = await appRes.json();
@@ -587,6 +615,22 @@ const InkFlow = forwardRef(({ isOpen, onClose, launch, onOpenYishanAppreciation 
         error: e instanceof Error ? e.message : String(e),
       });
       appreciationById = new Map();
+    }
+
+    try {
+      if (!famousRes.ok) throw new Error(`HTTP ${famousRes.status}`);
+      const famous = await famousRes.json();
+      const lines = famous?.lines || {};
+      for (const [k, v] of Object.entries(lines)) {
+        const line = String(v || '').trim();
+        if (line) famousById.set(String(k), line);
+      }
+    } catch (e) {
+      console.warn('[InkFlow] stele famous lines not loaded', {
+        url: '/data/stele_famous_lines.json',
+        error: e instanceof Error ? e.message : String(e),
+      });
+      famousById = new Map();
     }
 
     const rankStele = (s: any) => {
@@ -600,7 +644,9 @@ const InkFlow = forwardRef(({ isOpen, onClose, launch, onOpenYishanAppreciation 
     setSteleCards(
       ordered.map((s: any) => {
         const a = appreciationById.get(String(s.id)) || null;
-        const merged = a ? { ...s, appreciation: a } : s;
+        const famousLine = famousById.get(String(s.id)) || '';
+        const mergedBase = famousLine ? { ...s, famousLine } : s;
+        const merged = a ? { ...mergedBase, appreciation: a } : mergedBase;
         return { id: `s_${s.id}`, type: 'stele' as CardType, data: merged };
       })
     );
@@ -2811,7 +2857,7 @@ function MobileInkFlowCharacter({
           <div className="my-4 h-px bg-stone-200/70" />
 
           <div>
-            <div className="text-[10px] font-black tracking-[0.5em] pl-[0.5em] text-stone-500">English</div>
+            <div className="text-[10px] font-black tracking-[0.5em] pl-[0.5em] text-stone-500">英文 / English</div>
             <div className="mt-2 text-[11px] font-mono text-[#8B0000] tracking-widest uppercase">{char.en_word || '-'}</div>
             <div className="mt-2 text-[12px] font-serif text-stone-700 leading-relaxed tracking-wide">
               {char.en_meaning || '—'}
@@ -2899,7 +2945,10 @@ function MobileInkFlowSteleFeed({
       setCharIndexError(null);
 
       try {
-        const res = await fetch(charIndexUrl);
+        const urlForFetch = IS_NATIVE_ANDROID
+          ? charIndexUrl
+          : charIndexUrl + (charIndexUrl.includes('?') ? '&' : '?') + '_t=' + Date.now();
+        const res = await fetch(urlForFetch, { cache: 'no-store' });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = (await res.json()) as CharSliceIndex;
         if (cancelled) return;
@@ -3060,6 +3109,15 @@ function MobileInkFlowSteleFeed({
                       {stele.description || '以气韵读帖，以笔法入心。'}
                     </p>
 
+                    {String(stele.famousLine || '').trim() ? (
+                      <div className="mt-6 rounded-[1.5rem] bg-white/55 border border-stone-200/70 p-5 shadow-sm">
+                        <div className="text-[10px] font-black tracking-[0.18em] text-stone-600">金句</div>
+                        <p className="mt-3 text-[13px] font-serif text-stone-800 leading-[2.0] tracking-[0.12em] text-justify-zh">
+                          「{String(stele.famousLine).trim()}」
+                        </p>
+                      </div>
+                    ) : null}
+
                     {quote ? (
                       <div className="mt-6 rounded-[1.5rem] bg-white/45 border border-stone-200/70 p-5 shadow-sm">
                         <div className="text-[10px] font-black tracking-[0.18em] text-stone-600">摘句</div>
@@ -3160,9 +3218,9 @@ function MobileInkFlowSteleFeed({
                             <button
                               type="button"
                               onClick={() => onOpenStudyDeck({ initialCardId: 'atlas' })}
-                              className="h-8 px-3 rounded-full bg-[#8B0000] border border-[#8B0000]/60 text-[#F2E6CE] text-[10px] font-black tracking-[0.18em] shadow-sm active:scale-95 transition"
+                              className="h-8 min-w-[5.5rem] px-3 rounded-full bg-[#8B0000] border border-[#8B0000]/60 text-[#F2E6CE] text-[10px] font-black tracking-[0.12em] shadow-sm active:scale-95 transition flex items-center justify-center text-center whitespace-nowrap"
                             >
-                              去学习卡字库
+                              学习卡字库
                             </button>
                           </div>
 
