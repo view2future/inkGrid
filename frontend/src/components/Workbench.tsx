@@ -8,6 +8,11 @@ type Project = {
   direction?: string;
   grid?: { cols: number; rows: number };
   latest_dataset?: any;
+  models?: {
+    detector_best?: string | null;
+    classifier_best?: string | null;
+    classifier_classes_json?: string | null;
+  };
   created_at?: string;
 };
 
@@ -28,6 +33,10 @@ type Job = {
     dataset_url?: string;
     qa_summary_url?: string;
     overlays_url?: string;
+    gold_candidates_url?: string;
+    aligned_url?: string;
+    grid_png_url?: string;
+    crop_png_url?: string;
   };
   log_tail?: string;
 };
@@ -81,6 +90,9 @@ export function Workbench() {
   const [datasets, setDatasets] = useState<string[]>([]);
   const [textCandidates, setTextCandidates] = useState<TextCandidates | null>(null);
   const [textTrad, setTextTrad] = useState('');
+  const [detectorModel, setDetectorModel] = useState('');
+  const [classifierModel, setClassifierModel] = useState('');
+  const [classifierClassesJson, setClassifierClassesJson] = useState('');
 
   const [editorPage, setEditorPage] = useState<PageEntry | null>(null);
   const [editorImg, setEditorImg] = useState<HTMLImageElement | null>(null);
@@ -143,14 +155,17 @@ export function Workbench() {
       setEditDirection((p.direction || 'vertical_rtl') as any);
       setEditCols(Number(p.grid?.cols) || 14);
       setEditRows(Number(p.grid?.rows) || 24);
+      setDetectorModel(String(p.models?.detector_best || ''));
+      setClassifierModel(String(p.models?.classifier_best || ''));
+      setClassifierClassesJson(String(p.models?.classifier_classes_json || ''));
     }
     setPages(Array.isArray(json.pages) ? json.pages : []);
     setJobs(Array.isArray(json.jobs) ? (json.jobs as any) : []);
     setDatasets(Array.isArray(json.datasets) ? json.datasets : []);
 
-    // best-effort load alignment text
+    // load alignment text
     try {
-      const rr = await apiFetch(`/steles/unknown/${slug}/workbench/alignment.json?ts=${Date.now()}`);
+      const rr = await apiFetch(`/api/workbench/projects/${slug}/alignment`);
       if (rr.ok) {
         const a = (await rr.json()) as any;
         setTextTrad(String(a.text_trad || ''));
@@ -282,6 +297,11 @@ export function Workbench() {
         body: JSON.stringify({
           direction: editDirection,
           grid: { cols: editCols, rows: editRows },
+          models: {
+            detector_best: detectorModel.trim() || null,
+            classifier_best: classifierModel.trim() || null,
+            classifier_classes_json: classifierClassesJson.trim() || null,
+          },
         }),
       });
       if (!r.ok) throw new Error(`Save project failed: ${r.status}`);
@@ -402,6 +422,56 @@ export function Workbench() {
         body: JSON.stringify({ type: 'auto_annotate' }),
       });
       if (!r.ok) throw new Error(`Create job failed: ${r.status}`);
+      const json = (await r.json()) as { job?: Job };
+      setJob(json.job || null);
+      await loadProjectDetail(selected.slug);
+    } catch (e) {
+      setErr(String(e));
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function startMlRefineJob() {
+    if (!selected) return;
+    setBusy('ml_refine');
+    setErr(null);
+    try {
+      const r = await apiFetch(`/api/workbench/projects/${selected.slug}/jobs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'ml_refine_dataset',
+          detector_model: detectorModel.trim() || null,
+        }),
+      });
+      if (!r.ok) throw new Error(`ML refine job failed: ${r.status}`);
+      const json = (await r.json()) as { job?: Job };
+      setJob(json.job || null);
+      await loadProjectDetail(selected.slug);
+    } catch (e) {
+      setErr(String(e));
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function startMlAlignSplitJob() {
+    if (!selected) return;
+    setBusy('ml_align');
+    setErr(null);
+    try {
+      const r = await apiFetch(`/api/workbench/projects/${selected.slug}/jobs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'ml_align_and_split',
+          detector_model: detectorModel.trim() || null,
+          classifier_model: classifierModel.trim() || null,
+          classifier_classes_json: classifierClassesJson.trim() || null,
+        }),
+      });
+      if (!r.ok) throw new Error(`ML align/split job failed: ${r.status}`);
       const json = (await r.json()) as { job?: Job };
       setJob(json.job || null);
       await loadProjectDetail(selected.slug);
@@ -604,15 +674,62 @@ export function Workbench() {
                     >
                       {busy === 'job' ? 'Starting...' : 'Run Auto Annotate'}
                     </button>
+
+                    <button
+                      disabled={busy === 'ml_refine'}
+                      onClick={() => void startMlRefineJob()}
+                      className="rounded bg-emerald-500/15 border border-emerald-400/30 px-3 py-2 text-sm hover:bg-emerald-500/20 disabled:opacity-50"
+                    >
+                      {busy === 'ml_refine' ? 'Running...' : 'ML Refine Dataset'}
+                    </button>
+
+                    <button
+                      disabled={busy === 'ml_align'}
+                      onClick={() => void startMlAlignSplitJob()}
+                      className="rounded bg-purple-500/15 border border-purple-400/30 px-3 py-2 text-sm hover:bg-purple-500/20 disabled:opacity-50"
+                    >
+                      {busy === 'ml_align' ? 'Running...' : 'ML Align + Split'}
+                    </button>
                     <a
-                      href={`/?mode=annotator&stele=unknown/${selected.slug}&dataset=${encodeURIComponent(
+                      href={`/api/workbench/projects/${selected.slug}/list?path=datasets/${encodeURIComponent(
                         job?.outputs?.dataset_dir || datasets[datasets.length - 1] || 'chars_workbench_v1',
                       )}`}
+                      target="_blank"
+                      rel="noreferrer"
                       className="rounded bg-white/10 border border-white/10 px-3 py-2 text-sm hover:bg-white/15"
                     >
-                      Open Annotator
+                      Browse Dataset
                     </a>
                   </div>
+                </div>
+
+                <div className="mt-4 grid grid-cols-3 gap-2">
+                  <div className="col-span-3 text-xs text-white/60">Models (local paths)</div>
+                  <input
+                    value={detectorModel}
+                    onChange={(e) => setDetectorModel(e.target.value)}
+                    placeholder="detector best.pt (e.g. ~/InkGridWorkbench/models/detectors/.../best.pt)"
+                    className="col-span-3 rounded bg-white/5 border border-white/10 px-3 py-2 text-sm font-mono"
+                  />
+                  <input
+                    value={classifierModel}
+                    onChange={(e) => setClassifierModel(e.target.value)}
+                    placeholder="classifier best.pt (optional)"
+                    className="col-span-3 rounded bg-white/5 border border-white/10 px-3 py-2 text-sm font-mono"
+                  />
+                  <input
+                    value={classifierClassesJson}
+                    onChange={(e) => setClassifierClassesJson(e.target.value)}
+                    placeholder="classifier classes.json (optional)"
+                    className="col-span-3 rounded bg-white/5 border border-white/10 px-3 py-2 text-sm font-mono"
+                  />
+                  <button
+                    disabled={busy === 'save_project'}
+                    onClick={() => void saveProjectSettings()}
+                    className="col-span-3 rounded bg-white/10 border border-white/10 px-3 py-2 text-sm hover:bg-white/15 disabled:opacity-50"
+                  >
+                    {busy === 'save_project' ? 'Saving...' : 'Save Settings'}
+                  </button>
                 </div>
               </div>
 
@@ -1225,9 +1342,9 @@ export function Workbench() {
                             <div className="mt-3 rounded border border-white/10 bg-black/40 p-3">
                               <div className="text-xs text-white/50">preview job</div>
                               <div className="font-mono text-xs">{previewJob.status} · {previewJob.stage} · {previewJob.progress}%</div>
-                              {previewJob.outputs?.overlays_url ? (
+                              {previewJob.outputs?.grid_png_url ? (
                                 <img
-                                  src={`${previewJob.outputs.overlays_url}/page_grid.png?ts=${Date.now()}`}
+                                  src={`${previewJob.outputs.grid_png_url}?ts=${Date.now()}`}
                                   className="mt-2 w-full rounded bg-black"
                                 />
                               ) : null}
@@ -1247,7 +1364,9 @@ export function Workbench() {
                     datasets.map((d) => (
                       <a
                         key={d}
-                        href={`/?mode=annotator&stele=unknown/${selected.slug}&dataset=${encodeURIComponent(d)}`}
+                        href={`/api/workbench/projects/${selected.slug}/list?path=datasets/${encodeURIComponent(d)}`}
+                        target="_blank"
+                        rel="noreferrer"
                         className="rounded bg-white/10 border border-white/10 px-2 py-1 text-xs font-mono hover:bg-white/15"
                       >
                         {d}
@@ -1324,6 +1443,28 @@ export function Workbench() {
                             className="rounded bg-white/10 border border-white/10 px-2 py-1 text-xs font-mono"
                           >
                             qa_summary
+                          </a>
+                        ) : null}
+
+                        {job.outputs.gold_candidates_url ? (
+                          <a
+                            href={job.outputs.gold_candidates_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="rounded bg-white/10 border border-white/10 px-2 py-1 text-xs font-mono"
+                          >
+                            top200.csv
+                          </a>
+                        ) : null}
+
+                        {job.outputs.aligned_url ? (
+                          <a
+                            href={job.outputs.aligned_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="rounded bg-white/10 border border-white/10 px-2 py-1 text-xs font-mono"
+                          >
+                            aligned.json
                           </a>
                         ) : null}
                         {job.outputs.overlays_url ? (

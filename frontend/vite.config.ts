@@ -1,6 +1,3 @@
-import { existsSync } from 'node:fs';
-import { resolve } from 'node:path';
-
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 
@@ -9,17 +6,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      // In dev, serve large stele assets via FastAPI.
-      '/steles': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-        bypass: (req) => {
-          const url = req.url || '';
-          if (!url.startsWith('/steles/')) return null;
-          const localPath = resolve(__dirname, 'public', url.slice(1));
-          return existsSync(localPath) ? url : null;
-        },
-      },
+      // In dev, proxy API requests to FastAPI backend
       '/api': 'http://localhost:8000',
     },
   },

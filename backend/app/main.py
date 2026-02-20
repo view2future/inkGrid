@@ -220,6 +220,120 @@ async def save_workbench_alignment(
         raise HTTPException(status_code=400, detail=str(e))
 
 
+@app.get("/api/workbench/projects/{stele_slug}/alignment")
+async def get_workbench_alignment(stele_slug: str, _: None = Depends(require_admin)):
+    try:
+        return workbench_service.get_alignment(stele_slug)
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.get("/api/workbench/projects/{stele_slug}/files/{path:path}")
+async def get_workbench_file(stele_slug: str, path: str, _: None = Depends(require_admin)):
+    try:
+        paths = workbench_service._resolve_project_dir(stele_slug)
+        rel = str(path or "").lstrip("/")
+        target = (paths.stele_dir / rel).resolve()
+        if not str(target).startswith(str(paths.stele_dir.resolve()) + os.sep):
+            raise HTTPException(status_code=400, detail="Invalid path")
+        if not target.exists() or not target.is_file():
+            raise HTTPException(status_code=404, detail="File not found")
+        return FileResponse(str(target))
+    except HTTPException:
+        raise
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.get("/api/workbench/projects/{stele_slug}/list")
+async def list_workbench_dir(stele_slug: str, path: str = "", _: None = Depends(require_admin)):
+    try:
+        paths = workbench_service._resolve_project_dir(stele_slug)
+        rel = str(path or "").lstrip("/")
+        target = (paths.stele_dir / rel).resolve()
+        if not str(target).startswith(str(paths.stele_dir.resolve()) + os.sep):
+            raise HTTPException(status_code=400, detail="Invalid path")
+        if not target.exists() or not target.is_dir():
+            raise HTTPException(status_code=404, detail="Dir not found")
+        items = []
+        for p in sorted(target.iterdir(), key=lambda x: x.name):
+            try:
+                st = p.stat()
+                size = int(st.st_size)
+            except Exception:
+                size = 0
+            rel_item = (Path(rel) / p.name).as_posix() if rel else p.name
+            items.append(
+                {
+                    "name": p.name,
+                    "is_dir": p.is_dir(),
+                    "size": size,
+                    "path": rel_item,
+                    "url": None if p.is_dir() else f"/api/workbench/projects/{stele_slug}/files/{rel_item}",
+                }
+            )
+        return {"path": rel, "items": items}
+    except HTTPException:
+        raise
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.get("/api/workbench/projects/{stele_slug}/datasets/{dataset_dir}/overrides")
+async def get_workbench_crop_overrides(
+    stele_slug: str, dataset_dir: str, _: None = Depends(require_admin)
+):
+    try:
+        paths = workbench_service._resolve_project_dir(stele_slug)
+        ds = str(dataset_dir or "").strip().lstrip("/")
+        overrides_path = (paths.stele_dir / "datasets" / ds / "crop_overrides.json").resolve()
+        if not str(overrides_path).startswith(str(paths.stele_dir.resolve()) + os.sep):
+            raise HTTPException(status_code=400, detail="Invalid dataset_dir")
+        if not overrides_path.exists():
+            return {"version": 1, "crop_overrides": {}}
+        return json.loads(overrides_path.read_text(encoding="utf-8"))
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.post("/api/workbench/projects/{stele_slug}/datasets/{dataset_dir}/overrides")
+async def save_workbench_crop_overrides(
+    stele_slug: str, dataset_dir: str, payload: dict, _: None = Depends(require_admin)
+):
+    try:
+        paths = workbench_service._resolve_project_dir(stele_slug)
+        ds = str(dataset_dir or "").strip().lstrip("/")
+        target_dir = (paths.stele_dir / "datasets" / ds).resolve()
+        if not str(target_dir).startswith(str(paths.stele_dir.resolve()) + os.sep):
+            raise HTTPException(status_code=400, detail="Invalid dataset_dir")
+        target_dir.mkdir(parents=True, exist_ok=True)
+        overrides_path = (target_dir / "crop_overrides.json").resolve()
+        crop_overrides = payload.get("crop_overrides")
+        if crop_overrides is None:
+            crop_overrides = {}
+        if not isinstance(crop_overrides, dict):
+            raise HTTPException(status_code=400, detail="crop_overrides must be an object")
+        out = {
+            "version": 1,
+            "crop_overrides": crop_overrides,
+            "updated_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
+        }
+        overrides_path.write_text(json.dumps(out, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        return out
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
 @app.get("/api/workbench/projects/{stele_slug}/jobs")
 async def list_workbench_jobs(stele_slug: str, _: None = Depends(require_admin)):
     try:

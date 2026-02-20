@@ -6,6 +6,7 @@ import Logo from './Logo';
 import { useMediaQuery } from '../utils/useMediaQuery';
 import MobilePosterModal from './MobilePosterModal';
 import { MobileMasterpieceStudyDeck, MobileMasterpieceStudyHub } from './MasterpieceStudy';
+import { SteleInterpretation, type InterpretationData } from './SteleInterpretation';
 import { renderCuratedCollagePng, renderNewYearPosterPng, renderNewYearConceptPng, renderNewYearStoryPng } from '../utils/poster';
 import { track } from '../utils/analytics';
 import { emphasizeTip, extractGoldLine, getKeywords, highlightText, splitLeadSentence } from '../utils/readingEnhance';
@@ -61,6 +62,16 @@ interface Stele {
   };
 }
 
+interface SteleInterpretationsData {
+  metadata: {
+    version: string;
+    description: string;
+    total_steles: number;
+    last_updated: string;
+  };
+  steles: Record<string, InterpretationData>;
+}
+
 type CharSliceIndex = {
   total_chars: number;
   files: Array<{ index: number; char: string; file: string; source?: any }>;
@@ -71,6 +82,7 @@ interface InkFlowProps {
   onClose: () => void;
   launch?: InkFlowLaunch | null;
   onOpenYishanAppreciation?: () => void;
+  onOpenInterpretation?: (steleId: string) => void;
 }
 
 type FlowMode = 'characters' | 'steles';
@@ -395,6 +407,7 @@ function SealStamp({ x, y, visible }: { x: number; y: number; visible: boolean }
 
 function SteleCard({ stele }: { stele: Stele }) {
   const [activeTab, setActiveTab] = useState<'overview' | 'content' | 'story'>('overview');
+  const [showInterpretation, setShowInterpretation] = useState(false);
   const tabs = [
     { id: 'overview', label: '賞析', icon: Sparkles },
     { id: 'content', label: '原文', icon: Scroll },
@@ -406,6 +419,12 @@ function SteleCard({ stele }: { stele: Stele }) {
   const leadSnippet = leadSource ? leadSource.substring(0, 60) : '此帖尚无原文';
   const contentText = hasContent ? stele.content : stele.description || '暂无原文。';
   const app = stele.appreciation;
+
+  // 从全局上下文获取释义数据（通过 document 上的全局变量）
+  const interpretation = useMemo(() => {
+    const globalData = (window as any).__INKGRID_INTERPRETATIONS;
+    return globalData?.[stele.id] || null;
+  }, [stele.id]);
 
   return (
     <div className="h-full w-full flex flex-col bg-[#080808] relative overflow-hidden pointer-events-auto">
@@ -475,6 +494,25 @@ function SteleCard({ stele }: { stele: Stele }) {
                     </div>
                   ) : null}
 
+                  {/* 查看释义按钮 */}
+                  <div className="mt-10 flex gap-3">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowInterpretation(true);
+                      }}
+                      className="px-6 py-3 rounded-full bg-[#8B0000] border border-[#8B0000]/60 text-[#F2E6CE] text-[11px] font-black tracking-[0.18em] hover:bg-[#8B0000]/90 transition shadow-lg flex items-center gap-2"
+                    >
+                      <BookOpen size={16} />
+                      查看释义
+                    </button>
+                    {interpretation && (
+                      <div className="px-4 py-3 rounded-full bg-white/5 border border-white/10 text-stone-400 text-[10px] font-black tracking-[0.12em]">
+                        📖 已有释义
+                      </div>
+                    )}
+                  </div>
+
                   {app?.sources ? (
                     <div className="mt-10 flex flex-wrap gap-3">
                       <a
@@ -503,6 +541,14 @@ function SteleCard({ stele }: { stele: Stele }) {
           </motion.div>
         </AnimatePresence>
       </div>
+
+      {/* 释义组件 */}
+      <SteleInterpretation
+        interpretation={interpretation}
+        originalText={stele.content || ''}
+        isOpen={showInterpretation}
+        onClose={() => setShowInterpretation(false)}
+      />
     </div>
   );
 }
@@ -532,6 +578,9 @@ const InkFlow = forwardRef(({ isOpen, onClose, launch, onOpenYishanAppreciation 
   const [mobileSteleFacetKind, setMobileSteleFacetKind] = useState<'all' | 'dynasty' | 'author' | 'script'>('all');
   const [mobileSteleFacetValue, setMobileSteleFacetValue] = useState('');
   const [showSteleFullText, setShowSteleFullText] = useState(false);
+  const [showInterpretation, setShowInterpretation] = useState(false);
+  const [currentInterpretationId, setCurrentInterpretationId] = useState<string | null>(null);
+  const [interpretations, setInterpretations] = useState<Record<string, InterpretationData>>({});
   const [toast, setToast] = useState<string | null>(null);
   const [charLastIndex, setCharLastIndex] = useState<number | null>(null);
   const [steleLast, setSteleLast] = useState<SteleLastState | null>(null);
@@ -597,14 +646,17 @@ const InkFlow = forwardRef(({ isOpen, onClose, launch, onOpenYishanAppreciation 
   }, []);
 
   const loadSteles = useCallback(async () => {
-    const [res, appRes, famousRes] = await Promise.all([
+    const [res, appRes, famousRes, interpRes] = await Promise.all([
       fetch('/data/steles.json'),
       fetch('/data/stele_appreciations.json'),
       fetch('/data/stele_famous_lines.json'),
+      fetch('/data/steles_interpretations.json'),
     ]);
     const data = await res.json();
     let appreciationById = new Map<string, any>();
     let famousById = new Map<string, string>();
+    let interpretationsById: Record<string, InterpretationData> = {};
+
     try {
       if (!appRes.ok) throw new Error(`HTTP ${appRes.status}`);
       const app = await appRes.json();
@@ -631,6 +683,22 @@ const InkFlow = forwardRef(({ isOpen, onClose, launch, onOpenYishanAppreciation 
         error: e instanceof Error ? e.message : String(e),
       });
       famousById = new Map();
+    }
+
+    try {
+      if (!interpRes.ok) throw new Error(`HTTP ${interpRes.status}`);
+      const interpData = await interpRes.json();
+      interpretationsById = interpData.steles || {};
+      setInterpretations(interpretationsById);
+      // 设置到全局变量，供 SteleCard 组件访问
+      (window as any).__INKGRID_INTERPRETATIONS = interpretationsById;
+    } catch (e) {
+      console.warn('[InkFlow] stele interpretations not loaded', {
+        url: '/data/steles_interpretations.json',
+        error: e instanceof Error ? e.message : String(e),
+      });
+      interpretationsById = {};
+      (window as any).__INKGRID_INTERPRETATIONS = {};
     }
 
     const rankStele = (s: any) => {
@@ -1678,6 +1746,19 @@ const InkFlow = forwardRef(({ isOpen, onClose, launch, onOpenYishanAppreciation 
       </div>
       <SealStamp x={sealPosition.x} y={sealPosition.y} visible={sealPosition.visible} />
       <AnimatePresence>{showPoster && <SharePoster data={currentCard?.data} type={currentCard?.type} onClose={() => setShowPoster(false)} />}</AnimatePresence>
+
+      {/* 全局释义组件（用于移动端直接调用） */}
+      {currentInterpretationId && (
+        <SteleInterpretation
+          interpretation={interpretations[currentInterpretationId] || null}
+          originalText={steleCards.find(c => (c.data as Stele).id === currentInterpretationId)?.data?.content || ''}
+          isOpen={showInterpretation}
+          onClose={() => {
+            setShowInterpretation(false);
+            setCurrentInterpretationId(null);
+          }}
+        />
+      )}
     </motion.div>
   );
 });
@@ -2893,6 +2974,12 @@ function MobileInkFlowSteleFeed({
   onOpenFullText: () => void;
   onOpenStudyDeck: (opts?: { initialCardId?: string }) => void;
 }) {
+  const [showInterpretation, setShowInterpretation] = useState(false);
+  const interpretation = useMemo(() => {
+    const globalData = (window as any).__INKGRID_INTERPRETATIONS;
+    return globalData?.[stele?.id || ''] || null;
+  }, [stele?.id]);
+
   const handleSectionDragEnd = (_: any, info: PanInfo) => {
     if (Math.abs(info.offset.x) < 70) return;
     onNavigateSection(info.offset.x < 0 ? 1 : -1);
@@ -3126,6 +3213,22 @@ function MobileInkFlowSteleFeed({
                         </p>
                       </div>
                     ) : null}
+
+                    {/* 查看释义按钮 */}
+                    <div className="mt-6 flex gap-3">
+                      <button
+                        onClick={() => setShowInterpretation(true)}
+                        className="flex-1 h-12 rounded-full bg-[#8B0000] border border-[#8B0000]/60 text-[#F2E6CE] text-[11px] font-black tracking-[0.18em] shadow-lg active:scale-95 transition flex items-center justify-center gap-2"
+                      >
+                        <BookOpen size={16} />
+                        查看释义
+                      </button>
+                      {interpretation && (
+                        <div className="h-12 px-4 rounded-full bg-white/55 border border-stone-200/70 text-stone-600 text-[10px] font-black tracking-[0.12em] flex items-center">
+                          📖 已有释义
+                        </div>
+                      )}
+                    </div>
 
                     <div className="mt-6 grid grid-cols-1 min-[520px]:grid-cols-[1fr_260px] gap-4 items-start">
                       <div className="min-w-0">
@@ -3547,6 +3650,14 @@ function MobileInkFlowSteleFeed({
           ))}
         </div>
       </div>
+
+      {/* 释义组件 */}
+      <SteleInterpretation
+        interpretation={interpretation}
+        originalText={stele?.content || ''}
+        isOpen={showInterpretation}
+        onClose={() => setShowInterpretation(false)}
+      />
     </div>
   );
 }

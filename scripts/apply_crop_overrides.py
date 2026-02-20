@@ -23,9 +23,23 @@ from __future__ import annotations
 import argparse
 import importlib
 import json
+import importlib.util
+import sys
 from pathlib import Path
 
 from PIL import Image
+
+
+def _load_render_square(repo_root: Path):
+    extract_path = (repo_root / "scripts" / "extract_lantingjixu_chars.py").resolve()
+    spec = importlib.util.spec_from_file_location("extract_lantingjixu_chars", extract_path)
+    if spec is None or spec.loader is None:
+        raise SystemExit("cannot import extractor")
+    mod = importlib.util.module_from_spec(spec)
+    # Python 3.14 dataclasses expects the module to exist in sys.modules.
+    sys.modules[str(spec.name)] = mod
+    spec.loader.exec_module(mod)
+    return getattr(mod, "render_square")
 
 
 def main() -> int:
@@ -66,6 +80,16 @@ def main() -> int:
     entries = list(index.get("files", []) or [])
     by_file = {e.get("file"): e for e in entries if e.get("file")}
 
+    meta_out = (index.get("meta") or {}).get("output") if isinstance(index.get("meta"), dict) else None
+    output_format = None
+    output_quality = None
+    if isinstance(meta_out, dict):
+        output_format = str(meta_out.get("format") or "").lower().strip() or None
+        try:
+            output_quality = int(meta_out.get("quality")) if meta_out.get("quality") is not None else None
+        except Exception:
+            output_quality = None
+
     overrides = json.loads(overrides_path.read_text(encoding="utf-8"))
     crop_overrides = overrides.get("crop_overrides") or {}
     if not isinstance(crop_overrides, dict):
@@ -76,16 +100,25 @@ def main() -> int:
         only = {s.strip() for s in str(args.only_files).split(",") if s.strip()}
 
     # Import render_square from lanting extractor for consistent output.
-    mod = importlib.import_module("scripts.extract_lantingjixu_chars")
-    render_square = getattr(mod, "render_square")
+    repo_root = Path(__file__).resolve().parent.parent
+    render_square = _load_render_square(repo_root)
 
     page_cache: dict[str, Image.Image] = {}
 
     def load_page(name: str) -> Image.Image:
         if name not in page_cache:
-            p = source_dir / name
-            if not p.exists():
-                raise FileNotFoundError(f"Missing source image: {p}")
+            cand = [source_dir / name]
+            # Common prefix in index.json.
+            if str(name).startswith("pages_raw/"):
+                cand.append(source_dir / str(name).split("/", 1)[1])
+            cand.append(source_dir / "pages_raw" / name)
+            p = None
+            for c in cand:
+                if c.exists():
+                    p = c
+                    break
+            if p is None:
+                raise FileNotFoundError(f"Missing source image: {source_dir / name}")
             page_cache[name] = Image.open(p).convert("RGB")
         return page_cache[name]
 
@@ -131,7 +164,13 @@ def main() -> int:
         )
 
         out_path = dataset_dir / fn
-        out.save(out_path, format="PNG", optimize=True)
+        ext = out_path.suffix.lower()
+        fmt = output_format or ("webp" if ext == ".webp" else "png")
+        if fmt == "webp" or ext == ".webp":
+            q = int(output_quality or 82)
+            out.save(out_path, format="WEBP", quality=q, method=6)
+        else:
+            out.save(out_path, format="PNG", optimize=True)
 
         # Update index.json crop_box.
         src["crop_box"] = [int(x0), int(y0), int(x1), int(y1)]

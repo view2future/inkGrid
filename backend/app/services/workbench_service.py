@@ -46,9 +46,22 @@ class ProjectPaths:
 
 
 class WorkbenchService:
-    def __init__(self, base_dir: str, steles_dir: str):
+    def __init__(self, base_dir: str, steles_dir: str, *, workbench_root: str | None = None):
         self.base_dir = Path(base_dir)
         self.steles_dir = Path(steles_dir)
+
+        # Prefer external workbench root (keeps repo clean).
+        # Layout:
+        #   <root>/projects/<slug>/{pages_raw,workbench,datasets}
+        # Fallback (legacy): <steles_dir>/unknown/<slug>
+        env_root = str(workbench_root or os.environ.get("INKGRID_WORKBENCH_ROOT") or "").strip()
+        if env_root:
+            self.workbench_root = Path(env_root).expanduser().resolve()
+            self.projects_root = (self.workbench_root / "projects").resolve()
+        else:
+            # Backward compatible default.
+            self.workbench_root = self.steles_dir.resolve()
+            self.projects_root = (self.steles_dir / "unknown").resolve()
 
         self.search_endpoint = str(os.environ.get("INKGRID_SEARCH_ENDPOINT") or "").strip()
 
@@ -211,8 +224,8 @@ class WorkbenchService:
         if not slug:
             raise ValueError("Empty stele_slug")
 
-        stele_dir = (self.steles_dir / "unknown" / slug).resolve()
-        if not str(stele_dir).startswith(str(self.steles_dir.resolve()) + os.sep):
+        stele_dir = (self.projects_root / slug).resolve()
+        if not str(stele_dir).startswith(str(self.projects_root.resolve()) + os.sep):
             raise ValueError("Invalid stele_slug")
 
         pages_raw_dir = stele_dir / "pages_raw"
@@ -228,7 +241,7 @@ class WorkbenchService:
         )
 
     def list_projects(self) -> Dict[str, Any]:
-        base = (self.steles_dir / "unknown").resolve()
+        base = self.projects_root
         out: list[dict] = []
         if not base.exists():
             return {"projects": []}
@@ -269,12 +282,12 @@ class WorkbenchService:
             except Exception:
                 pages = {"version": 1, "pages": []}
 
+        datasets_dir = (paths.stele_dir / "datasets").resolve()
         datasets = []
-        for p in paths.stele_dir.iterdir():
-            if p.is_dir() and (p / "index.json").exists():
-                if p.name.startswith("workbench_"):
-                    continue
-                datasets.append(p.name)
+        if datasets_dir.exists():
+            for p in datasets_dir.iterdir():
+                if p.is_dir() and (p / "index.json").exists():
+                    datasets.append(p.name)
         datasets.sort()
 
         jobs = []
@@ -308,6 +321,15 @@ class WorkbenchService:
             rows = int(g.get("rows") or 0)
             if cols > 0 and rows > 0:
                 project["grid"] = {"cols": cols, "rows": rows}
+
+        if "models" in payload and isinstance(payload.get("models"), dict):
+            m = payload.get("models") or {}
+            project.setdefault("models", {})
+            if isinstance(project.get("models"), dict):
+                for k in ("detector_best", "classifier_best", "classifier_classes_json"):
+                    if k in m:
+                        v = m.get(k)
+                        project["models"][k] = (str(v).strip() if v is not None else None) or None
         project["updated_at"] = time.strftime("%Y-%m-%dT%H:%M:%S")
         paths.project_json.write_text(
             json.dumps(project, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
@@ -344,6 +366,11 @@ class WorkbenchService:
             "grid": {"cols": grid_cols, "rows": grid_rows},
             "created_at": now,
             "latest_dataset": None,
+            "models": {
+                "detector_best": None,
+                "classifier_best": None,
+                "classifier_classes_json": None,
+            },
             "text": {
                 "status": "unknown",
                 "selected_source_url": None,
@@ -377,6 +404,12 @@ class WorkbenchService:
             )
 
         return {"project": project}
+
+    def get_alignment(self, stele_slug: str) -> Dict[str, Any]:
+        paths = self._resolve_project_dir(stele_slug)
+        if not paths.alignment_json.exists():
+            return {"version": 1, "text_trad": "", "text_simp": "", "cells": []}
+        return json.loads(paths.alignment_json.read_text(encoding="utf-8"))
 
     def fetch_text_candidates(self, stele_slug: str) -> Dict[str, Any]:
         """Fetch text candidates by stele name using a configurable search endpoint.
@@ -573,7 +606,8 @@ class WorkbenchService:
         return {"pages": out_pages}
 
     def _next_dataset_dir(self, paths: ProjectPaths, prefix: str = "chars_workbench") -> str:
-        base = paths.stele_dir
+        base = (paths.stele_dir / "datasets").resolve()
+        base.mkdir(parents=True, exist_ok=True)
         existing = []
         for p in base.iterdir():
             if not p.is_dir():
@@ -591,7 +625,14 @@ class WorkbenchService:
 
     def create_job(self, stele_slug: str, payload: Dict[str, Any]) -> Dict[str, Any]:
         job_type = str(payload.get("type") or "").strip()
-        if job_type not in {"auto_annotate", "export_dataset", "preview_page"}:
+        if job_type not in {
+            "auto_annotate",
+            "export_dataset",
+            "preview_page",
+            "ml_refine_dataset",
+            "ml_align_and_split",
+            "apply_crop_overrides",
+        }:
             raise ValueError("Unsupported job type")
 
         paths = self._resolve_project_dir(stele_slug)
@@ -613,9 +654,17 @@ class WorkbenchService:
             dataset_dir = "workbench_preview"
             out_dir = (paths.workbench_dir / "preview" / page_image).resolve()
             out_dir.mkdir(parents=True, exist_ok=True)
+        elif job_type == "apply_crop_overrides":
+            ds = str(payload.get("dataset_dir") or "").strip()
+            if not ds:
+                raise ValueError("Missing dataset_dir for apply_crop_overrides")
+            dataset_dir = ds
+            out_dir = (paths.stele_dir / "datasets" / ds).resolve()
+            if not out_dir.exists():
+                raise FileNotFoundError("Dataset dir not found")
         else:
             dataset_dir = self._next_dataset_dir(paths)
-            out_dir = (paths.stele_dir / dataset_dir).resolve()
+            out_dir = (paths.stele_dir / "datasets" / dataset_dir).resolve()
             out_dir.mkdir(parents=True, exist_ok=True)
 
         job_id = time.strftime("%Y%m%d_%H%M%S")
@@ -651,7 +700,7 @@ class WorkbenchService:
                         rows=rows,
                         direction=direction,
                     )
-                else:
+                elif job_type in {"auto_annotate", "export_dataset"}:
                     self._run_job_build_dataset(
                         stele_slug,
                         job_path=job_path,
@@ -659,6 +708,33 @@ class WorkbenchService:
                         cols=cols,
                         rows=rows,
                         direction=direction,
+                    )
+                elif job_type == "ml_refine_dataset":
+                    self._run_job_ml_refine_dataset(
+                        stele_slug,
+                        job_path=job_path,
+                        out_dir=out_dir,
+                        cols=cols,
+                        rows=rows,
+                        direction=direction,
+                        payload=payload,
+                    )
+                elif job_type == "ml_align_and_split":
+                    self._run_job_ml_align_and_split(
+                        stele_slug,
+                        job_path=job_path,
+                        out_dir=out_dir,
+                        cols=cols,
+                        rows=rows,
+                        direction=direction,
+                        payload=payload,
+                    )
+                elif job_type == "apply_crop_overrides":
+                    self._run_job_apply_crop_overrides(
+                        stele_slug,
+                        job_path=job_path,
+                        dataset_dir=dataset_dir,
+                        dataset_path=out_dir,
                     )
             except Exception as e:
                 self._update_job(job_path, status="fail", stage="fail", log_tail=str(e))
@@ -854,24 +930,11 @@ class WorkbenchService:
         outputs = json.loads(job_path.read_text(encoding="utf-8")).get("outputs") or {}
         outputs["zip_path"] = str(zip_path)
 
-        try:
-            rel = zip_path.resolve().relative_to(self.steles_dir.resolve())
-            outputs["zip_url"] = "/steles/" + "/".join(rel.parts)
-        except Exception:
-            outputs["zip_url"] = None
-
-        # Dataset URLs for quick linking.
-        try:
-            rel_ds = out_dir.resolve().relative_to(self.steles_dir.resolve())
-            outputs["dataset_url"] = "/steles/" + "/".join(rel_ds.parts)
-            outputs["index_url"] = outputs["dataset_url"] + "/index.json"
-            outputs["qa_summary_url"] = outputs["dataset_url"] + "/qa_summary.md"
-            outputs["overlays_url"] = outputs["dataset_url"] + "/overlays"
-        except Exception:
-            outputs["dataset_url"] = None
-            outputs["index_url"] = None
-            outputs["qa_summary_url"] = None
-            outputs["overlays_url"] = None
+        outputs["zip_url"] = self._workbench_file_url(stele_slug, f"datasets/{out_dir.name}.zip")
+        outputs["dataset_url"] = f"/api/workbench/projects/{stele_slug}/list?path=datasets/{out_dir.name}"
+        outputs["index_url"] = self._workbench_file_url(stele_slug, f"datasets/{out_dir.name}/index.json")
+        outputs["qa_summary_url"] = self._workbench_file_url(stele_slug, f"datasets/{out_dir.name}/qa_summary.md")
+        outputs["overlays_url"] = f"/api/workbench/projects/{stele_slug}/list?path=datasets/{out_dir.name}/overlays"
 
         # Update project latest_dataset pointer.
         try:
@@ -888,6 +951,434 @@ class WorkbenchService:
             pass
 
         self._update_job(job_path, status="success", stage="done", progress=100, outputs=outputs)
+
+    def _workbench_file_url(self, stele_slug: str, rel_path: str) -> str:
+        p = str(rel_path or "").lstrip("/")
+        return f"/api/workbench/projects/{stele_slug}/files/{p}"
+
+    def _run_job_ml_refine_dataset(
+        self,
+        stele_slug: str,
+        *,
+        job_path: Path,
+        out_dir: Path,
+        cols: int,
+        rows: int,
+        direction: str,
+        payload: Dict[str, Any],
+    ) -> None:
+        """Run detector -> refine crops -> QA -> pick top200."""
+
+        self._update_job(job_path, status="running", stage="ml_start", progress=1)
+
+        paths = self._resolve_project_dir(stele_slug)
+        proj = json.loads(paths.project_json.read_text(encoding="utf-8"))
+        models = proj.get("models") if isinstance(proj.get("models"), dict) else {}
+        detector = str(payload.get("detector_model") or models.get("detector_best") or "").strip()
+        if not detector:
+            raise ValueError("Missing detector_model (configure project.models.detector_best or pass in payload)")
+
+        self._ensure_ultralytics(job_path)
+
+        exports_dir = (paths.workbench_dir / "ml" / "exports").resolve()
+        exports_dir.mkdir(parents=True, exist_ok=True)
+        dets_path = exports_dir / f"dets_{job_path.stem}.json"
+
+        # 1) predict
+        self._update_job(job_path, stage="ml_predict", progress=10)
+        cmd_pred = [
+            "python3",
+            str((self.base_dir / "scripts" / "ml_yolo_predict_pages.py").resolve()),
+            "--model",
+            detector,
+            "--pages-dir",
+            str(paths.pages_raw_dir),
+            "--glob",
+            "page_*.{jpg,jpeg,png,webp}",
+            "--out",
+            str(dets_path),
+        ]
+        self._run_cmd(job_path, cmd_pred)
+
+        # 2) refine
+        self._update_job(job_path, stage="ml_refine", progress=45)
+        cmd_ref = [
+            "python3",
+            str((self.base_dir / "scripts" / "ml_refine_crops_with_detector.py").resolve()),
+            "--stele-slug",
+            stele_slug,
+            "--stele-dir",
+            str(paths.stele_dir),
+            "--pages-dir",
+            str(paths.pages_raw_dir),
+            "--detections-json",
+            str(dets_path),
+            "--out-dir",
+            str(out_dir),
+            "--direction",
+            str(direction),
+            "--cols",
+            str(int(cols)),
+            "--rows",
+            str(int(rows)),
+            "--alignment-text",
+            str(paths.alignment_json),
+            "--run-qa",
+        ]
+        self._run_cmd(job_path, cmd_ref)
+
+        # 3) pick candidates
+        self._update_job(job_path, stage="ml_pick_gold", progress=85)
+        gold_csv = out_dir / "gold_candidates_top200.csv"
+        qa_report = out_dir / "qa_report.json"
+        if qa_report.exists():
+            cmd_pick = [
+                "python3",
+                str((self.base_dir / "scripts" / "ml_pick_gold_candidates.py").resolve()),
+                "--qa-report",
+                str(qa_report),
+                "--out",
+                str(gold_csv),
+                "--top",
+                "200",
+            ]
+            self._run_cmd(job_path, cmd_pick)
+
+        # zip
+        self._update_job(job_path, stage="zip", progress=92)
+        zip_path = out_dir.parent / f"{out_dir.name}.zip"
+        with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as z:
+            for fp in sorted(out_dir.rglob("*")):
+                if fp.is_dir():
+                    continue
+                z.write(fp, arcname=str(out_dir.name + "/" + str(fp.relative_to(out_dir))))
+
+        outputs = json.loads(job_path.read_text(encoding="utf-8")).get("outputs") or {}
+        outputs["zip_path"] = str(zip_path)
+        outputs["zip_url"] = self._workbench_file_url(stele_slug, f"datasets/{out_dir.name}.zip")
+        outputs["dataset_dir"] = out_dir.name
+        outputs["dataset_url"] = f"/api/workbench/projects/{stele_slug}/list?path=datasets/{out_dir.name}"
+        outputs["index_url"] = self._workbench_file_url(stele_slug, f"datasets/{out_dir.name}/index.json")
+        outputs["qa_summary_url"] = self._workbench_file_url(stele_slug, f"datasets/{out_dir.name}/qa_summary.md")
+        outputs["overlays_url"] = f"/api/workbench/projects/{stele_slug}/list?path=datasets/{out_dir.name}/overlays"
+        if gold_csv.exists():
+            outputs["gold_candidates_url"] = self._workbench_file_url(
+                stele_slug, f"datasets/{out_dir.name}/gold_candidates_top200.csv"
+            )
+        else:
+            outputs["gold_candidates_url"] = None
+
+        # Update project latest_dataset pointer.
+        try:
+            proj["latest_dataset"] = {"name": str(out_dir.name), "created_at": time.strftime("%Y-%m-%dT%H:%M:%S")}
+            paths.project_json.write_text(json.dumps(proj, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        except Exception:
+            pass
+
+        self._update_job(job_path, status="success", stage="done", progress=100, outputs=outputs)
+
+    def _run_job_ml_align_and_split(
+        self,
+        stele_slug: str,
+        *,
+        job_path: Path,
+        out_dir: Path,
+        cols: int,
+        rows: int,
+        direction: str,
+        payload: Dict[str, Any],
+    ) -> None:
+        """Run det -> sequence -> (optional cls) -> align -> split-build."""
+
+        self._update_job(job_path, status="running", stage="align_start", progress=1)
+        paths = self._resolve_project_dir(stele_slug)
+        proj = json.loads(paths.project_json.read_text(encoding="utf-8"))
+        models = proj.get("models") if isinstance(proj.get("models"), dict) else {}
+
+        detector = str(payload.get("detector_model") or models.get("detector_best") or "").strip()
+        if not detector:
+            raise ValueError("Missing detector_model")
+
+        self._ensure_ultralytics(job_path)
+
+        classifier = str(payload.get("classifier_model") or models.get("classifier_best") or "").strip()
+        classes_json = str(payload.get("classifier_classes_json") or models.get("classifier_classes_json") or "").strip()
+
+        exports_dir = (paths.workbench_dir / "ml" / "exports").resolve()
+        exports_dir.mkdir(parents=True, exist_ok=True)
+        dets_path = exports_dir / f"dets_{job_path.stem}.json"
+        seq_path = exports_dir / f"seq_{job_path.stem}.json"
+        preds_path = exports_dir / f"preds_{job_path.stem}.json"
+        aligned_path = exports_dir / f"aligned_{job_path.stem}.json"
+
+        # predict
+        self._update_job(job_path, stage="align_predict", progress=10)
+        cmd_pred = [
+            "python3",
+            str((self.base_dir / "scripts" / "ml_yolo_predict_pages.py").resolve()),
+            "--model",
+            detector,
+            "--pages-dir",
+            str(paths.pages_raw_dir),
+            "--glob",
+            "page_*.{jpg,jpeg,png,webp}",
+            "--out",
+            str(dets_path),
+        ]
+        self._run_cmd(job_path, cmd_pred)
+
+        # build seq + filter
+        self._update_job(job_path, stage="align_sequence", progress=25)
+        cmd_seq = [
+            "python3",
+            str((self.base_dir / "scripts" / "ml_build_detection_sequence.py").resolve()),
+            "--stele-dir",
+            str(paths.stele_dir),
+            "--pages-dir",
+            str(paths.pages_raw_dir),
+            "--detections-json",
+            str(dets_path),
+            "--out",
+            str(seq_path),
+            "--direction",
+            str(direction),
+            "--cols",
+            str(int(cols)),
+            "--rows",
+            str(int(rows)),
+        ]
+        self._run_cmd(job_path, cmd_seq)
+
+        # classify (optional)
+        pred_arg: list[str] = []
+        if classifier and classes_json:
+            self._update_job(job_path, stage="align_classify", progress=40)
+            cmd_cls = [
+                "python3",
+                str((self.base_dir / "scripts" / "ml_yolo_classify_detections.py").resolve()),
+                "--model",
+                classifier,
+                "--detections-seq",
+                str(seq_path),
+                "--stele-dir",
+                str(paths.pages_raw_dir),
+                "--classes-json",
+                classes_json,
+                "--out",
+                str(preds_path),
+            ]
+            self._run_cmd(job_path, cmd_cls)
+            pred_arg = ["--pred-json", str(preds_path)]
+
+        # align
+        self._update_job(job_path, stage="align_dp", progress=60)
+        text = ""
+        if paths.alignment_json.exists():
+            try:
+                a = json.loads(paths.alignment_json.read_text(encoding="utf-8"))
+                text = str(a.get("text_trad") or "").strip()
+            except Exception:
+                text = ""
+        cmd_align = [
+            "python3",
+            str((self.base_dir / "scripts" / "ml_align_sequence.py").resolve()),
+            "--text",
+            text,
+            "--detections-json",
+            str(seq_path),
+            "--out",
+            str(aligned_path),
+        ] + pred_arg
+        self._run_cmd(job_path, cmd_align)
+
+        # split-build
+        self._update_job(job_path, stage="align_build", progress=78)
+        cmd_build = [
+            "python3",
+            str((self.base_dir / "scripts" / "ml_split_and_build_dataset.py").resolve()),
+            "--stele-dir",
+            str(paths.pages_raw_dir),
+            "--stele-slug",
+            stele_slug,
+            "--detections-seq",
+            str(seq_path),
+            "--alignment-json",
+            str(aligned_path),
+            "--out-dir",
+            str(out_dir),
+            "--direction",
+            str(direction),
+        ]
+        self._run_cmd(job_path, cmd_build)
+
+        # QA
+        self._update_job(job_path, stage="qa", progress=90)
+        try:
+            qa_script = (self.base_dir / "scripts" / "qa_char_crops.py").resolve()
+            subprocess.check_call(
+                [
+                    "python3",
+                    str(qa_script),
+                    "--dataset-dir",
+                    str(out_dir),
+                    "--source-dir",
+                    str(paths.pages_raw_dir),
+                    "--top",
+                    "120",
+                ]
+            )
+        except Exception:
+            pass
+
+        # zip
+        zip_path = out_dir.parent / f"{out_dir.name}.zip"
+        with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as z:
+            for fp in sorted(out_dir.rglob("*")):
+                if fp.is_dir():
+                    continue
+                z.write(fp, arcname=str(out_dir.name + "/" + str(fp.relative_to(out_dir))))
+
+        outputs = json.loads(job_path.read_text(encoding="utf-8")).get("outputs") or {}
+        outputs["zip_path"] = str(zip_path)
+        outputs["zip_url"] = self._workbench_file_url(stele_slug, f"datasets/{out_dir.name}.zip")
+        outputs["dataset_dir"] = out_dir.name
+        outputs["dataset_url"] = f"/api/workbench/projects/{stele_slug}/list?path=datasets/{out_dir.name}"
+        outputs["index_url"] = self._workbench_file_url(stele_slug, f"datasets/{out_dir.name}/index.json")
+        outputs["qa_summary_url"] = self._workbench_file_url(stele_slug, f"datasets/{out_dir.name}/qa_summary.md")
+        outputs["overlays_url"] = f"/api/workbench/projects/{stele_slug}/list?path=datasets/{out_dir.name}/overlays"
+        outputs["aligned_url"] = self._workbench_file_url(stele_slug, str(aligned_path.relative_to(paths.stele_dir)))
+
+        try:
+            proj["latest_dataset"] = {"name": str(out_dir.name), "created_at": time.strftime("%Y-%m-%dT%H:%M:%S")}
+            paths.project_json.write_text(json.dumps(proj, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        except Exception:
+            pass
+
+        self._update_job(job_path, status="success", stage="done", progress=100, outputs=outputs)
+
+    def _run_cmd(self, job_path: Path, cmd: list[str]) -> None:
+        """Run a subprocess and stream stdout into job log_tail."""
+        p = subprocess.Popen(
+            cmd,
+            cwd=str(self.base_dir),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+        )
+        tail_lines: list[str] = []
+        assert p.stdout is not None
+        for line in p.stdout:
+            tail_lines.append(line.rstrip("\n"))
+            tail_lines = tail_lines[-120:]
+            self._update_job(job_path, log_tail="\n".join(tail_lines))
+        rc = p.wait()
+        if rc != 0:
+            raise RuntimeError(f"Command failed rc={rc}: {' '.join(cmd[:3])}")
+
+    def _run_job_apply_crop_overrides(
+        self,
+        stele_slug: str,
+        *,
+        job_path: Path,
+        dataset_dir: str,
+        dataset_path: Path,
+    ) -> None:
+        """Apply crop overrides to an existing dataset, rerun QA and refresh top200."""
+
+        self._update_job(job_path, status="running", stage="apply_overrides", progress=5)
+        paths = self._resolve_project_dir(stele_slug)
+
+        overrides_path = (dataset_path / "crop_overrides.json").resolve()
+        if not overrides_path.exists():
+            raise FileNotFoundError("Missing crop_overrides.json in dataset")
+
+        cmd_apply = [
+            "python3",
+            str((self.base_dir / "scripts" / "apply_crop_overrides.py").resolve()),
+            "--dataset-dir",
+            str(dataset_path),
+            "--source-dir",
+            str(paths.stele_dir),
+            "--overrides",
+            str(overrides_path),
+        ]
+        self._run_cmd(job_path, cmd_apply)
+
+        # QA
+        self._update_job(job_path, stage="qa", progress=70)
+        try:
+            qa_script = (self.base_dir / "scripts" / "qa_char_crops.py").resolve()
+            subprocess.check_call(
+                [
+                    "python3",
+                    str(qa_script),
+                    "--dataset-dir",
+                    str(dataset_path),
+                    "--source-dir",
+                    str(paths.stele_dir),
+                    "--top",
+                    "120",
+                ]
+            )
+        except Exception:
+            pass
+
+        # top200
+        self._update_job(job_path, stage="pick_top200", progress=85)
+        qa_report = dataset_path / "qa_report.json"
+        gold_csv = dataset_path / "gold_candidates_top200.csv"
+        if qa_report.exists():
+            cmd_pick = [
+                "python3",
+                str((self.base_dir / "scripts" / "ml_pick_gold_candidates.py").resolve()),
+                "--qa-report",
+                str(qa_report),
+                "--out",
+                str(gold_csv),
+                "--top",
+                "200",
+            ]
+            self._run_cmd(job_path, cmd_pick)
+
+        # zip
+        self._update_job(job_path, stage="zip", progress=92)
+        zip_path = dataset_path.parent / f"{dataset_path.name}.zip"
+        with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as z:
+            for fp in sorted(dataset_path.rglob("*")):
+                if fp.is_dir():
+                    continue
+                z.write(fp, arcname=str(dataset_path.name + "/" + str(fp.relative_to(dataset_path))))
+
+        outputs = json.loads(job_path.read_text(encoding="utf-8")).get("outputs") or {}
+        outputs["dataset_dir"] = str(dataset_dir)
+        outputs["zip_path"] = str(zip_path)
+        outputs["zip_url"] = self._workbench_file_url(stele_slug, f"datasets/{dataset_path.name}.zip")
+        outputs["index_url"] = self._workbench_file_url(stele_slug, f"datasets/{dataset_path.name}/index.json")
+        outputs["qa_summary_url"] = self._workbench_file_url(stele_slug, f"datasets/{dataset_path.name}/qa_summary.md")
+        outputs["overlays_url"] = f"/api/workbench/projects/{stele_slug}/list?path=datasets/{dataset_path.name}/overlays"
+        outputs["gold_candidates_url"] = self._workbench_file_url(
+            stele_slug, f"datasets/{dataset_path.name}/gold_candidates_top200.csv"
+        )
+        self._update_job(job_path, status="success", stage="done", progress=100, outputs=outputs)
+
+    def _ensure_ultralytics(self, job_path: Path) -> None:
+        """Fail fast with a clear message when ultralytics isn't installed."""
+        try:
+            import ultralytics  # type: ignore
+
+            _ = ultralytics
+            return
+        except Exception as e:
+            self._update_job(
+                job_path,
+                log_tail=(
+                    "Missing dependency: ultralytics.\n"
+                    "Install on this machine (venv) with:\n"
+                    "  python3 -m pip install -U ultralytics\n"
+                    f"Import error: {e}"
+                ),
+            )
+            raise
 
     def _run_job_preview_page(
         self,
@@ -949,16 +1440,11 @@ class WorkbenchService:
             raise RuntimeError(f"workbench_preview_page failed with rc={rc}")
 
         outputs = json.loads(job_path.read_text(encoding="utf-8")).get("outputs") or {}
-        # URL mapping
-        try:
-            rel = out_dir.resolve().relative_to(self.steles_dir.resolve())
-            base_url = "/steles/" + "/".join(rel.parts)
-            outputs["preview_url"] = base_url
-            outputs["overlays_url"] = base_url + "/overlays"
-            outputs["cells_url"] = base_url + "/cells.json"
-        except Exception:
-            outputs["preview_url"] = None
-            outputs["overlays_url"] = None
-            outputs["cells_url"] = None
+        # Under workbench dir: workbench/preview/<page>/...
+        rel_base = f"workbench/preview/{out_dir.name}"
+        outputs["preview_url"] = f"/api/workbench/projects/{stele_slug}/list?path={rel_base}"
+        outputs["cells_url"] = self._workbench_file_url(stele_slug, f"{rel_base}/cells.json")
+        outputs["grid_png_url"] = self._workbench_file_url(stele_slug, f"{rel_base}/overlays/page_grid.png")
+        outputs["crop_png_url"] = self._workbench_file_url(stele_slug, f"{rel_base}/overlays/page_crop.png")
 
         self._update_job(job_path, status="success", stage="done", progress=100, outputs=outputs)

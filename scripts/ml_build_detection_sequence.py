@@ -124,6 +124,7 @@ def clamp(v: float, lo: float, hi: float) -> float:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--stele-dir", required=True)
+    ap.add_argument("--pages-dir", default=None, help="defaults to stele-dir")
     ap.add_argument("--detections-json", required=True)
     ap.add_argument("--out", required=True)
     ap.add_argument("--direction", required=True, choices=["vertical_rtl", "horizontal_ltr"])
@@ -140,6 +141,7 @@ def main() -> int:
     args = ap.parse_args()
 
     stele_dir = Path(args.stele_dir).resolve()
+    pages_dir = Path(args.pages_dir).resolve() if args.pages_dir else stele_dir
     det = json.loads(Path(args.detections_json).read_text(encoding="utf-8"))
     det_pages = det.get("pages")
     if not isinstance(det_pages, dict):
@@ -159,7 +161,6 @@ def main() -> int:
         except Exception:
             workbench_pages = []
 
-    pages_dir = stele_dir
     existing = {p.name: p for p in pages_dir.iterdir() if p.is_file()}
     page_names = [p for p in existing.keys() if p in det_pages]
     # Prefer workbench order.
