@@ -351,6 +351,7 @@ export default function MobilePosterModal({
     <AnimatePresence>
       {isOpen && (
         <motion.div
+          key="poster-modal"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -430,7 +431,7 @@ export default function MobilePosterModal({
                     <AnimatePresence mode="wait">
                       {isBusy && loadingNotes[loadingIndex] ? (
                         <motion.div
-                          key={loadingIndex}
+                          key={`loading-${loadingIndex}-${Date.now()}`}
                           initial={{ opacity: 0, y: 8 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: 8 }}
@@ -495,7 +496,7 @@ export default function MobilePosterModal({
       <AnimatePresence>
         {toast ? (
           <motion.div
-            key={toast.id}
+            key={`toast-${toast.id}`}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}

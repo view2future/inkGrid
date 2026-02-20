@@ -86,7 +86,8 @@ def main() -> int:
     if isinstance(meta_out, dict):
         output_format = str(meta_out.get("format") or "").lower().strip() or None
         try:
-            output_quality = int(meta_out.get("quality")) if meta_out.get("quality") is not None else None
+            q = meta_out.get("quality")
+            output_quality = int(q) if q is not None else None
         except Exception:
             output_quality = None
 
