@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useAppActive } from '../utils/useAppActive';
 import { BookOpen, Copy, QrCode, Search, Share2 } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
 import QRCode from 'qrcode';
@@ -127,6 +128,7 @@ export function MasterpieceCharAtlasCard({
     label: string;
   }) => void;
 }) {
+  const isAppActive = useAppActive();
   const debugEnabled = useMemo(() => {
     try {
       const qs = new URLSearchParams(window.location.search);
@@ -397,15 +399,17 @@ export function MasterpieceCharAtlasCard({
     if (occView !== 'grid') return;
     if (!selectedChar) return;
     if (occurrences.length < 2) return;
+    if (!isAppActive) return;
     const timer = window.setInterval(() => {
       setSelectedOccIdx((i) => (i + 1) % occurrences.length);
     }, 1500);
     return () => window.clearInterval(timer);
-  }, [tab, occView, selectedChar, occurrences.length]);
+  }, [tab, occView, selectedChar, occurrences.length, isAppActive]);
 
   useEffect(() => {
     if (tab !== 'search') return;
     if (!selectedChar) return;
+    if (!isAppActive) return;
     const el = occGridRef.current;
     if (!el) return;
     const raf = window.requestAnimationFrame(() => {
@@ -422,7 +426,7 @@ export function MasterpieceCharAtlasCard({
       }
     });
     return () => window.cancelAnimationFrame(raf);
-  }, [tab, selectedChar, occIdx]);
+  }, [tab, selectedChar, occIdx, isAppActive]);
 
   const didApplyInitialGlyphRef = useRef(false);
   useEffect(() => {

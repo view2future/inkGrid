@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAppActive } from '../utils/useAppActive';
 
 interface Character {
   text: string;
@@ -19,6 +20,7 @@ interface CharCarouselProps {
 export default function CharCarousel({ characters, onCharClick, activeIndex }: CharCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const isAppActive = useAppActive();
 
   const centerChar = characters[currentIndex];
 
@@ -31,6 +33,7 @@ export default function CharCarousel({ characters, onCharClick, activeIndex }: C
 
   // 自动轮播
   useEffect(() => {
+    if (!isAppActive) return;
     if (isPaused || characters.length === 0) return;
 
     const interval = setInterval(() => {
@@ -38,7 +41,7 @@ export default function CharCarousel({ characters, onCharClick, activeIndex }: C
     }, 1500);
 
     return () => clearInterval(interval);
-  }, [isPaused, characters.length]);
+  }, [isPaused, characters.length, isAppActive]);
 
   // 获取5个位置的字（非循环处理，支持边界）
   const getVisibleChars = useCallback(() => {

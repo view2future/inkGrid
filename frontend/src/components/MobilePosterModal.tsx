@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useAppActive } from '../utils/useAppActive';
 import { Download, Share2, X } from 'lucide-react';
 import { type PosterKind, type PosterTemplate, INKGRID_QR_LABEL, renderPosterPng } from '../utils/poster';
 import { sharePngToApps, savePngToGallery } from '../native/media';
@@ -47,6 +48,7 @@ export default function MobilePosterModal({
   target: PosterTarget;
   onClose: () => void;
 }) {
+  const isAppActive = useAppActive();
   const [template, setTemplate] = useState<PosterTemplate>('folio');
   const [isBusy, setIsBusy] = useState(false);
   const [errorText, setErrorText] = useState<string | null>(null);
@@ -162,13 +164,14 @@ export default function MobilePosterModal({
     if (!isOpen) return;
     if (!isBusy) return;
     if (loadingNotes.length <= 1) return;
+    if (!isAppActive) return;
 
     const timer = window.setInterval(() => {
       setLoadingIndex((i) => (i + 1) % loadingNotes.length);
     }, 2600);
 
     return () => window.clearInterval(timer);
-  }, [isOpen, isBusy, loadingNotes.length]);
+  }, [isOpen, isBusy, loadingNotes.length, isAppActive]);
 
   useEffect(() => {
     return () => {

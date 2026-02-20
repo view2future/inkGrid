@@ -38,6 +38,28 @@
   @apply bg-stone-800 rounded-full hover:bg-amber-500/50 transition-colors;
 }
 
+/* Power save mode (default on native Android): reduce GPU-heavy effects. */
+html[data-power-save="1"] .backdrop-blur,
+html[data-power-save="1"] .backdrop-blur-sm,
+html[data-power-save="1"] .backdrop-blur-md,
+html[data-power-save="1"] .backdrop-blur-lg,
+html[data-power-save="1"] .backdrop-blur-xl,
+html[data-power-save="1"] .backdrop-blur-2xl,
+html[data-power-save="1"] .backdrop-blur-3xl {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+html[data-power-save="1"] .blur,
+html[data-power-save="1"] .blur-sm,
+html[data-power-save="1"] .blur-md,
+html[data-power-save="1"] .blur-lg,
+html[data-power-save="1"] .blur-xl,
+html[data-power-save="1"] .blur-2xl,
+html[data-power-save="1"] .blur-3xl {
+  filter: none !important;
+}
+
 /* 文字渲染优化 */
 .font-serif {
   font-display: swap;

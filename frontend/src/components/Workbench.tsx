@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAppActive } from '../utils/useAppActive';
 
 type Project = {
   slug: string;
@@ -64,6 +65,7 @@ async function apiFetch(path: string, opts: RequestInit = {}) {
 }
 
 export function Workbench() {
+  const isAppActive = useAppActive();
   const [token, setTokenState] = useState(getToken());
   const [projects, setProjects] = useState<Project[]>([]);
   const [selected, setSelected] = useState<Project | null>(null);
@@ -334,6 +336,7 @@ export function Workbench() {
   useEffect(() => {
     if (!selected || !previewJob) return;
     if (previewJob.status === 'success' || previewJob.status === 'fail') return;
+    if (!isAppActive) return;
     let cancelled = false;
     const tick = async () => {
       try {
@@ -355,7 +358,7 @@ export function Workbench() {
       cancelled = true;
       window.clearInterval(t);
     };
-  }, [selected, previewJob]);
+  }, [selected, previewJob, isAppActive]);
 
   function openEditor(p: PageEntry) {
     setEditorPage(p);
@@ -433,6 +436,7 @@ export function Workbench() {
   useEffect(() => {
     if (!selected || !job) return;
     if (job.status === 'success' || job.status === 'fail') return;
+    if (!isAppActive) return;
     let cancelled = false;
     const tick = async () => {
       try {
@@ -451,7 +455,7 @@ export function Workbench() {
       cancelled = true;
       window.clearInterval(t);
     };
-  }, [selected, job]);
+  }, [selected, job, isAppActive]);
 
   useEffect(() => {
     if (!selected) return;

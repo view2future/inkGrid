@@ -1,6 +1,6 @@
 // 嶧山刻石 - 追光背景与长卷详情精准恢复版
 import React, { useState, useEffect, useLayoutEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, MotionConfig } from 'framer-motion';
 import { Search, Info, X, ChevronRight, ChevronLeft, Library } from 'lucide-react';
 import { App as CapacitorApp } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
@@ -17,6 +17,8 @@ import { useMediaQuery } from './utils/useMediaQuery';
 import { initWebAnalytics } from './utils/analytics';
 import { parseInkgridDeepLink } from './native/deeplink';
 import { newLaunchKey, type InkFlowLaunch } from './native/inkflow';
+import { applyPowerSaveDataset, isPowerSaveEnabled } from './utils/powerSave';
+import { useAppActive } from './utils/useAppActive';
 
 const YISHAN_IMAGE = "/steles/1-zhuanshu/1-yishankeshi/yishan.jpg";
 const YISHAN2_IMAGE = "/steles/1-zhuanshu/1-yishankeshi/yishan2.jpg";
@@ -24,6 +26,7 @@ const YISHAN2_IMAGE = "/steles/1-zhuanshu/1-yishankeshi/yishan2.jpg";
 const YISHAN_EXTRACTED_COUNT = 135;
 
 function App() {
+  const isAppActive = useAppActive();
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('mode') === 'annotator') {
     return <SteleAnnotator />;
@@ -51,6 +54,7 @@ function App() {
   const [showInkFlow, setShowInkFlow] = useState(false);
   const [inkFlowLaunch, setInkFlowLaunch] = useState<InkFlowLaunch | null>(null);
   const isNativeAndroid = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
+  const powerSaveEnabled = isPowerSaveEnabled();
   const [showAndroidLaunch, setShowAndroidLaunch] = useState(isNativeAndroid);
   const [androidLaunchPhase, setAndroidLaunchPhase] = useState<0 | 1 | 2>(0);
   const [androidLaunchClosing, setAndroidLaunchClosing] = useState(false);
@@ -81,6 +85,10 @@ function App() {
   }, []);
 
   useEffect(() => {
+    applyPowerSaveDataset(powerSaveEnabled);
+  }, [powerSaveEnabled]);
+
+  useEffect(() => {
     // Browser debugging: allow `?inkflow=1`.
     launchInkFlowFromUrl(window.location.href);
   }, [launchInkFlowFromUrl]);
@@ -90,6 +98,8 @@ function App() {
       setShowAndroidLaunch(false);
       return;
     }
+
+    if (!isAppActive) return;
 
     const KEY = 'inkgrid_android_launch_showcase_v2';
     let shouldShow = true;
@@ -137,7 +147,7 @@ function App() {
         androidLaunchTimerRef.current = null;
       }
     };
-  }, [exitAndroidLaunch, isNativeAndroid]);
+  }, [exitAndroidLaunch, isNativeAndroid, isAppActive]);
 
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
@@ -228,6 +238,7 @@ function App() {
   useEffect(() => {
     if (!isMobile) return;
     if (fullSteleContent.length === 0) return;
+    if (!isAppActive) return;
 
     const poolSize = Math.min(fullSteleContent.length, 60);
     const interval = setInterval(() => {
@@ -235,7 +246,7 @@ function App() {
     }, 2200);
 
     return () => clearInterval(interval);
-  }, [isMobile, fullSteleContent.length]);
+  }, [isMobile, fullSteleContent.length, isAppActive]);
 
   const handleNextChar = useCallback(() => {
     if (!previewChar) return;
@@ -306,6 +317,7 @@ function App() {
   const showDetailDesktop = !isMobile && showDetail;
 
   return (
+    <MotionConfig reducedMotion={powerSaveEnabled ? 'always' : 'user'}>
     <div
       className={cn(
         'h-screen selection:bg-amber-500/30 overflow-hidden flex flex-col',
@@ -1037,6 +1049,7 @@ function App() {
         ) : null}
       </AnimatePresence>
     </div>
+    </MotionConfig>
   );
 }
 
@@ -1291,3 +1304,4 @@ function AndroidLaunchShowcase({
 }
 
 export default App;
+ App;
