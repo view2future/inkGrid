@@ -17,6 +17,7 @@ import json
 import os
 import time
 import importlib.util
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -77,6 +78,8 @@ def main() -> int:
         spec = importlib.util.spec_from_file_location("extract_lantingjixu_chars", extract_path)
         if spec is not None and spec.loader is not None:
             mod = importlib.util.module_from_spec(spec)
+            # Python 3.14 dataclasses expects the module to exist in sys.modules.
+            sys.modules[str(spec.name)] = mod
             spec.loader.exec_module(mod)
     except Exception:
         mod = None

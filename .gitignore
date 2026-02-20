@@ -76,6 +76,17 @@ frontend/.frontend.pid
 debug_*.txt
 *.json.lock
 
+# --- ML training artifacts ---
+ml/datasets/
+ml/exports/
+ml/runs/
+ml/wandb/
+ml/.cache/
+ml/datasets/_smoke_yolo/
+ml/datasets/_smoke_refine/
+ml/datasets/_smoke_cls_*/
+ml/exports/_smoke_*.json
+
 # --- Build Artifacts ---
 *.o
 *.a

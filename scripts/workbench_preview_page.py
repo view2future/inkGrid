@@ -14,6 +14,7 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import json
+import sys
 import time
 from pathlib import Path
 from typing import Any
@@ -163,6 +164,8 @@ def main() -> int:
     if spec is None or spec.loader is None:
         raise SystemExit("cannot import extractor")
     mod = importlib.util.module_from_spec(spec)
+    # Python 3.14 dataclasses expects the module to exist in sys.modules.
+    sys.modules[str(spec.name)] = mod
     spec.loader.exec_module(mod)
     ink_mask = getattr(mod, "ink_mask")
     trim_glyph = getattr(mod, "trim_glyph")
