@@ -1,0 +1,1007 @@
+{
+  "name": "书法理论知识题库",
+  "description": "涵盖书法史、书体知识、名家名作、文房四宝等理论知识",
+  "categories": [
+    {
+      "id": "history",
+      "name": "书法史",
+      "questions": [
+        {
+          "id": "hist-001",
+          "type": "choice",
+          "question": "中国书法艺术的起源可以追溯到哪个时期？",
+          "options": ["A. 夏朝", "B. 商周", "C. 春秋战国", "D. 秦朝"],
+          "answer": "B",
+          "explanation": "甲骨文是商周时期的文字，也是目前发现最早的成熟书法艺术形式。",
+          "difficulty": "easy",
+          "score": 2
+        },
+        {
+          "id": "hist-002",
+          "type": "fill_blank",
+          "question": "______是目前发现最早的成熟汉字体系，也是书法艺术的源头。",
+          "answer": "甲骨文",
+          "explanation": "甲骨文发现于河南安阳殷墟，距今约 3000 多年。",
+          "difficulty": "easy",
+          "score": 2
+        },
+        {
+          "id": "hist-003",
+          "type": "choice",
+          "question": "秦始皇统一六国后推行的标准字体是？",
+          "options": ["A. 大篆", "B. 小篆", "C. 隶书", "D. 楷书"],
+          "answer": "B",
+          "explanation": "秦始皇命李斯等人整理文字，创立小篆作为标准字体。",
+          "difficulty": "easy",
+          "score": 2
+        },
+        {
+          "id": "hist-004",
+          "type": "choice",
+          "question": "楷书成熟于哪个朝代？",
+          "options": ["A. 汉代", "B. 魏晋", "C. 唐代", "D. 宋代"],
+          "answer": "C",
+          "explanation": "楷书在唐代达到鼎盛，出现了欧阳询、颜真卿、柳公权等大家。",
+          "difficulty": "medium",
+          "score": 3
+        },
+        {
+          "id": "hist-005",
+          "type": "fill_blank",
+          "question": "东晋书法家王羲之被后世尊为______。",
+          "answer": "书圣",
+          "explanation": "王羲之的书法成就达到巅峰，被尊为'书圣'。",
+          "difficulty": "easy",
+          "score": 2
+        }
+      ]
+    },
+    {
+      "id": "scripts",
+      "name": "书体知识",
+      "questions": [
+        {
+          "id": "scr-001",
+          "type": "choice",
+          "question": "下列哪种书体的特点是'蚕头燕尾'？",
+          "options": ["A. 篆书", "B. 隶书", "C. 楷书", "D. 行书"],
+          "answer": "B",
+          "explanation": "蚕头燕尾是隶书最典型的笔画特征。",
+          "difficulty": "easy",
+          "score": 2
+        },
+        {
+          "id": "scr-002",
+          "type": "fill_blank",
+          "question": "篆书分为大篆和______两大类。",
+          "answer": "小篆",
+          "explanation": "大篆主要指西周金文，小篆是秦代统一后的标准字体。",
+          "difficulty": "easy",
+          "score": 2
+        },
+        {
+          "id": "scr-003",
+          "type": "choice",
+          "question": "行书介于哪两种书体之间？",
+          "options": ["A. 篆书和隶书", "B. 隶书和楷书", "C. 楷书和草书", "D. 篆书和楷书"],
+          "answer": "C",
+          "explanation": "行书是介于楷书和草书之间的书体。",
+          "difficulty": "easy",
+          "score": 2
+        },
+        {
+          "id": "scr-004",
+          "type": "choice",
+          "question": "草书的特点是？",
+          "options": ["A. 笔画平直", "B. 结构方正", "C. 笔画简省", "D. 易于辨认"],
+          "answer": "C",
+          "explanation": "草书笔画高度简化，连绵不断，艺术性强但较难辨认。",
+          "difficulty": "medium",
+          "score": 3
+        },
+        {
+          "id": "scr-005",
+          "type": "fill_blank",
+          "question": "楷书的特点是笔画______、结构方正、章法严谨。",
+          "answer": "平直",
+          "explanation": "楷书横平竖直，点画分明，是学习书法的基础。",
+          "difficulty": "easy",
+          "score": 2
+        }
+      ]
+    },
+    {
+      "id": "masters",
+      "name": "名家名作",
+      "questions": [
+        {
+          "id": "mas-001",
+          "type": "choice",
+          "question": "《兰亭序》的作者是谁？",
+          "options": ["A. 王献之", "B. 王羲之", "C. 欧阳询", "D. 颜真卿"],
+          "answer": "B",
+          "explanation": "《兰亭序》是王羲之的代表作，被誉为'天下第一行书'。",
+          "difficulty": "easy",
+          "score": 2
+        },
+        {
+          "id": "mas-002",
+          "type": "choice",
+          "question": "下列哪部作品不是颜真卿的代表作？",
+          "options": ["A. 多宝塔碑", "B. 祭侄文稿", "C. 玄秘塔碑", "D. 颜勤礼碑"],
+          "answer": "C",
+          "explanation": "《玄秘塔碑》是柳公权的作品。",
+          "difficulty": "medium",
+          "score": 3
+        },
+        {
+          "id": "mas-003",
+          "type": "fill_blank",
+          "question": "'颜筋柳骨'中的'颜'指的是______，'柳'指的是______。",
+          "answer": "颜真卿、柳公权",
+          "explanation": "颜真卿书法丰腴雄浑如筋，柳公权书法瘦硬挺拔如骨。",
+          "difficulty": "medium",
+          "score": 3
+        },
+        {
+          "id": "mas-004",
+          "type": "choice",
+          "question": "《九成宫醴泉铭》的作者是？",
+          "options": ["A. 欧阳询", "B. 虞世南", "C. 褚遂良", "D. 薛稷"],
+          "answer": "A",
+          "explanation": "《九成宫醴泉铭》是欧阳询的代表作，楷书典范。",
+          "difficulty": "medium",
+          "score": 3
+        },
+        {
+          "id": "mas-005",
+          "type": "choice",
+          "question": "草书《自叙帖》的作者是？",
+          "options": ["A. 张旭", "B. 怀素", "C. 孙过庭", "D. 黄庭坚"],
+          "answer": "B",
+          "explanation": "《自叙帖》是唐代怀素的草书代表作。",
+          "difficulty": "medium",
+          "score": 3
+        },
+        {
+          "id": "mas-006",
+          "type": "fill_blank",
+          "question": "《书谱》的作者是唐代书法家______。",
+          "answer": "孙过庭",
+          "explanation": "《书谱》既是书法理论著作，也是草书名作。",
+          "difficulty": "medium",
+          "score": 3
+        },
+        {
+          "id": "mas-007",
+          "type": "choice",
+          "question": "下列哪位不是'宋四家'之一？",
+          "options": ["A. 苏轼", "B. 黄庭坚", "C. 米芾", "D. 赵孟頫"],
+          "answer": "D",
+          "explanation": "宋四家为苏轼、黄庭坚、米芾、蔡襄。赵孟頫是元代书法家。",
+          "difficulty": "hard",
+          "score": 4
+        },
+        {
+          "id": "mas-008",
+          "type": "choice",
+          "question": "《蜀素帖》的作者是？",
+          "options": ["A. 苏轼", "B. 黄庭坚", "C. 米芾", "D. 蔡襄"],
+          "answer": "C",
+          "explanation": "《蜀素帖》是米芾的行书代表作。",
+          "difficulty": "medium",
+          "score": 3
+        }
+      ]
+    },
+    {
+      "id": "tools",
+      "name": "文房四宝",
+      "questions": [
+        {
+          "id": "tool-001",
+          "type": "fill_blank",
+          "question": "文房四宝指的是笔、墨、______、砚。",
+          "answer": "纸",
+          "explanation": "文房四宝是中国传统书写工具的统称。",
+          "difficulty": "easy",
+          "score": 2
+        },
+        {
+          "id": "tool-002",
+          "type": "fill_blank",
+          "question": "宣纸产于安徽省______县。",
+          "answer": "泾",
+          "explanation": "宣纸因产于古宣州（今安徽泾县）而得名。",
+          "difficulty": "medium",
+          "score": 3
+        },
+        {
+          "id": "tool-003",
+          "type": "choice",
+          "question": "湖笔产于现在的哪个省份？",
+          "options": ["A. 江苏省", "B. 浙江省", "C. 安徽省", "D. 江西省"],
+          "answer": "B",
+          "explanation": "湖笔产于浙江省湖州市。",
+          "difficulty": "medium",
+          "score": 3
+        },
+        {
+          "id": "tool-004",
+          "type": "choice",
+          "question": "端砚产于现在的哪个省份？",
+          "options": ["A. 安徽省", "B. 广东省", "C. 广西省", "D. 福建省"],
+          "answer": "B",
+          "explanation": "端砚产于广东省肇庆市（古称端州）。",
+          "difficulty": "medium",
+          "score": 3
+        },
+        {
+          "id": "tool-005",
+          "type": "fill_blank",
+          "question": "徽墨产于安徽省______（古地名）。",
+          "answer": "徽州",
+          "explanation": "徽墨因产于古徽州府（今黄山市）而得名。",
+          "difficulty": "medium",
+          "score": 3
+        },
+        {
+          "id": "tool-006",
+          "type": "choice",
+          "question": "下列哪种宣纸适合写意画和行草书？",
+          "options": ["A. 生宣", "B. 熟宣", "C. 半生熟宣", "D. 金笺"],
+          "answer": "A",
+          "explanation": "生宣吸水性强，墨色变化丰富，适合写意画和行草书。",
+          "difficulty": "hard",
+          "score": 4
+        }
+      ]
+    },
+    {
+      "id": "aesthetics",
+      "name": "书法美学",
+      "questions": [
+        {
+          "id": "aes-001",
+          "type": "choice",
+          "question": "书法创作中'意在笔先'强调的是？",
+          "options": ["A. 笔画顺序", "B. 构思布局", "C. 用墨技巧", "D. 纸张选择"],
+          "answer": "B",
+          "explanation": "'意在笔先'指动笔前要充分构思，胸有成竹。",
+          "difficulty": "medium",
+          "score": 3
+        },
+        {
+          "id": "aes-002",
+          "type": "fill_blank",
+          "question": "书法章法中的'留白'指的是______的处理。",
+          "answer": "空白空间",
+          "explanation": "留白是书法章法的重要艺术手法，虚实相生。",
+          "difficulty": "medium",
+          "score": 3
+        },
+        {
+          "id": "aes-003",
+          "type": "choice",
+          "question": "下列哪项不是书法章法的要素？",
+          "options": ["A. 字距", "B. 行距", "C. 墨色", "D. 落款"],
+          "answer": "C",
+          "explanation": "墨色属于用墨技巧，不是章法布局的直接要素。",
+          "difficulty": "hard",
+          "score": 4
+        },
+        {
+          "id": "aes-004",
+          "type": "choice",
+          "question": "书法作品的落款一般位于？",
+          "options": ["A. 正文开头", "B. 正文中间", "C. 正文末尾", "D. 任意位置"],
+          "answer": "C",
+          "explanation": "落款通常位于正文末尾，内容包含时间、作者等。",
+          "difficulty": "easy",
+          "score": 2
+        }
+      ]
+    }
+  ],
+  "mixed": [
+    {
+      "id": "mix-001",
+      "type": "choice",
+      "question": "《多宝塔碑》是什么书体的代表作？",
+      "options": ["A. 篆书", "B. 隶书", "C. 楷书", "D. 行书"],
+      "answer": "C",
+      "explanation": "《多宝塔碑》是颜真卿的楷书代表作。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "mix-002",
+      "type": "choice",
+      "question": "下列碑帖中，年代最早的是？",
+      "options": ["A. 峄山碑", "B. 曹全碑", "C. 兰亭序", "D. 多宝塔碑"],
+      "answer": "A",
+      "explanation": "《峄山碑》是秦代作品，年代最早。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "mix-003",
+      "type": "fill_blank",
+      "question": "王羲之的《兰亭序》创作于永和九年，即公元______年。",
+      "answer": "353",
+      "explanation": "永和九年是公元 353 年，王羲之在兰亭雅集时创作了《兰亭序》。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "mix-004",
+      "type": "choice",
+      "question": "书法中的'中锋用笔'指的是？",
+      "options": ["A. 笔尖在笔画中间运行", "B. 笔尖在笔画边缘运行", "C. 用力按压笔锋", "D. 快速运笔"],
+      "answer": "A",
+      "explanation": "中锋用笔是书法基本技法，笔尖在笔画中间运行，线条圆润有力。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "mix-005",
+      "type": "choice",
+      "question": "下列哪种书体最适合初学者入门？",
+      "options": ["A. 篆书", "B. 隶书", "C. 楷书", "D. 草书"],
+      "answer": "C",
+      "explanation": "楷书笔画规范，结构清晰，最适合初学者打基础。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "mix-006",
+      "type": "choice",
+      "question": "'二王'通常指的是？",
+      "options": ["A. 王羲之与王献之", "B. 王羲之与王安石", "C. 王献之与王维", "D. 王羲之与王维"],
+      "answer": "A",
+      "explanation": "书法史上的'二王'指东晋王羲之与其子王献之。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "mix-007",
+      "type": "choice",
+      "question": "下列哪部作品被誉为'天下第二行书'？",
+      "options": ["A. 《兰亭序》", "B. 《祭侄文稿》", "C. 《寒食帖》", "D. 《书谱》"],
+      "answer": "B",
+      "explanation": "颜真卿《祭侄文稿》被誉为'天下第二行书'，情感真挚，笔势跌宕。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "mix-008",
+      "type": "choice",
+      "question": "宋代'四大家'不包括以下哪位？",
+      "options": ["A. 苏轼", "B. 黄庭坚", "C. 米芾", "D. 赵孟頫"],
+      "answer": "D",
+      "explanation": "宋四家为苏轼、黄庭坚、米芾、蔡襄；赵孟頫为元代书法家。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "mix-009",
+      "type": "choice",
+      "question": "《玄秘塔碑》的作者是？",
+      "options": ["A. 欧阳询", "B. 颜真卿", "C. 柳公权", "D. 褚遂良"],
+      "answer": "C",
+      "explanation": "《玄秘塔碑》为唐代柳公权楷书代表作。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "mix-010",
+      "type": "choice",
+      "question": "'永字八法'主要用来概括哪方面的技法？",
+      "options": ["A. 用墨方法", "B. 笔画基本写法", "C. 章法布局", "D. 印章篆刻"],
+      "answer": "B",
+      "explanation": "永字八法借'永'字八笔概括楷书用笔基本法则。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "mix-011",
+      "type": "choice",
+      "question": "下列哪项更接近'藏锋'的含义？",
+      "options": ["A. 起笔收锋不露尖", "B. 运笔速度极快", "C. 墨色越浓越好", "D. 结构拉得很长"],
+      "answer": "A",
+      "explanation": "藏锋强调起收笔含蓄，锋芒内敛，使线条更圆厚。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "mix-012",
+      "type": "choice",
+      "question": "宣纸最主要的特点是？",
+      "options": ["A. 不吸墨", "B. 吸水性强、渗化适中", "C. 只能写硬笔", "D. 必须上光"],
+      "answer": "B",
+      "explanation": "宣纸纤维细长，吸水渗化适中，利于表现笔墨层次。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "mix-013",
+      "type": "choice",
+      "question": "下列哪部作品属于草书名作？",
+      "options": ["A. 《自叙帖》", "B. 《九成宫醴泉铭》", "C. 《雁塔圣教序》", "D. 《张迁碑》"],
+      "answer": "A",
+      "explanation": "怀素《自叙帖》为狂草代表作之一。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "mix-014",
+      "type": "choice",
+      "question": "书法中的'结体'主要指？",
+      "options": ["A. 纸张装裱", "B. 单字内部结构处理", "C. 墨色浓淡变化", "D. 落款内容"],
+      "answer": "B",
+      "explanation": "结体即字的结构、布白与重心安排。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "mix-015",
+      "type": "choice",
+      "question": "下列哪项最能体现'行气'？",
+      "options": ["A. 单个字写得很大", "B. 字与字之间气势贯通", "C. 墨色极淡", "D. 只写篆书"],
+      "answer": "B",
+      "explanation": "行气强调字与字、行与行之间的呼应贯通。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "mix-016",
+      "type": "choice",
+      "question": "《书谱》作者是？",
+      "options": ["A. 孙过庭", "B. 张旭", "C. 怀素", "D. 欧阳询"],
+      "answer": "A",
+      "explanation": "唐代孙过庭《书谱》为重要的书法理论著作。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "mix-017",
+      "type": "choice",
+      "question": "下列哪项不是'文房四宝'？",
+      "options": ["A. 笔", "B. 墨", "C. 纸", "D. 扇"],
+      "answer": "D",
+      "explanation": "文房四宝为笔、墨、纸、砚。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "mix-018",
+      "type": "choice",
+      "question": "下列哪种书体以'波磔'最具特征？",
+      "options": ["A. 篆书", "B. 隶书", "C. 楷书", "D. 草书"],
+      "answer": "B",
+      "explanation": "隶书以蚕头燕尾、波磔分明著称。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "mix-019",
+      "type": "choice",
+      "question": "《寒食帖》的作者是？",
+      "options": ["A. 苏轼", "B. 米芾", "C. 黄庭坚", "D. 蔡襄"],
+      "answer": "A",
+      "explanation": "苏轼《黄州寒食诗帖》为行书名作。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "mix-020",
+      "type": "choice",
+      "question": "下列哪项最符合'提按'的理解？",
+      "options": ["A. 笔锋始终不离纸面", "B. 运笔中提起与按下交替", "C. 墨越浓越好", "D. 每笔都一模一样"],
+      "answer": "B",
+      "explanation": "提按是线条粗细、节奏的重要来源。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "mix-021",
+      "type": "choice",
+      "question": "《九成宫醴泉铭》的书体属于？",
+      "options": ["A. 楷书", "B. 行书", "C. 隶书", "D. 草书"],
+      "answer": "A",
+      "explanation": "欧阳询《九成宫醴泉铭》为楷书典范。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "mix-022",
+      "type": "choice",
+      "question": "书法中常说的'枯笔'更强调？",
+      "options": ["A. 墨少而见笔触肌理", "B. 墨很浓很湿", "C. 只写楷书", "D. 起笔必须顿"],
+      "answer": "A",
+      "explanation": "枯笔用墨较少，易出现飞白与笔触纹理。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "mix-023",
+      "type": "choice",
+      "question": "下列哪部作品与王羲之有关？",
+      "options": ["A. 《兰亭序》", "B. 《自叙帖》", "C. 《书谱》", "D. 《多宝塔碑》"],
+      "answer": "A",
+      "explanation": "《兰亭序》为王羲之行书代表作。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "mix-024",
+      "type": "choice",
+      "question": "下列哪项更接近'飞白'效果？",
+      "options": ["A. 线条饱满圆润", "B. 线条中有丝状露白", "C. 墨色均匀无变化", "D. 每笔都极慢"],
+      "answer": "B",
+      "explanation": "飞白是用笔或用墨造成的丝缕露白效果。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "mix-025",
+      "type": "choice",
+      "question": "下列哪位书法家以'狂草'著称？",
+      "options": ["A. 欧阳询", "B. 张旭", "C. 虞世南", "D. 柳公权"],
+      "answer": "B",
+      "explanation": "张旭以狂草著称，与怀素并称草书大家。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "mix-026",
+      "type": "choice",
+      "question": "《张迁碑》属于哪种书体代表作？",
+      "options": ["A. 篆书", "B. 隶书", "C. 楷书", "D. 行书"],
+      "answer": "B",
+      "explanation": "《张迁碑》为东汉隶书名碑。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "mix-027",
+      "type": "choice",
+      "question": "书法作品中'闲章'通常起到的作用是？",
+      "options": ["A. 记录作品标题", "B. 装饰、点睛与平衡构图", "C. 代替正文内容", "D. 表示书体类别"],
+      "answer": "B",
+      "explanation": "闲章常用于补白、点景、调节章法与强化意趣。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "mix-028",
+      "type": "choice",
+      "question": "下列哪项不是楷书四大家之一？",
+      "options": ["A. 欧阳询", "B. 颜真卿", "C. 柳公权", "D. 王羲之"],
+      "answer": "D",
+      "explanation": "楷书四大家通常指欧阳询、颜真卿、柳公权、褚遂良（或虞世南等说法）。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "mix-029",
+      "type": "choice",
+      "question": "下列哪项更符合'侧锋'的描述？",
+      "options": ["A. 笔尖在笔画中心行走", "B. 用笔偏锋，线条富于变化", "C. 只适合写篆书", "D. 墨越淡越好"],
+      "answer": "B",
+      "explanation": "侧锋用笔偏锋运行，线条较有棱角与变化，但需控制避免浮滑。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "mix-030",
+      "type": "choice",
+      "question": "书法史上'三希堂'所藏三帖不包括？",
+      "options": ["A. 《快雪时晴帖》", "B. 《中秋帖》", "C. 《伯远帖》", "D. 《兰亭序》"],
+      "answer": "D",
+      "explanation": "三希堂三帖为《快雪时晴帖》《中秋帖》《伯远帖》。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "mix-031",
+      "type": "choice",
+      "question": "明代书法家董其昌号？",
+      "options": ["A. 香光居士", "B. 易安居士", "C. 六一居士", "D. 东坡居士"],
+      "answer": "A",
+      "explanation": "董其昌号香光居士，主张南北宗论，对后世影响深远。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "mix-032",
+      "type": "choice",
+      "question": "书法中的'欧体'通常指哪位书法家的风格？",
+      "options": ["A. 欧阳询", "B. 欧阳修", "C. 欧阳通", "D. 欧阳詹"],
+      "answer": "A",
+      "explanation": "欧体指欧阳询楷书风格，结构严谨、法度森严。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "mix-033",
+      "type": "choice",
+      "question": "《雁塔圣教序》主要是哪位书法家所书？",
+      "options": ["A. 褚遂良", "B. 颜真卿", "C. 柳公权", "D. 虞世南"],
+      "answer": "A",
+      "explanation": "《雁塔圣教序》为褚遂良楷书名作（亦有部分刻工与版本差异）。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "mix-034",
+      "type": "choice",
+      "question": "《快雪时晴帖》的作者是？",
+      "options": ["A. 王羲之", "B. 王献之", "C. 米芾", "D. 苏轼"],
+      "answer": "A",
+      "explanation": "《快雪时晴帖》为王羲之行书名帖。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "mix-035",
+      "type": "choice",
+      "question": "三希堂之一《中秋帖》的作者是？",
+      "options": ["A. 王羲之", "B. 王献之", "C. 赵孟頫", "D. 董其昌"],
+      "answer": "B",
+      "explanation": "三希堂三帖中《中秋帖》一般认为为王献之所书。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "mix-036",
+      "type": "choice",
+      "question": "用墨讲究'浓淡干湿枯'，其中'湿'更偏向指？",
+      "options": ["A. 墨色发灰无光", "B. 含水量高、渗化明显", "C. 只用淡墨", "D. 只用焦墨"],
+      "answer": "B",
+      "explanation": "湿墨含水量高，易渗化，适合表现润泽与氤氲之气。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "mix-037",
+      "type": "choice",
+      "question": "唐代草书大家常并称为？",
+      "options": ["A. 欧颜", "B. 颜柳", "C. 张旭与怀素", "D. 苏黄"],
+      "answer": "C",
+      "explanation": "张旭与怀素均以草书名世，常被并称。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "mix-038",
+      "type": "choice",
+      "question": "'颜筋柳骨'中的'柳骨'指的是？",
+      "options": ["A. 柳宗元", "B. 柳公权", "C. 柳永", "D. 柳如是"],
+      "answer": "B",
+      "explanation": "柳公权书法劲挺，被形容为'骨'。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "mix-039",
+      "type": "choice",
+      "question": "赵孟頫书法风格更常被概括为？",
+      "options": ["A. 方折峻利", "B. 圆转妍雅", "C. 枯涩苍茫", "D. 蚕头燕尾"],
+      "answer": "B",
+      "explanation": "赵孟頫多取法晋唐，线条圆转流美，风格妍雅。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "mix-040",
+      "type": "choice",
+      "question": "清代以来书法史上'碑学'兴起的重要原因之一是？",
+      "options": ["A. 纸张完全消失", "B. 大量金石碑刻出土与拓本流传", "C. 禁止临帖", "D. 只准写篆书"],
+      "answer": "B",
+      "explanation": "清代金石学兴盛，碑刻拓本普及，推动了碑学审美与取法。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "mix-041",
+      "type": "choice",
+      "question": "《十七帖》一般被认为是下列哪位书法家的作品？",
+      "options": ["A. 王羲之", "B. 王献之", "C. 欧阳询", "D. 颜真卿"],
+      "answer": "A",
+      "explanation": "《十七帖》为王羲之草书经典（传为摹本系统）。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "mix-042",
+      "type": "choice",
+      "question": "《石门颂》属于哪种书体？",
+      "options": ["A. 隶书", "B. 楷书", "C. 行书", "D. 草书"],
+      "answer": "A",
+      "explanation": "《石门颂》为汉隶名刻，气势开张。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "mix-043",
+      "type": "choice",
+      "question": "篆刻印章常用的文字书体是？",
+      "options": ["A. 楷书", "B. 行书", "C. 篆书", "D. 隶书"],
+      "answer": "C",
+      "explanation": "篆刻多以篆书入印，便于方圆转折与古意表达。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "mix-044",
+      "type": "choice",
+      "question": "书法作品中的'引首章'通常钤在哪里？",
+      "options": ["A. 作品上方开头处", "B. 作品正中", "C. 作品落款下方", "D. 作品背面"],
+      "answer": "A",
+      "explanation": "引首章常钤于作品上端，起引题与点景之用。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "mix-045",
+      "type": "choice",
+      "question": "书写前常说的'润笔'更接近指？",
+      "options": ["A. 把纸泡在水里", "B. 试笔、调墨，让笔性顺滑", "C. 只用浓墨", "D. 先写落款"],
+      "answer": "B",
+      "explanation": "润笔是准备环节：试笔、调墨、使笔锋含墨均匀。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "mix-046",
+      "type": "choice",
+      "question": "书法里的'顿笔'常用于？",
+      "options": ["A. 增强笔画力量与节奏", "B. 让墨立刻变干", "C. 让字变小", "D. 避免用笔变化"],
+      "answer": "A",
+      "explanation": "顿笔产生停驻与蓄势感，是节奏与力感的重要手段。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "mix-047",
+      "type": "choice",
+      "question": "'条幅'在形制上更常见的是？",
+      "options": ["A. 横向长条", "B. 竖向长条", "C. 正方形", "D. 圆形"],
+      "answer": "B",
+      "explanation": "条幅多为竖向长幅，便于悬挂与分行布局。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "mix-048",
+      "type": "choice",
+      "question": "书法形制中的'斗方'一般指？",
+      "options": ["A. 圆形纸", "B. 正方形作品", "C. 折扇面", "D. 长卷"],
+      "answer": "B",
+      "explanation": "斗方通常为方形尺幅，适合小品与章法练习。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "mix-049",
+      "type": "choice",
+      "question": "形制'中堂'的常见用途是？",
+      "options": ["A. 随身携带", "B. 悬挂厅堂正中", "C. 书信往来", "D. 印章刻制"],
+      "answer": "B",
+      "explanation": "中堂多为较大竖幅，常悬挂于厅堂正中。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "mix-050",
+      "type": "choice",
+      "question": "宋代书法家米芾常被称为？",
+      "options": ["A. 草圣", "B. 书圣", "C. 米颠", "D. 右军"],
+      "answer": "C",
+      "explanation": "米芾性情率真，被称为'米颠'。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "mix-051",
+      "type": "choice",
+      "question": "《蜀素帖》一般认为是谁的代表作之一？",
+      "options": ["A. 米芾", "B. 苏轼", "C. 颜真卿", "D. 欧阳询"],
+      "answer": "A",
+      "explanation": "《蜀素帖》为米芾行书代表作之一。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "mix-052",
+      "type": "choice",
+      "question": "下列哪件更常被认为与黄庭坚相关？",
+      "options": ["A. 《松风阁诗帖》", "B. 《兰亭序》", "C. 《多宝塔碑》", "D. 《自叙帖》"],
+      "answer": "A",
+      "explanation": "《松风阁诗帖》常与黄庭坚书风联系，是其重要行书作品之一。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "mix-053",
+      "type": "choice",
+      "question": "《蜀素帖》的书体更接近？",
+      "options": ["A. 楷书", "B. 行书", "C. 隶书", "D. 篆书"],
+      "answer": "B",
+      "explanation": "《蜀素帖》以行书为主，节奏明快，笔势飞动。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "mix-054",
+      "type": "choice",
+      "question": "下列哪项属于'章法'层面的内容？",
+      "options": ["A. 提按转折", "B. 中锋侧锋", "C. 字距行距与布白", "D. 藏锋露锋"],
+      "answer": "C",
+      "explanation": "章法关注整体布局：字距行距、虚实疏密、落款钤印等。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "mix-055",
+      "type": "choice",
+      "question": "'逆入平出'常用来描述哪一类用笔要领？",
+      "options": ["A. 起笔藏锋", "B. 墨色控制", "C. 章法分行", "D. 纸张装裱"],
+      "answer": "A",
+      "explanation": "逆入平出强调起笔先逆势入纸再平出成线，利于藏锋与线条厚实。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "mix-056",
+      "type": "choice",
+      "question": "《兰亭序》在文体上属于？",
+      "options": ["A. 诏书", "B. 雅集序文", "C. 奏疏", "D. 史传"],
+      "answer": "B",
+      "explanation": "《兰亭序》为雅集序文，记述兰亭修禊盛会。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "mix-057",
+      "type": "choice",
+      "question": "篆刻中的'朱文印'一般指？",
+      "options": ["A. 文字凹下，印出白字", "B. 文字凸起，印出红字", "C. 只刻圆印", "D. 只刻闲章"],
+      "answer": "B",
+      "explanation": "朱文印文字凸起，钤出红字；白文印则相反。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "mix-058",
+      "type": "choice",
+      "question": "篆刻中的'白文印'一般指？",
+      "options": ["A. 文字凹下，印出白字", "B. 文字凸起，印出红字", "C. 只刻篆书", "D. 只刻楷书"],
+      "answer": "A",
+      "explanation": "白文印文字凹下，钤出白字（红底白字）。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "mix-059",
+      "type": "choice",
+      "question": "下列哪项不是小篆代表作？",
+      "options": ["A. 峄山碑", "B. 泰山刻石", "C. 曹全碑", "D. 琅琊台刻石"],
+      "answer": "C",
+      "explanation": "《曹全碑》为隶书代表作，小篆代表多为秦刻石。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "mix-060",
+      "type": "choice",
+      "question": "'北碑南帖'中的'南帖'更接近指？",
+      "options": ["A. 北朝碑刻体系", "B. 以二王为核心的帖学体系", "C. 唐代宫廷敕令", "D. 甲骨文资料"],
+      "answer": "B",
+      "explanation": "南帖常指以晋人帖学（尤其二王体系）为代表的传统。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "mix-061",
+      "type": "choice",
+      "question": "'北碑'在书法史语境下通常更接近指？",
+      "options": ["A. 北朝碑刻与摩崖造像题记", "B. 宋代行书帖", "C. 明代小楷", "D. 清代馆阁体"],
+      "answer": "A",
+      "explanation": "北碑多指北朝碑刻体系及相关刻石题记，风格雄浑朴茂。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "mix-062",
+      "type": "choice",
+      "question": "临摹方法中的'对临'指？",
+      "options": ["A. 不看原帖凭记忆写", "B. 对照原帖边看边写", "C. 只临单个字", "D. 只临章法不临笔画"],
+      "answer": "B",
+      "explanation": "对临即对照原帖临写，是初学常用方法。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "mix-063",
+      "type": "choice",
+      "question": "临摹方法中的'背临'指？",
+      "options": ["A. 对照原帖临写", "B. 临写作品背面", "C. 不看原帖凭记忆临写", "D. 只写落款"],
+      "answer": "C",
+      "explanation": "背临强调记忆与理解：不看原帖，凭印象临写。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "mix-064",
+      "type": "choice",
+      "question": "临摹方法中的'意临'更强调？",
+      "options": ["A. 完全一笔不差", "B. 抓住风神与笔意，不拘形似", "C. 只用浓墨", "D. 只写篆书"],
+      "answer": "B",
+      "explanation": "意临重在神似与气韵，属于理解与再创造。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "mix-065",
+      "type": "choice",
+      "question": "书法练习中常说的'集字'是指？",
+      "options": ["A. 把字写得很大", "B. 从不同作品选字组合成新内容", "C. 只练习一个字", "D. 把纸裁成小块"],
+      "answer": "B",
+      "explanation": "集字从碑帖中挑选合适字形组合，用于创作与章法训练。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "mix-066",
+      "type": "choice",
+      "question": "拓片的主要用途是？",
+      "options": ["A. 复制与传播碑刻文字形态", "B. 固定墨色不褪", "C. 提高纸张韧性", "D. 代替刻石"],
+      "answer": "A",
+      "explanation": "拓片用于把碑刻凹凸文字转印到纸上，便于保存与学习。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "mix-067",
+      "type": "choice",
+      "question": "传统拓片制作通常离不开？",
+      "options": ["A. 宣纸与墨", "B. 油漆与刷子", "C. 粘土与火", "D. 石灰与水泥"],
+      "answer": "A",
+      "explanation": "拓片常以宣纸覆石、用墨捶拓形成黑地白字。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "mix-068",
+      "type": "choice",
+      "question": "楷书学习中常强调'中正'，更接近指？",
+      "options": ["A. 字形重心稳定，结构匀称", "B. 全部用淡墨", "C. 每个字都写得一样大", "D. 只写横画"],
+      "answer": "A",
+      "explanation": "楷书重中正端庄，重心稳定是基础要求。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "mix-069",
+      "type": "choice",
+      "question": "书法史上的'隶变'大致发生在？",
+      "options": ["A. 夏商时期", "B. 秦汉之际", "C. 唐宋之际", "D. 明清之际"],
+      "answer": "B",
+      "explanation": "隶变指从篆到隶的演变过程，主要在秦汉时期完成。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "mix-070",
+      "type": "choice",
+      "question": "书法史上常称的'草圣'更常指？",
+      "options": ["A. 欧阳询", "B. 张旭", "C. 王羲之", "D. 柳公权"],
+      "answer": "B",
+      "explanation": "张旭以狂草著称，常被称为'草圣'。",
+      "difficulty": "medium",
+      "score": 3
+    }
+  ]
+}

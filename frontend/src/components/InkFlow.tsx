@@ -9,6 +9,7 @@ import { MobileMasterpieceStudyDeck, MobileMasterpieceStudyHub } from './Masterp
 import { SteleInterpretation, type InterpretationData } from './SteleInterpretation';
 import { renderCuratedCollagePng, renderNewYearPosterPng, renderNewYearConceptPng, renderNewYearStoryPng } from '../utils/poster';
 import { track } from '../utils/analytics';
+import { cn } from '../utils/cn';
 import { emphasizeTip, extractGoldLine, getKeywords, highlightText, splitLeadSentence } from '../utils/readingEnhance';
 import type { InkFlowLaunch } from '../native/inkflow';
 import { cancelInkFlowNotification, showInkFlowNotification } from '../native/notifications';
@@ -1156,13 +1157,12 @@ const InkFlow = forwardRef(({ isOpen, onClose, launch, onOpenYishanAppreciation 
                   : '学一课'
             : '选一页，慢慢看';
 
-    const refreshAll = async () => {
-      try {
-        await Promise.all([loadChars(), loadSteles()]);
-        showToast('已刷新');
-      } catch {
-        showToast('刷新失败');
-      }
+    const openInkLadder = () => {
+      track('hub_open_inkladder');
+      onClose();
+      window.setTimeout(() => {
+        window.location.href = '?mode=grade&level=advanced';
+      }, 0);
     };
 
     const randomizeStele = () => {
@@ -1465,9 +1465,9 @@ const InkFlow = forwardRef(({ isOpen, onClose, launch, onOpenYishanAppreciation 
             <div className="flex items-center gap-2">
               {mobilePage === 'hub' ? (
                 <button
-                  onClick={() => void refreshAll()}
+                  onClick={openInkLadder}
                   className="w-10 h-10 rounded-full bg-white/60 backdrop-blur-md border border-stone-200/70 flex items-center justify-center text-stone-700 shadow-sm active:scale-95 transition"
-                  aria-label="刷新"
+                  aria-label="墨梯"
                 >
                   <Sparkles size={18} />
                 </button>
@@ -2080,7 +2080,7 @@ function MobileInkFlowPosterGallery({
     }
 
     const yearLabel = '馬年';
-        const specs = [
+    const specs = [
           { id: 'ny_08', dayLabel: '除夕', caption: '守歲迎新', glyph: '久', date: '2026-02-16', lunarDateStr: '乙巳年 · 腊月 · 二十九', story: '岁暮守夜，祈愿长久。墨迹如火，映照新岁。', index: 32, source: '嶧山刻石' },
           { id: 'ny_01', dayLabel: '初一', caption: '拜歲迎春', glyph: '年', date: '2026-02-17', lunarDateStr: '丙午年 · 正月 · 初一', story: '开门见年，万象更新。秦篆古意，共贺新禧。', index: 40, source: '嶧山刻石' },
           { id: 'ny_02', dayLabel: '初二', caption: '回門團圓', glyph: '家', date: '2026-02-18', lunarDateStr: '丙午年 · 正月 · 初二', story: '归宁省亲，心系一家。信笔家书，纸短情长。', index: 114, source: '嶧山刻石' },
@@ -2089,6 +2089,14 @@ function MobileInkFlowPosterGallery({
           { id: 'ny_05', dayLabel: '初五', caption: '破五迎財', glyph: '利', date: '2026-02-21', lunarDateStr: '丙午年 · 正月 · 初五', story: '破五迎财，万事顺利。金石拓片，刻录吉祥。', index: 129, source: '嶧山刻石' },
           { id: 'ny_06', dayLabel: '初六', caption: '送窮出行', glyph: '泽', date: '2026-02-22', lunarDateStr: '丙午年 · 正月 · 初六', story: '送穷出行，广施润泽。行云流水，万路皆宽。', index: 130, source: '嶧山刻石' },
           { id: 'ny_07', dayLabel: '初七', caption: '人日安康', glyph: '康', date: '2026-02-23', lunarDateStr: '丙午年 · 正月 · 初七', story: '人日安康，万物共生。竹影筛月，气清神和。', index: 127, source: '嶧山刻石' },
+          { id: 'ny_09', dayLabel: '初八', caption: '顺星开运', glyph: '开', date: '2026-02-24', lunarDateStr: '丙午年 · 正月 · 初八', story: '顺星开运，开卷见新。朱砂一点，启程向前。', index: 82, source: '嶧山刻石' },
+          { id: 'ny_10', dayLabel: '初九', caption: '天公赐福', glyph: '天', date: '2026-02-25', lunarDateStr: '丙午年 · 正月 · 初九', story: '天公生辰，天佑人间。赤印落纸，愿景成真。', index: 115, source: '嶧山刻石' },
+          { id: 'ny_11', dayLabel: '初十', caption: '土神护宅', glyph: '土', date: '2026-02-26', lunarDateStr: '丙午年 · 正月 · 初十', story: '初十敬土，守宅安稳。朱印落定，四方皆稳。', index: 78, source: '嶧山刻石' },
+          { id: 'ny_12', dayLabel: '十一', caption: '亲眷相聚', glyph: '亲', date: '2026-02-27', lunarDateStr: '丙午年 · 正月 · 十一', story: '亲眷相聚，一席暖意。家在灯火处，字亦有归处。', index: 57, source: '嶧山刻石' },
+          { id: 'ny_13', dayLabel: '十二', caption: '作灯备会', glyph: '作', date: '2026-02-28', lunarDateStr: '丙午年 · 正月 · 十二', story: '作灯备会，灯火可期。红纸起势，先把年味写足。', index: 88, source: '嶧山刻石' },
+          { id: 'ny_14', dayLabel: '十三', caption: '试灯见明', glyph: '明', date: '2026-03-01', lunarDateStr: '丙午年 · 正月 · 十三', story: '试灯见明，照见喜气。墨在暗处更有光。', index: 48, source: '嶧山刻石' },
+          { id: 'ny_15', dayLabel: '十四', caption: '登门送灯', glyph: '登', date: '2026-03-02', lunarDateStr: '丙午年 · 正月 · 十四', story: '登门送灯，照拂四方。一路红灯，一路安稳。', index: 61, source: '嶧山刻石' },
+          { id: 'ny_16', dayLabel: '十五', caption: '元宵灯会', glyph: '泰', date: '2026-03-03', lunarDateStr: '丙午年 · 正月 · 十五 · 元宵', story: '灯火阑珊，泰和长久。以朱为喜，以金为庆。', index: 51, source: '嶧山刻石' },
         ];
 
     return specs
@@ -2289,7 +2297,7 @@ function MobileInkFlowPosterGallery({
 
         <section className="space-y-4">
           <div className="flex items-end justify-between">
-            <div className="text-[11px] font-black tracking-[0.5em] pl-[0.5em] text-stone-600">馬年七日</div>
+            <div className="text-[11px] font-black tracking-[0.5em] pl-[0.5em] text-stone-600">馬年 · 除夕至元宵</div>
             <div className="text-[10px] font-mono text-stone-500 tracking-widest">{newYearPosters.length} 张</div>
           </div>
 
@@ -2576,6 +2584,8 @@ function MobileNewYearPosterModal({
   const [loadingIndex, setLoadingIndex] = useState(0);
   const [conceptUrl, setConceptUrl] = useState<string | null>(null);
   const [storyUrl, setStoryUrl] = useState<string | null>(null);
+  const [variant, setVariant] = useState<'classic' | 'festive'>('classic');
+  const [festivePreviewUrl, setFestivePreviewUrl] = useState<string | null>(null);
 
   const loadingNotes = useMemo(
     () =>
@@ -2588,11 +2598,20 @@ function MobileNewYearPosterModal({
     []
   );
 
-  const filename = useMemo(() => {
+  const supportsVariant = poster.id === 'ny_06' || poster.id === 'ny_07';
+  const renderId = supportsVariant && variant === 'festive' ? `${poster.id}_festive` : poster.id;
+  const storyId = poster.id;
+
+  const baseFilename = useMemo(() => {
     const date = new Date();
     const stamp = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
     return `inkgrid_${stamp}_${poster.id}.png`;
   }, [poster.id]);
+
+  const filename = useMemo(() => {
+    const suffix = supportsVariant && variant === 'festive' ? '_festive' : '';
+    return baseFilename.replace(/\.png$/i, `${suffix}.png`);
+  }, [baseFilename, supportsVariant, variant]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -2603,14 +2622,15 @@ function MobileNewYearPosterModal({
     const urls: string[] = [];
     setConceptUrl(null);
     setStoryUrl(null);
+    setFestivePreviewUrl(null);
 
     const runNotes = async () => {
       try {
         const [conceptRes, storyRes] = await Promise.all([
-          renderNewYearConceptPng(poster.id, { pixelRatio: 2 }),
+          renderNewYearConceptPng(renderId, { pixelRatio: 2 }),
           renderNewYearStoryPng(
             {
-              id: poster.id,
+              id: storyId,
               yearLabel: poster.yearLabel,
               dayLabel: poster.dayLabel,
               caption: poster.caption,
@@ -2636,6 +2656,36 @@ function MobileNewYearPosterModal({
         const storyObjectUrl = URL.createObjectURL(storyRes.blob);
         urls.push(storyObjectUrl);
         setStoryUrl(storyObjectUrl);
+
+        if (supportsVariant && variant === 'festive') {
+          try {
+            const festiveRes = await renderNewYearPosterPng(
+              {
+                id: renderId,
+                yearLabel: poster.yearLabel,
+                dayLabel: poster.dayLabel,
+                caption: poster.caption,
+                date: poster.date,
+                lunarDateStr: poster.lunarDateStr,
+                story: poster.story,
+                glyph: {
+                  simplified: poster.glyph.simplified,
+                  image: poster.glyph.image,
+                  index: poster.glyph.index,
+                  source: poster.glyph.source,
+                },
+              },
+              { scale: 0.42, pixelRatio: 2 }
+            );
+            if (!cancelled) {
+              const festiveObjectUrl = URL.createObjectURL(festiveRes.blob);
+              urls.push(festiveObjectUrl);
+              setFestivePreviewUrl(festiveObjectUrl);
+            }
+          } catch {
+            // ignore
+          }
+        }
       } catch (err) {
         console.error('Failed to generate note cards', err);
       }
@@ -2659,6 +2709,10 @@ function MobileNewYearPosterModal({
     poster.lunarDateStr,
     poster.story,
     poster.yearLabel,
+    renderId,
+    storyId,
+    supportsVariant,
+    variant,
   ]);
 
   useEffect(() => {
@@ -2676,7 +2730,7 @@ function MobileNewYearPosterModal({
     setTip(null);
     try {
       const baseInput = {
-        id: poster.id,
+        id: kind === 'story' ? storyId : renderId,
         yearLabel: poster.yearLabel,
         dayLabel: poster.dayLabel,
         caption: poster.caption,
@@ -2696,12 +2750,17 @@ function MobileNewYearPosterModal({
           ? await renderNewYearPosterPng(baseInput, { pixelRatio: 3 })
           : kind === 'story'
             ? await renderNewYearStoryPng(baseInput, { pixelRatio: 3 })
-            : await renderNewYearConceptPng(poster.id, { pixelRatio: 3 });
+            : await renderNewYearConceptPng(renderId, { pixelRatio: 3 });
 
       const url = URL.createObjectURL(res.blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = kind === 'poster' ? filename : kind === 'story' ? `story_${filename}` : `note_${filename}`;
+       a.download =
+         kind === 'poster'
+           ? filename
+           : kind === 'story'
+             ? `story_${baseFilename}`
+             : `note_${filename}`;
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -2748,37 +2807,73 @@ function MobileNewYearPosterModal({
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-5 custom-scrollbar">
-              <div className="max-w-md mx-auto space-y-10 pb-12">
-                {/* 海报预览 */}
-                <div className="space-y-4">
-                  <div className="text-[10px] font-black tracking-[0.4em] text-stone-500 uppercase px-1">典藏海报</div>
-                  <div className="rounded-[2rem] bg-white/5 border border-white/10 shadow-[0_40px_120px_rgba(0,0,0,0.65)] overflow-hidden">
-                    <div className="relative w-full aspect-[9/16] bg-black/30">
-                      {previewUrl ? (
-                        <img src={previewUrl} alt="new-year" className="absolute inset-0 w-full h-full object-cover" />
-                      ) : (
-                        <div className="absolute inset-0 flex items-center justify-center text-stone-400 text-sm font-serif">预览不可用</div>
-                      )}
+                <div className="flex-1 overflow-y-auto px-5 custom-scrollbar">
+                  <div className="max-w-md mx-auto space-y-10 pb-12">
+                    {/* 海报预览 */}
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between gap-3 px-1">
+                        <div className="text-[10px] font-black tracking-[0.4em] text-stone-500 uppercase">海报</div>
+                        {supportsVariant ? (
+                          <div className="inline-flex items-center gap-1 rounded-full bg-white/5 border border-white/10 p-1">
+                            <button
+                              type="button"
+                              onClick={() => setVariant('classic')}
+                              className={cn(
+                                'px-3 py-1 rounded-full text-[10px] font-black tracking-[0.18em] transition',
+                                variant === 'classic'
+                                  ? 'bg-[#8B0000] text-[#F2E6CE]'
+                                  : 'text-stone-300 hover:text-stone-100'
+                              )}
+                            >
+                              典藏
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setVariant('festive')}
+                              className={cn(
+                                'px-3 py-1 rounded-full text-[10px] font-black tracking-[0.18em] transition',
+                                variant === 'festive'
+                                  ? 'bg-amber-500 text-black'
+                                  : 'text-stone-300 hover:text-stone-100'
+                              )}
+                            >
+                              喜庆
+                            </button>
+                          </div>
+                        ) : null}
+                      </div>
+                      <div className="rounded-[2rem] bg-white/5 border border-white/10 shadow-[0_40px_120px_rgba(0,0,0,0.65)] overflow-hidden">
+                        <div className="relative w-full aspect-[9/16] bg-black/30">
+                          {supportsVariant && variant === 'festive' ? (
+                            festivePreviewUrl ? (
+                              <img src={festivePreviewUrl} alt="new-year" className="absolute inset-0 w-full h-full object-cover" />
+                            ) : (
+                              <div className="absolute inset-0 flex items-center justify-center text-stone-400 text-sm font-serif">正在生成喜庆版…</div>
+                            )
+                          ) : previewUrl ? (
+                            <img src={previewUrl} alt="new-year" className="absolute inset-0 w-full h-full object-cover" />
+                          ) : (
+                            <div className="absolute inset-0 flex items-center justify-center text-stone-400 text-sm font-serif">预览不可用</div>
+                          )}
                       {isBusy && (
                         <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
                           <div className="w-10 h-10 rounded-full border-2 border-white/20 border-t-white/70 animate-spin" />
                         </div>
                       )}
                     </div>
-                  </div>
-                  <button
-                    onClick={() => handleDownload('poster')}
-                    disabled={isBusy}
-                    className="w-full flex items-center justify-center gap-3 px-4 py-4 rounded-[1.25rem] bg-[#8B0000] border border-[#8B0000]/60 text-[#F2E6CE] text-[12px] font-black tracking-[0.25em] shadow-xl active:scale-95 transition disabled:opacity-40"
-                  >
-                    <Download size={16} /> 保存典藏海报
-                  </button>
-                </div>
+                      </div>
+                      <button
+                        onClick={() => handleDownload('poster')}
+                        disabled={isBusy}
+                        className="w-full flex items-center justify-center gap-3 px-4 py-4 rounded-[1.25rem] bg-[#8B0000] border border-[#8B0000]/60 text-[#F2E6CE] text-[12px] font-black tracking-[0.25em] shadow-xl active:scale-95 transition disabled:opacity-40"
+                      >
+                        <Download size={16} /> 保存{supportsVariant && variant === 'festive' ? '喜庆' : '典藏'}海报
+                      </button>
+                    </div>
 
                 {/* 理念札记预览 */}
-                <div className="space-y-4">
-                  <div className="text-[10px] font-black tracking-[0.4em] text-stone-500 uppercase px-1">设计札记</div>
+                    <div className="space-y-4">
+                      <div className="text-[10px] font-black tracking-[0.4em] text-stone-500 uppercase px-1">设计札记</div>
                   <div className="rounded-[1.5rem] bg-white/5 border border-white/10 shadow-2xl overflow-hidden">
                     <div className="relative w-full aspect-square bg-black/20">
                       {conceptUrl ? (
@@ -2798,8 +2893,8 @@ function MobileNewYearPosterModal({
                 </div>
 
                 {/* 年俗故事预览 */}
-                <div className="space-y-4">
-                  <div className="text-[10px] font-black tracking-[0.4em] text-stone-500 uppercase px-1">年俗故事</div>
+                    <div className="space-y-4">
+                      <div className="text-[10px] font-black tracking-[0.4em] text-stone-500 uppercase px-1">年俗故事</div>
                   <div className="rounded-[1.5rem] bg-white/5 border border-white/10 shadow-2xl overflow-hidden">
                     <div className="relative w-full aspect-square bg-black/20">
                       {storyUrl ? (

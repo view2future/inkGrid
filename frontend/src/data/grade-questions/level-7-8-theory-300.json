@@ -1,0 +1,4230 @@
+{
+  "name": "7-8 级书法考级理论题库（300 道）",
+  "description": "高级书法考级理论题库，涵盖书法史、书体知识、名家名作、文房四宝、书法美学",
+  "version": "1.0",
+  "totalQuestions": 300,
+  "categories": {
+    "history": {
+      "name": "书法史",
+      "count": 100
+    },
+    "scripts": {
+      "name": "书体知识",
+      "count": 80
+    },
+    "masters": {
+      "name": "名家名作",
+      "count": 70
+    },
+    "tools": {
+      "name": "文房四宝",
+      "count": 30
+    },
+    "aesthetics": {
+      "name": "书法美学",
+      "count": 20
+    }
+  },
+  "questions": [
+    {
+      "id": "adv-hist-001",
+      "category": "history",
+      "type": "choice",
+      "question": "中国书法艺术的起源可以追溯到哪个时期？",
+      "options": [
+        "A. 新石器时代",
+        "B. 商周时期",
+        "C. 春秋战国",
+        "D. 秦朝"
+      ],
+      "answer": "B",
+      "explanation": "商周时期的甲骨文是目前发现最早的成熟书法艺术形式。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-hist-002",
+      "category": "history",
+      "type": "choice",
+      "question": "甲骨文主要出土于哪个地方？",
+      "options": [
+        "A. 西安半坡",
+        "B. 河南安阳殷墟",
+        "C. 北京周口店",
+        "D. 浙江余姚"
+      ],
+      "answer": "B",
+      "explanation": "甲骨文主要出土于河南安阳殷墟。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-hist-003",
+      "category": "history",
+      "type": "choice",
+      "question": "甲骨文的主要用途是？",
+      "options": [
+        "A. 记录历史",
+        "B. 占卜记事",
+        "C. 文学创作",
+        "D. 书法练习"
+      ],
+      "answer": "B",
+      "explanation": "甲骨文主要用于商代王室的占卜记事。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-hist-004",
+      "category": "history",
+      "type": "fill_blank",
+      "question": "甲骨文距今约有______年历史。",
+      "answer": "3000",
+      "explanation": "甲骨文距今约 3000 多年历史。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-hist-005",
+      "category": "history",
+      "type": "choice",
+      "question": "《石鼓文》属于哪种书体？",
+      "options": [
+        "A. 甲骨文",
+        "B. 大篆",
+        "C. 小篆",
+        "D. 隶书"
+      ],
+      "answer": "B",
+      "explanation": "《石鼓文》是先秦时期的大篆代表作。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-hist-006",
+      "category": "history",
+      "type": "choice",
+      "question": "金文主要铸刻在什么上面？",
+      "options": [
+        "A. 石器",
+        "B. 青铜器",
+        "C. 玉器",
+        "D. 陶器"
+      ],
+      "answer": "B",
+      "explanation": "金文是铸刻在青铜器上的文字，又称钟鼎文。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-hist-007",
+      "category": "history",
+      "type": "fill_blank",
+      "question": "西周晚期金文的代表作是______。",
+      "answer": "毛公鼎",
+      "explanation": "《毛公鼎》是西周晚期金文的代表作。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-hist-008",
+      "category": "history",
+      "type": "choice",
+      "question": "《散氏盘》铭文属于哪种书体？",
+      "options": [
+        "A. 甲骨文",
+        "B. 金文",
+        "C. 小篆",
+        "D. 隶书"
+      ],
+      "answer": "B",
+      "explanation": "《散氏盘》是西周青铜器，铭文属于金文。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-hist-009",
+      "category": "history",
+      "type": "choice",
+      "question": "大篆又称为什么？",
+      "options": [
+        "A. 籀文",
+        "B. 隶书",
+        "C. 楷书",
+        "D. 行书"
+      ],
+      "answer": "A",
+      "explanation": "大篆又称籀文，是西周晚期的文字。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-hist-010",
+      "category": "history",
+      "type": "fill_blank",
+      "question": "《______》是现存最早的大篆书法作品集。",
+      "answer": "石鼓文",
+      "explanation": "《石鼓文》是现存最早的大篆书法作品集。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-hist-011",
+      "category": "history",
+      "type": "choice",
+      "question": "秦始皇统一六国后推行的标准字体是？",
+      "options": [
+        "A. 大篆",
+        "B. 小篆",
+        "C. 隶书",
+        "D. 楷书"
+      ],
+      "answer": "B",
+      "explanation": "秦始皇命李斯等人创立小篆作为标准字体。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-hist-012",
+      "category": "history",
+      "type": "choice",
+      "question": "'书同文'政策是由哪位皇帝推行的？",
+      "options": [
+        "A. 汉武帝",
+        "B. 秦始皇",
+        "C. 汉高祖",
+        "D. 唐太宗"
+      ],
+      "answer": "B",
+      "explanation": "秦始皇推行'书同文'政策。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-hist-013",
+      "category": "history",
+      "type": "choice",
+      "question": "小篆的代表作品不包括？",
+      "options": [
+        "A. 峄山碑",
+        "B. 泰山刻石",
+        "C. 曹全碑",
+        "D. 琅琊台刻石"
+      ],
+      "answer": "C",
+      "explanation": "《曹全碑》是东汉隶书代表作。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-hist-014",
+      "category": "history",
+      "type": "fill_blank",
+      "question": "《峄山碑》的作者是秦代丞相______。",
+      "answer": "李斯",
+      "explanation": "《峄山碑》传为李斯所书。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-hist-015",
+      "category": "history",
+      "type": "choice",
+      "question": "隶书起源于哪个朝代？",
+      "options": [
+        "A. 商代",
+        "B. 西周",
+        "C. 秦代",
+        "D. 汉代"
+      ],
+      "answer": "C",
+      "explanation": "隶书起源于秦代。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-hist-016",
+      "category": "history",
+      "type": "choice",
+      "question": "隶书在哪个朝代达到鼎盛？",
+      "options": [
+        "A. 秦代",
+        "B. 西汉",
+        "C. 东汉",
+        "D. 魏晋"
+      ],
+      "answer": "C",
+      "explanation": "东汉是隶书的鼎盛时期。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-hist-017",
+      "category": "history",
+      "type": "choice",
+      "question": "下列哪块碑不是东汉隶书代表作？",
+      "options": [
+        "A. 曹全碑",
+        "B. 张迁碑",
+        "C. 礼器碑",
+        "D. 峄山碑"
+      ],
+      "answer": "D",
+      "explanation": "《峄山碑》是秦代小篆作品。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-hist-018",
+      "category": "history",
+      "type": "fill_blank",
+      "question": "《曹全碑》以______的风格著称。",
+      "answer": "秀美飘逸",
+      "explanation": "《曹全碑》以秀美飘逸著称。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-hist-019",
+      "category": "history",
+      "type": "choice",
+      "question": "《张迁碑》的风格特点是？",
+      "options": [
+        "A. 秀美",
+        "B. 方整厚重",
+        "C. 瘦劲",
+        "D. 狂放"
+      ],
+      "answer": "B",
+      "explanation": "《张迁碑》以方整厚重著称。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-hist-020",
+      "category": "history",
+      "type": "choice",
+      "question": "《礼器碑》的风格特点是？",
+      "options": [
+        "A. 秀美",
+        "B. 厚重",
+        "C. 瘦劲有力",
+        "D. 狂放"
+      ],
+      "answer": "C",
+      "explanation": "《礼器碑》以瘦劲有力著称。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-hist-021",
+      "category": "history",
+      "type": "choice",
+      "question": "《石门颂》属于哪种书体？",
+      "options": [
+        "A. 小篆",
+        "B. 隶书",
+        "C. 楷书",
+        "D. 行书"
+      ],
+      "answer": "B",
+      "explanation": "《石门颂》是东汉隶书摩崖石刻。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-hist-022",
+      "category": "history",
+      "type": "fill_blank",
+      "question": "汉代隶书碑刻中，______被誉为'隶中草书'。",
+      "answer": "石门颂",
+      "explanation": "《石门颂》笔法奔放，被誉为'隶中草书'。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-hist-023",
+      "category": "history",
+      "type": "choice",
+      "question": "汉代简牍书法主要使用哪种书体？",
+      "options": [
+        "A. 篆书",
+        "B. 隶书",
+        "C. 楷书",
+        "D. 草书"
+      ],
+      "answer": "B",
+      "explanation": "汉代简牍主要使用隶书。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-hist-024",
+      "category": "history",
+      "type": "choice",
+      "question": "《乙瑛碑》是哪个朝代的隶书作品？",
+      "options": [
+        "A. 西汉",
+        "B. 东汉",
+        "C. 魏",
+        "D. 晋"
+      ],
+      "answer": "B",
+      "explanation": "《乙瑛碑》是东汉隶书代表作。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-hist-025",
+      "category": "history",
+      "type": "fill_blank",
+      "question": "东汉隶书碑刻中，以方笔著称的是______。",
+      "answer": "张迁碑",
+      "explanation": "《张迁碑》以方笔著称。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-hist-026",
+      "category": "history",
+      "type": "choice",
+      "question": "被誉为'书圣'的是哪位书法家？",
+      "options": [
+        "A. 王献之",
+        "B. 王羲之",
+        "C. 王珣",
+        "D. 王导"
+      ],
+      "answer": "B",
+      "explanation": "王羲之被尊为'书圣'。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-hist-027",
+      "category": "history",
+      "type": "choice",
+      "question": "《兰亭序》创作于哪一年？",
+      "options": [
+        "A. 353 年",
+        "B. 365 年",
+        "C. 373 年",
+        "D. 385 年"
+      ],
+      "answer": "A",
+      "explanation": "《兰亭序》创作于东晋永和九年（353 年）。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-hist-028",
+      "category": "history",
+      "type": "fill_blank",
+      "question": "《兰亭序》被誉为'天下______行书'。",
+      "answer": "第一",
+      "explanation": "《兰亭序》被誉为'天下第一行书'。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-hist-029",
+      "category": "history",
+      "type": "choice",
+      "question": "王羲之的第七子是谁？",
+      "options": [
+        "A. 王珣",
+        "B. 王献之",
+        "C. 王凝之",
+        "D. 王徽之"
+      ],
+      "answer": "B",
+      "explanation": "王献之是王羲之第七子。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-hist-030",
+      "category": "history",
+      "type": "choice",
+      "question": "'二王'指的是？",
+      "options": [
+        "A. 王羲之、王珣",
+        "B. 王羲之、王献之",
+        "C. 王导、王羲之",
+        "D. 王献之、王珣"
+      ],
+      "answer": "B",
+      "explanation": "'二王'指王羲之、王献之父子。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-hist-031",
+      "category": "history",
+      "type": "fill_blank",
+      "question": "王献之的代表作是______。",
+      "answer": "中秋帖",
+      "explanation": "《中秋帖》传为王献之所作。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-hist-032",
+      "category": "history",
+      "type": "choice",
+      "question": "《伯远帖》的作者是？",
+      "options": [
+        "A. 王羲之",
+        "B. 王献之",
+        "C. 王珣",
+        "D. 王导"
+      ],
+      "answer": "C",
+      "explanation": "《伯远帖》是王珣的作品。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-hist-033",
+      "category": "history",
+      "type": "choice",
+      "question": "乾隆'三希'不包括？",
+      "options": [
+        "A. 快雪时晴帖",
+        "B. 中秋帖",
+        "C. 伯远帖",
+        "D. 兰亭序"
+      ],
+      "answer": "D",
+      "explanation": "三希堂法帖包括《快雪时晴帖》《中秋帖》《伯远帖》。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-hist-034",
+      "category": "history",
+      "type": "fill_blank",
+      "question": "《快雪时晴帖》的作者是______。",
+      "answer": "王羲之",
+      "explanation": "《快雪时晴帖》是王羲之的作品。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-hist-035",
+      "category": "history",
+      "type": "choice",
+      "question": "智永是王羲之的第几代孙？",
+      "options": [
+        "A. 五代",
+        "B. 六代",
+        "C. 七代",
+        "D. 八代"
+      ],
+      "answer": "C",
+      "explanation": "智永是王羲之七代孙。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-hist-036",
+      "category": "history",
+      "type": "choice",
+      "question": "智永的代表作是？",
+      "options": [
+        "A. 真草千字文",
+        "B. 自叙帖",
+        "C. 书谱",
+        "D. 肚痛帖"
+      ],
+      "answer": "A",
+      "explanation": "《真草千字文》是智永的代表作。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-hist-037",
+      "category": "history",
+      "type": "fill_blank",
+      "question": "智永曾书写《千字文》______本。",
+      "answer": "800",
+      "explanation": "智永曾书写《真草千字文》800 本分赠各寺。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-hist-038",
+      "category": "history",
+      "type": "choice",
+      "question": "《爨宝子碑》属于哪个朝代的书法？",
+      "options": [
+        "A. 汉",
+        "B. 魏",
+        "C. 晋",
+        "D. 南北朝"
+      ],
+      "answer": "D",
+      "explanation": "《爨宝子碑》是东晋末年的碑刻。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-hist-039",
+      "category": "history",
+      "type": "choice",
+      "question": "魏碑是指哪个时期的楷书？",
+      "options": [
+        "A. 曹魏",
+        "B. 北魏",
+        "C. 东魏",
+        "D. 西魏"
+      ],
+      "answer": "B",
+      "explanation": "魏碑主要指北魏时期的楷书。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-hist-040",
+      "category": "history",
+      "type": "fill_blank",
+      "question": "魏碑书法中，______被誉为'魏碑第一'。",
+      "answer": "张猛龙碑",
+      "explanation": "《张猛龙碑》被誉为'魏碑第一'。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-hist-041",
+      "category": "history",
+      "type": "choice",
+      "question": "楷书成熟于哪个朝代？",
+      "options": [
+        "A. 汉代",
+        "B. 魏晋",
+        "C. 隋代",
+        "D. 唐代"
+      ],
+      "answer": "D",
+      "explanation": "楷书在唐代达到鼎盛。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-hist-042",
+      "category": "history",
+      "type": "choice",
+      "question": "初唐四大家不包括？",
+      "options": [
+        "A. 欧阳询",
+        "B. 虞世南",
+        "C. 褚遂良",
+        "D. 颜真卿"
+      ],
+      "answer": "D",
+      "explanation": "初唐四大家为欧阳询、虞世南、褚遂良、薛稷。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-hist-043",
+      "category": "history",
+      "type": "fill_blank",
+      "question": "《九成宫醴泉铭》的作者是______。",
+      "answer": "欧阳询",
+      "explanation": "《九成宫醴泉铭》是欧阳询的代表作。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-hist-044",
+      "category": "history",
+      "type": "choice",
+      "question": "欧阳询的楷书被称为？",
+      "options": [
+        "A. 欧体",
+        "B. 颜体",
+        "C. 柳体",
+        "D. 赵体"
+      ],
+      "answer": "A",
+      "explanation": "欧阳询的楷书被称为'欧体'。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-hist-045",
+      "category": "history",
+      "type": "choice",
+      "question": "《雁塔圣教序》的作者是？",
+      "options": [
+        "A. 欧阳询",
+        "B. 虞世南",
+        "C. 褚遂良",
+        "D. 薛稷"
+      ],
+      "answer": "C",
+      "explanation": "《雁塔圣教序》是褚遂良的代表作。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-hist-046",
+      "category": "history",
+      "type": "fill_blank",
+      "question": "《多宝塔碑》的作者是______。",
+      "answer": "颜真卿",
+      "explanation": "《多宝塔碑》是颜真卿早期楷书代表作。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-hist-047",
+      "category": "history",
+      "type": "choice",
+      "question": "颜真卿的代表作不包括？",
+      "options": [
+        "A. 多宝塔碑",
+        "B. 祭侄文稿",
+        "C. 玄秘塔碑",
+        "D. 颜勤礼碑"
+      ],
+      "answer": "C",
+      "explanation": "《玄秘塔碑》是柳公权的作品。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-hist-048",
+      "category": "history",
+      "type": "choice",
+      "question": "《祭侄文稿》被誉为？",
+      "options": [
+        "A. 天下第一行书",
+        "B. 天下第二行书",
+        "C. 天下第三行书",
+        "D. 天下第四行书"
+      ],
+      "answer": "B",
+      "explanation": "《祭侄文稿》被誉为'天下第二行书'。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-hist-049",
+      "category": "history",
+      "type": "fill_blank",
+      "question": "'颜筋柳骨'中的'颜'指的是______。",
+      "answer": "颜真卿",
+      "explanation": "'颜筋柳骨'指颜真卿和柳公权。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-hist-050",
+      "category": "history",
+      "type": "choice",
+      "question": "'柳骨'指的是哪位书法家？",
+      "options": [
+        "A. 柳宗元",
+        "B. 柳公权",
+        "C. 柳永",
+        "D. 柳如是"
+      ],
+      "answer": "B",
+      "explanation": "'柳骨'指柳公权。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-hist-051",
+      "category": "history",
+      "type": "choice",
+      "question": "柳公权的代表作是？",
+      "options": [
+        "A. 多宝塔碑",
+        "B. 玄秘塔碑",
+        "C. 雁塔圣教序",
+        "D. 九成宫"
+      ],
+      "answer": "B",
+      "explanation": "《玄秘塔碑》是柳公权的代表作。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-hist-052",
+      "category": "history",
+      "type": "fill_blank",
+      "question": "楷书四大家是欧阳询、颜真卿、柳公权和______。",
+      "answer": "赵孟頫",
+      "explanation": "楷书四大家为欧阳询、颜真卿、柳公权、赵孟頫。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-hist-053",
+      "category": "history",
+      "type": "choice",
+      "question": "草书《自叙帖》的作者是？",
+      "options": [
+        "A. 张旭",
+        "B. 怀素",
+        "C. 孙过庭",
+        "D. 智永"
+      ],
+      "answer": "B",
+      "explanation": "《自叙帖》是怀素的代表作。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-hist-054",
+      "category": "history",
+      "type": "choice",
+      "question": "被誉为'草圣'的是？",
+      "options": [
+        "A. 张旭",
+        "B. 怀素",
+        "C. 王羲之",
+        "D. 孙过庭"
+      ],
+      "answer": "A",
+      "explanation": "张旭被誉为'草圣'。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-hist-055",
+      "category": "history",
+      "type": "fill_blank",
+      "question": "'颠张醉素'中的'颠张'指的是______。",
+      "answer": "张旭",
+      "explanation": "'颠张'指张旭。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-hist-056",
+      "category": "history",
+      "type": "choice",
+      "question": "《书谱》的作者是？",
+      "options": [
+        "A. 孙过庭",
+        "B. 张旭",
+        "C. 怀素",
+        "D. 智永"
+      ],
+      "answer": "A",
+      "explanation": "《书谱》是孙过庭的作品。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-hist-057",
+      "category": "history",
+      "type": "choice",
+      "question": "《书谱》是什么书体？",
+      "options": [
+        "A. 楷书",
+        "B. 行书",
+        "C. 草书",
+        "D. 隶书"
+      ],
+      "answer": "C",
+      "explanation": "《书谱》是草书作品。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-hist-058",
+      "category": "history",
+      "type": "fill_blank",
+      "question": "唐代以草书闻名的'颠张醉素'中，'醉素'指的是______。",
+      "answer": "怀素",
+      "explanation": "'醉素'指怀素。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-hist-059",
+      "category": "history",
+      "type": "choice",
+      "question": "李邕的书法代表作是？",
+      "options": [
+        "A. 李思训碑",
+        "B. 多宝塔碑",
+        "C. 玄秘塔碑",
+        "D. 祭侄文稿"
+      ],
+      "answer": "A",
+      "explanation": "《李思训碑》是李邕的代表作。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-hist-060",
+      "category": "history",
+      "type": "choice",
+      "question": "《肚痛帖》的作者是？",
+      "options": [
+        "A. 张旭",
+        "B. 怀素",
+        "C. 孙过庭",
+        "D. 智永"
+      ],
+      "answer": "A",
+      "explanation": "《肚痛帖》传为张旭所作。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-hist-061",
+      "category": "history",
+      "type": "fill_blank",
+      "question": "唐代书法家______提出了'外师造化，中得心源'的理论。",
+      "answer": "张璪",
+      "explanation": "张璪提出'外师造化，中得心源'。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-hist-062",
+      "category": "history",
+      "type": "choice",
+      "question": "《自叙帖》有多少字？",
+      "options": [
+        "A. 约 500 字",
+        "B. 约 700 字",
+        "C. 约 900 字",
+        "D. 约 1100 字"
+      ],
+      "answer": "B",
+      "explanation": "《自叙帖》约有 700 字。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-hist-063",
+      "category": "history",
+      "type": "choice",
+      "question": "颜真卿的《祭侄文稿》创作于哪一年？",
+      "options": [
+        "A. 755 年",
+        "B. 758 年",
+        "C. 765 年",
+        "D. 778 年"
+      ],
+      "answer": "B",
+      "explanation": "《祭侄文稿》创作于唐乾元元年（758 年）。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-hist-064",
+      "category": "history",
+      "type": "fill_blank",
+      "question": "《颜勤礼碑》是颜真卿为纪念其______而立。",
+      "answer": "祖父",
+      "explanation": "《颜勤礼碑》是颜真卿为其祖父颜勤礼而立。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-hist-065",
+      "category": "history",
+      "type": "choice",
+      "question": "《麻姑仙坛记》的作者是？",
+      "options": [
+        "A. 欧阳询",
+        "B. 颜真卿",
+        "C. 柳公权",
+        "D. 褚遂良"
+      ],
+      "answer": "B",
+      "explanation": "《麻姑仙坛记》是颜真卿的作品。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-hist-066",
+      "category": "history",
+      "type": "choice",
+      "question": "宋代书法四大家不包括？",
+      "options": [
+        "A. 苏轼",
+        "B. 黄庭坚",
+        "C. 米芾",
+        "D. 赵孟頫"
+      ],
+      "answer": "D",
+      "explanation": "宋四家为苏轼、黄庭坚、米芾、蔡襄。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-hist-067",
+      "category": "history",
+      "type": "fill_blank",
+      "question": "宋代书法四大家是苏轼、黄庭坚、米芾和______。",
+      "answer": "蔡襄",
+      "explanation": "宋四家为苏轼、黄庭坚、米芾、蔡襄。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-hist-068",
+      "category": "history",
+      "type": "choice",
+      "question": "苏轼的书法代表作是？",
+      "options": [
+        "A. 黄州寒食帖",
+        "B. 蜀素帖",
+        "C. 松风阁诗帖",
+        "D. 苕溪诗帖"
+      ],
+      "answer": "A",
+      "explanation": "《黄州寒食帖》是苏轼的代表作。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-hist-069",
+      "category": "history",
+      "type": "choice",
+      "question": "《黄州寒食帖》被誉为？",
+      "options": [
+        "A. 天下第一行书",
+        "B. 天下第二行书",
+        "C. 天下第三行书",
+        "D. 天下第四行书"
+      ],
+      "answer": "C",
+      "explanation": "《黄州寒食帖》被誉为'天下第三行书'。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-hist-070",
+      "category": "history",
+      "type": "fill_blank",
+      "question": "《蜀素帖》的作者是______。",
+      "answer": "米芾",
+      "explanation": "《蜀素帖》是米芾的代表作。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-hist-071",
+      "category": "history",
+      "type": "choice",
+      "question": "黄庭坚的书法代表作是？",
+      "options": [
+        "A. 松风阁诗帖",
+        "B. 蜀素帖",
+        "C. 黄州寒食帖",
+        "D. 快雪时晴帖"
+      ],
+      "answer": "A",
+      "explanation": "《松风阁诗帖》是黄庭坚的代表作。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-hist-072",
+      "category": "history",
+      "type": "choice",
+      "question": "米芾的号是？",
+      "options": [
+        "A. 东坡居士",
+        "B. 山谷道人",
+        "C. 襄阳漫士",
+        "D. 松雪道人"
+      ],
+      "answer": "C",
+      "explanation": "米芾号襄阳漫士。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-hist-073",
+      "category": "history",
+      "type": "fill_blank",
+      "question": "苏轼号______。",
+      "answer": "东坡居士",
+      "explanation": "苏轼号东坡居士。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-hist-074",
+      "category": "history",
+      "type": "choice",
+      "question": "黄庭坚号？",
+      "options": [
+        "A. 东坡居士",
+        "B. 山谷道人",
+        "C. 襄阳漫士",
+        "D. 海岳外史"
+      ],
+      "answer": "B",
+      "explanation": "黄庭坚号山谷道人。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-hist-075",
+      "category": "history",
+      "type": "choice",
+      "question": "赵孟頫是哪个朝代的书法家？",
+      "options": [
+        "A. 宋",
+        "B. 元",
+        "C. 明",
+        "D. 清"
+      ],
+      "answer": "B",
+      "explanation": "赵孟頫是元代书法家。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-hist-076",
+      "category": "history",
+      "type": "fill_blank",
+      "question": "赵孟頫的楷书被称为______。",
+      "answer": "赵体",
+      "explanation": "赵孟頫的楷书被称为'赵体'。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-hist-077",
+      "category": "history",
+      "type": "choice",
+      "question": "赵孟頫的代表作是？",
+      "options": [
+        "A. 胆巴碑",
+        "B. 多宝塔碑",
+        "C. 玄秘塔碑",
+        "D. 九成宫"
+      ],
+      "answer": "A",
+      "explanation": "《胆巴碑》是赵孟頫的代表作。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-hist-078",
+      "category": "history",
+      "type": "choice",
+      "question": "明代书法家董其昌提出了什么理论？",
+      "options": [
+        "A. 南北宗论",
+        "B. 书画同源",
+        "C. 气韵生动",
+        "D. 骨法用笔"
+      ],
+      "answer": "A",
+      "explanation": "董其昌提出'南北宗论'。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-hist-079",
+      "category": "history",
+      "type": "fill_blank",
+      "question": "明代书法家______以小楷著称。",
+      "answer": "文徵明",
+      "explanation": "文徵明以小楷著称。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-hist-080",
+      "category": "history",
+      "type": "choice",
+      "question": "文徵明是哪个朝代的书法家？",
+      "options": [
+        "A. 宋",
+        "B. 元",
+        "C. 明",
+        "D. 清"
+      ],
+      "answer": "C",
+      "explanation": "文徵明是明代书法家。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-hist-081",
+      "category": "history",
+      "type": "choice",
+      "question": "清代碑学兴起的代表人物不包括？",
+      "options": [
+        "A. 邓石如",
+        "B. 伊秉绶",
+        "C. 何绍基",
+        "D. 文徵明"
+      ],
+      "answer": "D",
+      "explanation": "文徵明是明代书法家。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-hist-082",
+      "category": "history",
+      "type": "fill_blank",
+      "question": "清代书法家______以隶书著称。",
+      "answer": "伊秉绶",
+      "explanation": "伊秉绶是清代隶书大家。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-hist-083",
+      "category": "history",
+      "type": "choice",
+      "question": "邓石如擅长哪种书体？",
+      "options": [
+        "A. 楷书",
+        "B. 隶书",
+        "C. 篆书",
+        "D. 行书"
+      ],
+      "answer": "C",
+      "explanation": "邓石如以篆书著称。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-hist-084",
+      "category": "history",
+      "type": "choice",
+      "question": "何绍基的书法特点是？",
+      "options": [
+        "A. 回腕法",
+        "B. 悬针法",
+        "C. 垂露法",
+        "D. 中锋法"
+      ],
+      "answer": "A",
+      "explanation": "何绍基善用回腕法。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-hist-085",
+      "category": "history",
+      "type": "fill_blank",
+      "question": "清代书法家______提出了'碑学'理论。",
+      "answer": "阮元",
+      "explanation": "阮元提出碑学理论。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-hist-086",
+      "category": "history",
+      "type": "choice",
+      "question": "《广艺舟双楫》的作者是？",
+      "options": [
+        "A. 康有为",
+        "B. 梁启超",
+        "C. 王国维",
+        "D. 陈独秀"
+      ],
+      "answer": "A",
+      "explanation": "《广艺舟双楫》是康有为的书法理论著作。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-hist-087",
+      "category": "history",
+      "type": "choice",
+      "question": "康有为在书法上主张？",
+      "options": [
+        "A. 尊碑抑帖",
+        "B. 尊帖抑碑",
+        "C. 碑帖并重",
+        "D. 碑帖皆废"
+      ],
+      "answer": "A",
+      "explanation": "康有为主张'尊碑抑帖'。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-hist-088",
+      "category": "history",
+      "type": "fill_blank",
+      "question": "近代书法家______以'瘦金体'著称。",
+      "answer": "赵佶",
+      "explanation": "宋徽宗赵佶创'瘦金体'。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-hist-089",
+      "category": "history",
+      "type": "choice",
+      "question": "'瘦金体'的创始人是？",
+      "options": [
+        "A. 赵孟頫",
+        "B. 赵佶",
+        "C. 赵构",
+        "D. 赵雍"
+      ],
+      "answer": "B",
+      "explanation": "宋徽宗赵佶创'瘦金体'。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-hist-090",
+      "category": "history",
+      "type": "choice",
+      "question": "赵佶是哪个朝代的皇帝？",
+      "options": [
+        "A. 唐",
+        "B. 宋",
+        "C. 元",
+        "D. 明"
+      ],
+      "answer": "B",
+      "explanation": "赵佶是北宋皇帝（宋徽宗）。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-hist-091",
+      "category": "history",
+      "type": "fill_blank",
+      "question": "宋代皇帝赵佶的书法被称为______。",
+      "answer": "瘦金体",
+      "explanation": "赵佶的书法被称为'瘦金体'。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-hist-092",
+      "category": "history",
+      "type": "choice",
+      "question": "《苕溪诗帖》的作者是？",
+      "options": [
+        "A. 苏轼",
+        "B. 黄庭坚",
+        "C. 米芾",
+        "D. 蔡襄"
+      ],
+      "answer": "C",
+      "explanation": "《苕溪诗帖》是米芾的作品。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-hist-093",
+      "category": "history",
+      "type": "choice",
+      "question": "蔡襄的代表作是？",
+      "options": [
+        "A. 万安桥记",
+        "B. 蜀素帖",
+        "C. 松风阁诗帖",
+        "D. 黄州寒食帖"
+      ],
+      "answer": "A",
+      "explanation": "《万安桥记》是蔡襄的代表作。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-hist-094",
+      "category": "history",
+      "type": "fill_blank",
+      "question": "元代书法家______与赵孟頫齐名。",
+      "answer": "鲜于枢",
+      "explanation": "鲜于枢与赵孟頫齐名。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-hist-095",
+      "category": "history",
+      "type": "choice",
+      "question": "明代'吴门四家'不包括？",
+      "options": [
+        "A. 文徵明",
+        "B. 祝允明",
+        "C. 王宠",
+        "D. 董其昌"
+      ],
+      "answer": "D",
+      "explanation": "吴门四家为文徵明、祝允明、王宠、陈淳。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-hist-096",
+      "category": "history",
+      "type": "choice",
+      "question": "祝允明擅长哪种书体？",
+      "options": [
+        "A. 篆书",
+        "B. 隶书",
+        "C. 楷书",
+        "D. 草书"
+      ],
+      "answer": "D",
+      "explanation": "祝允明以草书著称。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-hist-097",
+      "category": "history",
+      "type": "fill_blank",
+      "question": "明代书法家______号枝山。",
+      "answer": "祝允明",
+      "explanation": "祝允明号枝山。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-hist-098",
+      "category": "history",
+      "type": "choice",
+      "question": "王宠的书法风格接近？",
+      "options": [
+        "A. 王羲之",
+        "B. 颜真卿",
+        "C. 柳公权",
+        "D. 赵孟頫"
+      ],
+      "answer": "A",
+      "explanation": "王宠书法追摹王羲之。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-hist-099",
+      "category": "history",
+      "type": "choice",
+      "question": "董其昌是哪个朝代的书法家？",
+      "options": [
+        "A. 宋",
+        "B. 元",
+        "C. 明",
+        "D. 清"
+      ],
+      "answer": "C",
+      "explanation": "董其昌是明代书法家。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-hist-100",
+      "category": "history",
+      "type": "fill_blank",
+      "question": "清代'扬州八怪'中，______以'六分半书'著称。",
+      "answer": "郑板桥",
+      "explanation": "郑板桥创'六分半书'。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-scr-001",
+      "category": "scripts",
+      "type": "choice",
+      "question": "篆书分为哪两大类？",
+      "options": [
+        "A. 大篆和小篆",
+        "B. 古篆和今篆",
+        "C. 秦篆和汉篆",
+        "D. 金篆和石篆"
+      ],
+      "answer": "A",
+      "explanation": "篆书分为大篆和小篆。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-scr-002",
+      "category": "scripts",
+      "type": "fill_blank",
+      "question": "小篆是______统一六国后推行的标准字体。",
+      "answer": "秦始皇",
+      "explanation": "秦始皇统一六国后推行小篆。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-scr-003",
+      "category": "scripts",
+      "type": "choice",
+      "question": "小篆的笔画特点是？",
+      "options": [
+        "A. 方折",
+        "B. 圆润均匀",
+        "C. 波磔",
+        "D. 连笔"
+      ],
+      "answer": "B",
+      "explanation": "小篆笔画圆润均匀。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-scr-004",
+      "category": "scripts",
+      "type": "choice",
+      "question": "大篆的代表作品是？",
+      "options": [
+        "A. 峄山碑",
+        "B. 石鼓文",
+        "C. 曹全碑",
+        "D. 兰亭序"
+      ],
+      "answer": "B",
+      "explanation": "《石鼓文》是大篆代表作。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-scr-005",
+      "category": "scripts",
+      "type": "fill_blank",
+      "question": "小篆的代表作《峄山碑》的作者是______。",
+      "answer": "李斯",
+      "explanation": "《峄山碑》传为李斯所书。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-scr-006",
+      "category": "scripts",
+      "type": "choice",
+      "question": "篆书的结构特点是？",
+      "options": [
+        "A. 扁平",
+        "B. 方正",
+        "C. 修长对称",
+        "D. 倾斜"
+      ],
+      "answer": "C",
+      "explanation": "篆书结构修长对称。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-scr-007",
+      "category": "scripts",
+      "type": "choice",
+      "question": "下列哪块碑不是小篆作品？",
+      "options": [
+        "A. 峄山碑",
+        "B. 泰山刻石",
+        "C. 琅琊台刻石",
+        "D. 张迁碑"
+      ],
+      "answer": "D",
+      "explanation": "《张迁碑》是隶书作品。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-scr-008",
+      "category": "scripts",
+      "type": "fill_blank",
+      "question": "篆书用笔以______为主。",
+      "answer": "中锋",
+      "explanation": "篆书用笔以中锋为主。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-scr-009",
+      "category": "scripts",
+      "type": "choice",
+      "question": "清代篆书大家是？",
+      "options": [
+        "A. 邓石如",
+        "B. 伊秉绶",
+        "C. 何绍基",
+        "D. 赵之谦"
+      ],
+      "answer": "A",
+      "explanation": "邓石如是清代篆书大家。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-scr-010",
+      "category": "scripts",
+      "type": "choice",
+      "question": "《泰山刻石》现存多少字？",
+      "options": [
+        "A. 1 字",
+        "B. 10 字",
+        "C. 29 字",
+        "D. 100 字"
+      ],
+      "answer": "C",
+      "explanation": "《泰山刻石》现存 29 字。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-scr-011",
+      "category": "scripts",
+      "type": "fill_blank",
+      "question": "篆书的'玉箸篆'特点是笔画如______。",
+      "answer": "玉箸",
+      "explanation": "'玉箸篆'笔画如玉箸（玉筷）般均匀圆润。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-scr-012",
+      "category": "scripts",
+      "type": "choice",
+      "question": "'铁线篆'的特点是？",
+      "options": [
+        "A. 粗重",
+        "B. 细劲如丝",
+        "C. 方折",
+        "D. 波磔"
+      ],
+      "answer": "B",
+      "explanation": "'铁线篆'笔画细劲如铁丝。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-scr-013",
+      "category": "scripts",
+      "type": "choice",
+      "question": "下列哪位不是篆书名家？",
+      "options": [
+        "A. 李斯",
+        "B. 邓石如",
+        "C. 吴昌硕",
+        "D. 颜真卿"
+      ],
+      "answer": "D",
+      "explanation": "颜真卿是楷书名家。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-scr-014",
+      "category": "scripts",
+      "type": "fill_blank",
+      "question": "吴昌硕以写______著称。",
+      "answer": "石鼓文",
+      "explanation": "吴昌硕以写《石鼓文》著称。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-scr-015",
+      "category": "scripts",
+      "type": "choice",
+      "question": "篆书的章法特点是？",
+      "options": [
+        "A. 错落有致",
+        "B. 整齐划一",
+        "C. 纵横有象",
+        "D. 自由奔放"
+      ],
+      "answer": "C",
+      "explanation": "篆书章法讲究'纵横有象'。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-scr-016",
+      "category": "scripts",
+      "type": "choice",
+      "question": "《袁安碑》是什么书体？",
+      "options": [
+        "A. 大篆",
+        "B. 小篆",
+        "C. 隶书",
+        "D. 楷书"
+      ],
+      "answer": "B",
+      "explanation": "《袁安碑》是小篆作品。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-scr-017",
+      "category": "scripts",
+      "type": "fill_blank",
+      "question": "篆书创作中，'婉而通'是______提出的要求。",
+      "answer": "孙过庭",
+      "explanation": "孙过庭在《书谱》中提出篆书要'婉而通'。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-scr-018",
+      "category": "scripts",
+      "type": "choice",
+      "question": "清代篆书复兴的代表人物是？",
+      "options": [
+        "A. 邓石如",
+        "B. 郑板桥",
+        "C. 刘墉",
+        "D. 翁方纲"
+      ],
+      "answer": "A",
+      "explanation": "邓石如是清代篆书复兴的代表。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-scr-019",
+      "category": "scripts",
+      "type": "choice",
+      "question": "《天发神谶碑》的书体特点是？",
+      "options": [
+        "A. 篆书",
+        "B. 隶书",
+        "C. 篆隶之间",
+        "D. 楷书"
+      ],
+      "answer": "C",
+      "explanation": "《天发神谶碑》介于篆隶之间。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-scr-020",
+      "category": "scripts",
+      "type": "fill_blank",
+      "question": "篆书临摹时，要注意笔画的______和______。",
+      "answer": "起收、转折",
+      "explanation": "篆书临摹要注意起收和转折。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-scr-021",
+      "category": "scripts",
+      "type": "choice",
+      "question": "隶书最典型的笔画特征是？",
+      "options": [
+        "A. 中锋",
+        "B. 侧锋",
+        "C. 蚕头燕尾",
+        "D. 连笔"
+      ],
+      "answer": "C",
+      "explanation": "'蚕头燕尾'是隶书最典型的特征。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-scr-022",
+      "category": "scripts",
+      "type": "fill_blank",
+      "question": "隶书的结构特点是______。",
+      "answer": "扁平",
+      "explanation": "隶书结构扁平。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-scr-023",
+      "category": "scripts",
+      "type": "choice",
+      "question": "隶书的'波磔'是指？",
+      "options": [
+        "A. 横画",
+        "B. 竖画",
+        "C. 捺画",
+        "D. 撇画"
+      ],
+      "answer": "C",
+      "explanation": "'波磔'主要指隶书的捺画。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-scr-024",
+      "category": "scripts",
+      "type": "choice",
+      "question": "下列哪块碑不是隶书？",
+      "options": [
+        "A. 曹全碑",
+        "B. 张迁碑",
+        "C. 礼器碑",
+        "D. 峄山碑"
+      ],
+      "answer": "D",
+      "explanation": "《峄山碑》是小篆。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-scr-025",
+      "category": "scripts",
+      "type": "fill_blank",
+      "question": "隶书起源于______代。",
+      "answer": "秦",
+      "explanation": "隶书起源于秦代。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-scr-026",
+      "category": "scripts",
+      "type": "choice",
+      "question": "隶书在哪个朝代达到鼎盛？",
+      "options": [
+        "A. 秦",
+        "B. 西汉",
+        "C. 东汉",
+        "D. 魏晋"
+      ],
+      "answer": "C",
+      "explanation": "东汉是隶书的鼎盛时期。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-scr-027",
+      "category": "scripts",
+      "type": "choice",
+      "question": "《曹全碑》的风格是？",
+      "options": [
+        "A. 方整",
+        "B. 秀美飘逸",
+        "C. 厚重",
+        "D. 瘦劲"
+      ],
+      "answer": "B",
+      "explanation": "《曹全碑》以秀美飘逸著称。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-scr-028",
+      "category": "scripts",
+      "type": "fill_blank",
+      "question": "《张迁碑》以______笔法著称。",
+      "answer": "方笔",
+      "explanation": "《张迁碑》以方笔著称。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-scr-029",
+      "category": "scripts",
+      "type": "choice",
+      "question": "《礼器碑》的风格是？",
+      "options": [
+        "A. 秀美",
+        "B. 厚重",
+        "C. 瘦劲有力",
+        "D. 狂放"
+      ],
+      "answer": "C",
+      "explanation": "《礼器碑》以瘦劲有力著称。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-scr-030",
+      "category": "scripts",
+      "type": "choice",
+      "question": "隶书的用笔方法是？",
+      "options": [
+        "A. 纯中锋",
+        "B. 中侧并用",
+        "C. 纯侧锋",
+        "D. 散锋"
+      ],
+      "answer": "B",
+      "explanation": "隶书用笔中侧并用。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-scr-031",
+      "category": "scripts",
+      "type": "fill_blank",
+      "question": "隶书中，'雁不双飞'是指______不能同时出现两个波磔。",
+      "answer": "一字",
+      "explanation": "'雁不双飞'指一字中不能有两个波磔。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-scr-032",
+      "category": "scripts",
+      "type": "choice",
+      "question": "《石门颂》的风格是？",
+      "options": [
+        "A. 工整",
+        "B. 奔放",
+        "C. 秀美",
+        "D. 瘦劲"
+      ],
+      "answer": "B",
+      "explanation": "《石门颂》风格奔放。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-scr-033",
+      "category": "scripts",
+      "type": "choice",
+      "question": "隶书'汉隶'的代表作不包括？",
+      "options": [
+        "A. 曹全碑",
+        "B. 张迁碑",
+        "C. 礼器碑",
+        "D. 泰山刻石"
+      ],
+      "answer": "D",
+      "explanation": "《泰山刻石》是小篆。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-scr-034",
+      "category": "scripts",
+      "type": "fill_blank",
+      "question": "隶书的章法特点是______分明。",
+      "answer": "行距",
+      "explanation": "隶书章法讲究行距分明。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-scr-035",
+      "category": "scripts",
+      "type": "choice",
+      "question": "《乙瑛碑》的风格是？",
+      "options": [
+        "A. 秀美",
+        "B. 厚重",
+        "C. 方正",
+        "D. 瘦劲"
+      ],
+      "answer": "C",
+      "explanation": "《乙瑛碑》风格方正。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-scr-036",
+      "category": "scripts",
+      "type": "choice",
+      "question": "隶书临摹时，'蚕头'的写法是？",
+      "options": [
+        "A. 逆锋起笔",
+        "B. 顺锋起笔",
+        "C. 侧锋起笔",
+        "D. 散锋起笔"
+      ],
+      "answer": "A",
+      "explanation": "'蚕头'要逆锋起笔。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-scr-037",
+      "category": "scripts",
+      "type": "fill_blank",
+      "question": "隶书的'燕尾'收笔要______。",
+      "answer": "出锋",
+      "explanation": "'燕尾'收笔要出锋。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-scr-038",
+      "category": "scripts",
+      "type": "choice",
+      "question": "清代隶书名家是？",
+      "options": [
+        "A. 邓石如",
+        "B. 伊秉绶",
+        "C. 何绍基",
+        "D. 以上都是"
+      ],
+      "answer": "D",
+      "explanation": "邓石如、伊秉绶、何绍基都是清代隶书名家。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-scr-039",
+      "category": "scripts",
+      "type": "choice",
+      "question": "《西岳华山庙碑》的书体是？",
+      "options": [
+        "A. 篆书",
+        "B. 隶书",
+        "C. 楷书",
+        "D. 行书"
+      ],
+      "answer": "B",
+      "explanation": "《西岳华山庙碑》是隶书。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-scr-040",
+      "category": "scripts",
+      "type": "fill_blank",
+      "question": "隶书由篆书演变而来，这个过程称为______。",
+      "answer": "隶变",
+      "explanation": "篆书演变为隶书的过程称为'隶变'。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-scr-041",
+      "category": "scripts",
+      "type": "choice",
+      "question": "楷书的特点是？",
+      "options": [
+        "A. 连笔",
+        "B. 笔画平直、结构方正",
+        "C. 波磔",
+        "D. 圆润"
+      ],
+      "answer": "B",
+      "explanation": "楷书笔画平直、结构方正。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-scr-042",
+      "category": "scripts",
+      "type": "fill_blank",
+      "question": "楷书又称______。",
+      "answer": "正书",
+      "explanation": "楷书又称正书、真书。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-scr-043",
+      "category": "scripts",
+      "type": "choice",
+      "question": "楷书成熟于哪个朝代？",
+      "options": [
+        "A. 汉",
+        "B. 魏晋",
+        "C. 隋",
+        "D. 唐"
+      ],
+      "answer": "D",
+      "explanation": "楷书在唐代成熟。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-scr-044",
+      "category": "scripts",
+      "type": "choice",
+      "question": "楷书四大家不包括？",
+      "options": [
+        "A. 欧阳询",
+        "B. 颜真卿",
+        "C. 柳公权",
+        "D. 王羲之"
+      ],
+      "answer": "D",
+      "explanation": "楷书四大家为欧、颜、柳、赵。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-scr-045",
+      "category": "scripts",
+      "type": "fill_blank",
+      "question": "欧体楷书的特点是______。",
+      "answer": "险峻",
+      "explanation": "欧体楷书以险峻著称。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-scr-046",
+      "category": "scripts",
+      "type": "choice",
+      "question": "颜体楷书的特点是？",
+      "options": [
+        "A. 瘦劲",
+        "B. 丰腴雄浑",
+        "C. 险峻",
+        "D. 秀美"
+      ],
+      "answer": "B",
+      "explanation": "颜体楷书丰腴雄浑。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-scr-047",
+      "category": "scripts",
+      "type": "choice",
+      "question": "柳体楷书的特点是？",
+      "options": [
+        "A. 丰腴",
+        "B. 瘦硬挺拔",
+        "C. 险峻",
+        "D. 圆润"
+      ],
+      "answer": "B",
+      "explanation": "柳体楷书瘦硬挺拔。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-scr-048",
+      "category": "scripts",
+      "type": "fill_blank",
+      "question": "赵体楷书的特点是______。",
+      "answer": "流美",
+      "explanation": "赵体楷书流美圆润。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-scr-049",
+      "category": "scripts",
+      "type": "choice",
+      "question": "楷书的'永字八法'不包括？",
+      "options": [
+        "A. 侧",
+        "B. 勒",
+        "C. 努",
+        "D. 飞"
+      ],
+      "answer": "D",
+      "explanation": "'永字八法'为侧、勒、努、趯、策、掠、啄、磔。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-scr-050",
+      "category": "scripts",
+      "type": "choice",
+      "question": "'永字八法'中，'侧'是指？",
+      "options": [
+        "A. 横",
+        "B. 竖",
+        "C. 点",
+        "D. 撇"
+      ],
+      "answer": "C",
+      "explanation": "'侧'指点。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-scr-051",
+      "category": "scripts",
+      "type": "fill_blank",
+      "question": "'永字八法'中，'勒'是指______。",
+      "answer": "横",
+      "explanation": "'勒'指横画。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-scr-052",
+      "category": "scripts",
+      "type": "choice",
+      "question": "'永字八法'中，'努'是指？",
+      "options": [
+        "A. 横",
+        "B. 竖",
+        "C. 点",
+        "D. 钩"
+      ],
+      "answer": "B",
+      "explanation": "'努'指竖画。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-scr-053",
+      "category": "scripts",
+      "type": "choice",
+      "question": "楷书用笔以什么为主？",
+      "options": [
+        "A. 中锋",
+        "B. 侧锋",
+        "C. 偏锋",
+        "D. 散锋"
+      ],
+      "answer": "A",
+      "explanation": "楷书用笔以中锋为主。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-scr-054",
+      "category": "scripts",
+      "type": "fill_blank",
+      "question": "楷书的结构原则是______。",
+      "answer": "平正",
+      "explanation": "楷书结构讲究平正。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-scr-055",
+      "category": "scripts",
+      "type": "choice",
+      "question": "《九成宫醴泉铭》的书体是？",
+      "options": [
+        "A. 篆书",
+        "B. 隶书",
+        "C. 楷书",
+        "D. 行书"
+      ],
+      "answer": "C",
+      "explanation": "《九成宫醴泉铭》是楷书。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-scr-056",
+      "category": "scripts",
+      "type": "choice",
+      "question": "《多宝塔碑》的书体是？",
+      "options": [
+        "A. 篆书",
+        "B. 隶书",
+        "C. 楷书",
+        "D. 行书"
+      ],
+      "answer": "C",
+      "explanation": "《多宝塔碑》是楷书。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-scr-057",
+      "category": "scripts",
+      "type": "fill_blank",
+      "question": "《玄秘塔碑》的书体是______。",
+      "answer": "楷书",
+      "explanation": "《玄秘塔碑》是楷书。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-scr-058",
+      "category": "scripts",
+      "type": "choice",
+      "question": "魏碑是指哪个时期的楷书？",
+      "options": [
+        "A. 曹魏",
+        "B. 北魏",
+        "C. 东魏",
+        "D. 西魏"
+      ],
+      "answer": "B",
+      "explanation": "魏碑主要指北魏楷书。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-scr-059",
+      "category": "scripts",
+      "type": "choice",
+      "question": "魏碑的特点是？",
+      "options": [
+        "A. 圆润",
+        "B. 方峻",
+        "C. 连笔",
+        "D. 波磔"
+      ],
+      "answer": "B",
+      "explanation": "魏碑以方峻著称。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-scr-060",
+      "category": "scripts",
+      "type": "fill_blank",
+      "question": "楷书临摹要注意笔画的______和结构。",
+      "answer": "笔法",
+      "explanation": "楷书临摹要注意笔法和结构。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-scr-061",
+      "category": "scripts",
+      "type": "choice",
+      "question": "行书介于哪两种书体之间？",
+      "options": [
+        "A. 篆隶",
+        "B. 隶楷",
+        "C. 楷草",
+        "D. 篆楷"
+      ],
+      "answer": "C",
+      "explanation": "行书介于楷书和草书之间。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-scr-062",
+      "category": "scripts",
+      "type": "fill_blank",
+      "question": "行书的特点是______。",
+      "answer": "流畅",
+      "explanation": "行书笔画流畅。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-scr-063",
+      "category": "scripts",
+      "type": "choice",
+      "question": "'天下第一行书'是？",
+      "options": [
+        "A. 祭侄文稿",
+        "B. 兰亭序",
+        "C. 黄州寒食帖",
+        "D. 蜀素帖"
+      ],
+      "answer": "B",
+      "explanation": "《兰亭序》被誉为'天下第一行书'。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-scr-064",
+      "category": "scripts",
+      "type": "choice",
+      "question": "行书的用笔特点是？",
+      "options": [
+        "A. 纯中锋",
+        "B. 中侧并用",
+        "C. 纯侧锋",
+        "D. 散锋"
+      ],
+      "answer": "B",
+      "explanation": "行书用笔中侧并用。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-scr-065",
+      "category": "scripts",
+      "type": "fill_blank",
+      "question": "行书的结构讲究______。",
+      "answer": "变化",
+      "explanation": "行书结构讲究变化。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-scr-066",
+      "category": "scripts",
+      "type": "choice",
+      "question": "行书的章法特点是？",
+      "options": [
+        "A. 整齐划一",
+        "B. 错落有致",
+        "C. 方正对称",
+        "D. 扁平"
+      ],
+      "answer": "B",
+      "explanation": "行书章法错落有致。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-scr-067",
+      "category": "scripts",
+      "type": "choice",
+      "question": "《兰亭序》有多少字？",
+      "options": [
+        "A. 200 多字",
+        "B. 300 多字",
+        "C. 400 多字",
+        "D. 500 多字"
+      ],
+      "answer": "B",
+      "explanation": "《兰亭序》共 324 字。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-scr-068",
+      "category": "scripts",
+      "type": "fill_blank",
+      "question": "《兰亭序》中'之'字有______种写法。",
+      "answer": "20",
+      "explanation": "《兰亭序》中'之'字有 20 多种写法。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-scr-069",
+      "category": "scripts",
+      "type": "choice",
+      "question": "行书临摹时要注意？",
+      "options": [
+        "A. 笔画",
+        "B. 结构",
+        "C. 行气",
+        "D. 以上都是"
+      ],
+      "answer": "D",
+      "explanation": "行书临摹要注意笔画、结构、行气。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-scr-070",
+      "category": "scripts",
+      "type": "choice",
+      "question": "《蜀素帖》的书体是？",
+      "options": [
+        "A. 楷书",
+        "B. 行书",
+        "C. 草书",
+        "D. 隶书"
+      ],
+      "answer": "B",
+      "explanation": "《蜀素帖》是行书。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-scr-071",
+      "category": "scripts",
+      "type": "choice",
+      "question": "草书的特点是？",
+      "options": [
+        "A. 工整",
+        "B. 笔画简省、连绵",
+        "C. 方正",
+        "D. 扁平"
+      ],
+      "answer": "B",
+      "explanation": "草书笔画简省、连绵。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-scr-072",
+      "category": "scripts",
+      "type": "fill_blank",
+      "question": "草书分为章草、______和大草。",
+      "answer": "今草",
+      "explanation": "草书分为章草、今草和大草。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-scr-073",
+      "category": "scripts",
+      "type": "choice",
+      "question": "章草起源于哪个朝代？",
+      "options": [
+        "A. 秦",
+        "B. 西汉",
+        "C. 东汉",
+        "D. 魏晋"
+      ],
+      "answer": "B",
+      "explanation": "章草起源于西汉。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-scr-074",
+      "category": "scripts",
+      "type": "choice",
+      "question": "'草圣'是指？",
+      "options": [
+        "A. 张旭",
+        "B. 怀素",
+        "C. 王羲之",
+        "D. 孙过庭"
+      ],
+      "answer": "A",
+      "explanation": "张旭被誉为'草圣'。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-scr-075",
+      "category": "scripts",
+      "type": "fill_blank",
+      "question": "《自叙帖》的书体是______。",
+      "answer": "草书",
+      "explanation": "《自叙帖》是草书。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-scr-076",
+      "category": "scripts",
+      "type": "choice",
+      "question": "《书谱》的书体是？",
+      "options": [
+        "A. 楷书",
+        "B. 行书",
+        "C. 草书",
+        "D. 隶书"
+      ],
+      "answer": "C",
+      "explanation": "《书谱》是草书。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-scr-077",
+      "category": "scripts",
+      "type": "choice",
+      "question": "草书的用笔特点是？",
+      "options": [
+        "A. 缓慢",
+        "B. 快速连贯",
+        "C. 停顿",
+        "D. 方正"
+      ],
+      "answer": "B",
+      "explanation": "草书用笔快速连贯。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-scr-078",
+      "category": "scripts",
+      "type": "fill_blank",
+      "question": "草书临摹要注意笔画的______和气势。",
+      "answer": "连贯",
+      "explanation": "草书要注意连贯和气势。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-scr-079",
+      "category": "scripts",
+      "type": "choice",
+      "question": "'颠张醉素'中，'颠张'是指？",
+      "options": [
+        "A. 张旭",
+        "B. 张芝",
+        "C. 张即之",
+        "D. 张瑞图"
+      ],
+      "answer": "A",
+      "explanation": "'颠张'指张旭。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-scr-080",
+      "category": "scripts",
+      "type": "choice",
+      "question": "《肚痛帖》的书体是？",
+      "options": [
+        "A. 楷书",
+        "B. 行书",
+        "C. 草书",
+        "D. 隶书"
+      ],
+      "answer": "C",
+      "explanation": "《肚痛帖》是草书。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-mas-001",
+      "category": "masters",
+      "type": "choice",
+      "question": "《石鼓文》是哪个时期的作品？",
+      "options": [
+        "A. 商代",
+        "B. 西周",
+        "C. 春秋战国",
+        "D. 秦代"
+      ],
+      "answer": "C",
+      "explanation": "《石鼓文》是春秋战国时期秦国作品。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-mas-002",
+      "category": "masters",
+      "type": "fill_blank",
+      "question": "《毛公鼎》是______时期的青铜器。",
+      "answer": "西周",
+      "explanation": "《毛公鼎》是西周晚期青铜器。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-mas-003",
+      "category": "masters",
+      "type": "choice",
+      "question": "《散氏盘》铭文有多少字？",
+      "options": [
+        "A. 100 多字",
+        "B. 200 多字",
+        "C. 300 多字",
+        "D. 400 多字"
+      ],
+      "answer": "C",
+      "explanation": "《散氏盘》铭文 357 字。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-mas-004",
+      "category": "masters",
+      "type": "choice",
+      "question": "李斯是哪个朝代的书法家？",
+      "options": [
+        "A. 战国",
+        "B. 秦代",
+        "C. 西汉",
+        "D. 东汉"
+      ],
+      "answer": "B",
+      "explanation": "李斯是秦代丞相、书法家。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-mas-005",
+      "category": "masters",
+      "type": "fill_blank",
+      "question": "李斯以小篆书写了《______》。",
+      "answer": "峄山碑",
+      "explanation": "李斯书《峄山碑》。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-mas-006",
+      "category": "masters",
+      "type": "choice",
+      "question": "《曹全碑》立于哪个朝代？",
+      "options": [
+        "A. 西汉",
+        "B. 东汉",
+        "C. 魏",
+        "D. 晋"
+      ],
+      "answer": "B",
+      "explanation": "《曹全碑》立于东汉中平二年。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-mas-007",
+      "category": "masters",
+      "type": "choice",
+      "question": "《张迁碑》立于哪一年？",
+      "options": [
+        "A. 185 年",
+        "B. 186 年",
+        "C. 187 年",
+        "D. 188 年"
+      ],
+      "answer": "B",
+      "explanation": "《张迁碑》立于东汉中平三年（186 年）。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-mas-008",
+      "category": "masters",
+      "type": "fill_blank",
+      "question": "《礼器碑》全称是《______》。",
+      "answer": "汉鲁相韩敕造孔庙礼器碑",
+      "explanation": "《礼器碑》全称为《汉鲁相韩敕造孔庙礼器碑》。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-mas-009",
+      "category": "masters",
+      "type": "choice",
+      "question": "《石门颂》位于哪里？",
+      "options": [
+        "A. 陕西汉中",
+        "B. 河南洛阳",
+        "C. 山东曲阜",
+        "D. 陕西西安"
+      ],
+      "answer": "A",
+      "explanation": "《石门颂》位于陕西汉中石门。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-mas-010",
+      "category": "masters",
+      "type": "choice",
+      "question": "《乙瑛碑》的内容是？",
+      "options": [
+        "A. 记功",
+        "B. 祭祀",
+        "C. 置官",
+        "D. 纪事"
+      ],
+      "answer": "C",
+      "explanation": "《乙瑛碑》记述置百石卒史事。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-mas-011",
+      "category": "masters",
+      "type": "choice",
+      "question": "王羲之的生卒年是？",
+      "options": [
+        "A. 303-361",
+        "B. 321-379",
+        "C. 307-365",
+        "D. 315-369"
+      ],
+      "answer": "A",
+      "explanation": "王羲之生卒年为 303-361 年。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-mas-012",
+      "category": "masters",
+      "type": "fill_blank",
+      "question": "王羲之字______。",
+      "answer": "逸少",
+      "explanation": "王羲之字逸少。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-mas-013",
+      "category": "masters",
+      "type": "choice",
+      "question": "王羲之曾任什么官职？",
+      "options": [
+        "A. 右军将军",
+        "B. 左军将军",
+        "C. 大将军",
+        "D. 丞相"
+      ],
+      "answer": "A",
+      "explanation": "王羲之曾任右军将军。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-mas-014",
+      "category": "masters",
+      "type": "choice",
+      "question": "《兰亭序》是王羲之多少岁时写的？",
+      "options": [
+        "A. 30 岁",
+        "B. 40 岁",
+        "C. 50 岁",
+        "D. 60 岁"
+      ],
+      "answer": "C",
+      "explanation": "《兰亭序》是王羲之 50 岁时所写。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-mas-015",
+      "category": "masters",
+      "type": "fill_blank",
+      "question": "王献之字______。",
+      "answer": "子敬",
+      "explanation": "王献之字子敬。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-mas-016",
+      "category": "masters",
+      "type": "choice",
+      "question": "王献之的生卒年是？",
+      "options": [
+        "A. 344-386",
+        "B. 350-392",
+        "C. 338-380",
+        "D. 355-397"
+      ],
+      "answer": "A",
+      "explanation": "王献之生卒年为 344-386 年。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-mas-017",
+      "category": "masters",
+      "type": "choice",
+      "question": "《伯远帖》的作者王珣是王羲之的？",
+      "options": [
+        "A. 儿子",
+        "B. 侄子",
+        "C. 孙子",
+        "D. 曾孙"
+      ],
+      "answer": "B",
+      "explanation": "王珣是王羲之的侄子。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-mas-018",
+      "category": "masters",
+      "type": "fill_blank",
+      "question": "智永是王羲之的______代孙。",
+      "answer": "七",
+      "explanation": "智永是王羲之七代孙。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-mas-019",
+      "category": "masters",
+      "type": "choice",
+      "question": "智永出家为僧的寺庙是？",
+      "options": [
+        "A. 永欣寺",
+        "B. 灵隐寺",
+        "C. 寒山寺",
+        "D. 少林寺"
+      ],
+      "answer": "A",
+      "explanation": "智永出家于永欣寺。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-mas-020",
+      "category": "masters",
+      "type": "choice",
+      "question": "《爨宝子碑》位于哪个省？",
+      "options": [
+        "A. 云南",
+        "B. 贵州",
+        "C. 四川",
+        "D. 广西"
+      ],
+      "answer": "A",
+      "explanation": "《爨宝子碑》位于云南曲靖。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-mas-021",
+      "category": "masters",
+      "type": "fill_blank",
+      "question": "《张黑女墓志》的书体是______。",
+      "answer": "楷书",
+      "explanation": "《张黑女墓志》是楷书。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-mas-022",
+      "category": "masters",
+      "type": "choice",
+      "question": "《郑文公碑》的作者是？",
+      "options": [
+        "A. 郑道昭",
+        "B. 郑玄",
+        "C. 郑成功",
+        "D. 郑和"
+      ],
+      "answer": "A",
+      "explanation": "《郑文公碑》由郑道昭所书。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-mas-023",
+      "category": "masters",
+      "type": "choice",
+      "question": "郑道昭是哪个朝代的书法家？",
+      "options": [
+        "A. 汉",
+        "B. 魏",
+        "C. 晋",
+        "D. 南北朝"
+      ],
+      "answer": "D",
+      "explanation": "郑道昭是北魏书法家。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-mas-024",
+      "category": "masters",
+      "type": "fill_blank",
+      "question": "《瘗鹤铭》位于______。",
+      "answer": "江苏镇江焦山",
+      "explanation": "《瘗鹤铭》位于江苏镇江焦山。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-mas-025",
+      "category": "masters",
+      "type": "choice",
+      "question": "《瘗鹤铭》的书体是？",
+      "options": [
+        "A. 篆书",
+        "B. 隶书",
+        "C. 楷书",
+        "D. 行书"
+      ],
+      "answer": "C",
+      "explanation": "《瘗鹤铭》是楷书。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-mas-026",
+      "category": "masters",
+      "type": "choice",
+      "question": "欧阳询的生卒年是？",
+      "options": [
+        "A. 557-641",
+        "B. 560-645",
+        "C. 550-638",
+        "D. 565-650"
+      ],
+      "answer": "A",
+      "explanation": "欧阳询生卒年为 557-641 年。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-mas-027",
+      "category": "masters",
+      "type": "fill_blank",
+      "question": "欧阳询字______。",
+      "answer": "信本",
+      "explanation": "欧阳询字信本。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-mas-028",
+      "category": "masters",
+      "type": "choice",
+      "question": "《九成宫醴泉铭》立于哪一年？",
+      "options": [
+        "A. 631 年",
+        "B. 632 年",
+        "C. 633 年",
+        "D. 634 年"
+      ],
+      "answer": "B",
+      "explanation": "《九成宫醴泉铭》立于贞观六年（632 年）。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-mas-029",
+      "category": "masters",
+      "type": "choice",
+      "question": "虞世南的生卒年是？",
+      "options": [
+        "A. 558-638",
+        "B. 560-640",
+        "C. 555-635",
+        "D. 565-645"
+      ],
+      "answer": "A",
+      "explanation": "虞世南生卒年为 558-638 年。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-mas-030",
+      "category": "masters",
+      "type": "fill_blank",
+      "question": "虞世南字______。",
+      "answer": "伯施",
+      "explanation": "虞世南字伯施。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-mas-031",
+      "category": "masters",
+      "type": "choice",
+      "question": "褚遂良的生卒年是？",
+      "options": [
+        "A. 596-658",
+        "B. 600-662",
+        "C. 590-655",
+        "D. 605-665"
+      ],
+      "answer": "A",
+      "explanation": "褚遂良生卒年为 596-658 年。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-mas-032",
+      "category": "masters",
+      "type": "choice",
+      "question": "《雁塔圣教序》立于哪一年？",
+      "options": [
+        "A. 651 年",
+        "B. 652 年",
+        "C. 653 年",
+        "D. 654 年"
+      ],
+      "answer": "B",
+      "explanation": "《雁塔圣教序》立于永徽三年（652 年）。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-mas-033",
+      "category": "masters",
+      "type": "fill_blank",
+      "question": "颜真卿字______。",
+      "answer": "清臣",
+      "explanation": "颜真卿字清臣。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-mas-034",
+      "category": "masters",
+      "type": "choice",
+      "question": "颜真卿的生卒年是？",
+      "options": [
+        "A. 709-785",
+        "B. 710-786",
+        "C. 708-784",
+        "D. 711-787"
+      ],
+      "answer": "A",
+      "explanation": "颜真卿生卒年为 709-785 年。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-mas-035",
+      "category": "masters",
+      "type": "choice",
+      "question": "《多宝塔碑》立于哪一年？",
+      "options": [
+        "A. 751 年",
+        "B. 752 年",
+        "C. 753 年",
+        "D. 754 年"
+      ],
+      "answer": "B",
+      "explanation": "《多宝塔碑》立于天宝十一年（752 年）。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-mas-036",
+      "category": "masters",
+      "type": "fill_blank",
+      "question": "《祭侄文稿》创作于______年。",
+      "answer": "758",
+      "explanation": "《祭侄文稿》创作于乾元元年（758 年）。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-mas-037",
+      "category": "masters",
+      "type": "choice",
+      "question": "颜真卿《祭侄文稿》是为什么而作？",
+      "options": [
+        "A. 纪念父亲",
+        "B. 纪念侄子",
+        "C. 纪念老师",
+        "D. 纪念朋友"
+      ],
+      "answer": "B",
+      "explanation": "《祭侄文稿》是颜真卿为纪念在安史之乱中牺牲的侄子颜季明而作。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-mas-038",
+      "category": "masters",
+      "type": "choice",
+      "question": "柳公权的生卒年是？",
+      "options": [
+        "A. 778-865",
+        "B. 780-867",
+        "C. 775-862",
+        "D. 782-869"
+      ],
+      "answer": "A",
+      "explanation": "柳公权生卒年为 778-865 年。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-mas-039",
+      "category": "masters",
+      "type": "fill_blank",
+      "question": "柳公权字______。",
+      "answer": "诚悬",
+      "explanation": "柳公权字诚悬。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-mas-040",
+      "category": "masters",
+      "type": "choice",
+      "question": "《玄秘塔碑》立于哪一年？",
+      "options": [
+        "A. 840 年",
+        "B. 841 年",
+        "C. 842 年",
+        "D. 843 年"
+      ],
+      "answer": "B",
+      "explanation": "《玄秘塔碑》立于会昌元年（841 年）。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-mas-041",
+      "category": "masters",
+      "type": "choice",
+      "question": "张旭的生卒年约为？",
+      "options": [
+        "A. 658-747",
+        "B. 660-749",
+        "C. 655-745",
+        "D. 665-752"
+      ],
+      "answer": "A",
+      "explanation": "张旭生卒年约为 658-747 年。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-mas-042",
+      "category": "masters",
+      "type": "fill_blank",
+      "question": "张旭字______。",
+      "answer": "伯高",
+      "explanation": "张旭字伯高。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-mas-043",
+      "category": "masters",
+      "type": "choice",
+      "question": "怀素的生卒年是？",
+      "options": [
+        "A. 737-799",
+        "B. 740-802",
+        "C. 735-797",
+        "D. 742-804"
+      ],
+      "answer": "A",
+      "explanation": "怀素生卒年为 737-799 年。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-mas-044",
+      "category": "masters",
+      "type": "choice",
+      "question": "怀素出家为僧的寺庙位于？",
+      "options": [
+        "A. 湖南零陵",
+        "B. 河南嵩山",
+        "C. 浙江杭州",
+        "D. 江苏南京"
+      ],
+      "answer": "A",
+      "explanation": "怀素出家于湖南零陵。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-mas-045",
+      "category": "masters",
+      "type": "fill_blank",
+      "question": "孙过庭字______。",
+      "answer": "虔礼",
+      "explanation": "孙过庭字虔礼。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-mas-046",
+      "category": "masters",
+      "type": "choice",
+      "question": "苏轼的生卒年是？",
+      "options": [
+        "A. 1037-1101",
+        "B. 1040-1104",
+        "C. 1035-1099",
+        "D. 1042-1106"
+      ],
+      "answer": "A",
+      "explanation": "苏轼生卒年为 1037-1101 年。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-mas-047",
+      "category": "masters",
+      "type": "fill_blank",
+      "question": "苏轼字______。",
+      "answer": "子瞻",
+      "explanation": "苏轼字子瞻。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-mas-048",
+      "category": "masters",
+      "type": "choice",
+      "question": "苏轼号？",
+      "options": [
+        "A. 东坡居士",
+        "B. 山谷道人",
+        "C. 襄阳漫士",
+        "D. 松雪道人"
+      ],
+      "answer": "A",
+      "explanation": "苏轼号东坡居士。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-mas-049",
+      "category": "masters",
+      "type": "choice",
+      "question": "《黄州寒食帖》创作于哪一年？",
+      "options": [
+        "A. 1080 年",
+        "B. 1081 年",
+        "C. 1082 年",
+        "D. 1083 年"
+      ],
+      "answer": "C",
+      "explanation": "《黄州寒食帖》创作于元丰五年（1082 年）。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-mas-050",
+      "category": "masters",
+      "type": "fill_blank",
+      "question": "黄庭坚字______。",
+      "answer": "鲁直",
+      "explanation": "黄庭坚字鲁直。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-mas-051",
+      "category": "masters",
+      "type": "choice",
+      "question": "黄庭坚号？",
+      "options": [
+        "A. 山谷道人",
+        "B. 东坡居士",
+        "C. 襄阳漫士",
+        "D. 海岳外史"
+      ],
+      "answer": "A",
+      "explanation": "黄庭坚号山谷道人。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-mas-052",
+      "category": "masters",
+      "type": "choice",
+      "question": "黄庭坚的生卒年是？",
+      "options": [
+        "A. 1045-1105",
+        "B. 1050-1110",
+        "C. 1040-1100",
+        "D. 1055-1115"
+      ],
+      "answer": "A",
+      "explanation": "黄庭坚生卒年为 1045-1105 年。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-mas-053",
+      "category": "masters",
+      "type": "fill_blank",
+      "question": "米芾字______。",
+      "answer": "元章",
+      "explanation": "米芾字元章。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-mas-054",
+      "category": "masters",
+      "type": "choice",
+      "question": "米芾号？",
+      "options": [
+        "A. 襄阳漫士",
+        "B. 山谷道人",
+        "C. 东坡居士",
+        "D. 松雪道人"
+      ],
+      "answer": "A",
+      "explanation": "米芾号襄阳漫士。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-mas-055",
+      "category": "masters",
+      "type": "choice",
+      "question": "米芾的生卒年是？",
+      "options": [
+        "A. 1051-1107",
+        "B. 1055-1111",
+        "C. 1048-1104",
+        "D. 1060-1116"
+      ],
+      "answer": "A",
+      "explanation": "米芾生卒年为 1051-1107 年。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-mas-056",
+      "category": "masters",
+      "type": "fill_blank",
+      "question": "《蜀素帖》创作于______年。",
+      "answer": "1088",
+      "explanation": "《蜀素帖》创作于元祐三年（1088 年）。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-mas-057",
+      "category": "masters",
+      "type": "choice",
+      "question": "蔡襄的生卒年是？",
+      "options": [
+        "A. 1012-1067",
+        "B. 1015-1070",
+        "C. 1010-1065",
+        "D. 1020-1075"
+      ],
+      "answer": "A",
+      "explanation": "蔡襄生卒年为 1012-1067 年。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-mas-058",
+      "category": "masters",
+      "type": "fill_blank",
+      "question": "蔡襄字______。",
+      "answer": "君谟",
+      "explanation": "蔡襄字君谟。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-mas-059",
+      "category": "masters",
+      "type": "choice",
+      "question": "赵孟頫的生卒年是？",
+      "options": [
+        "A. 1254-1322",
+        "B. 1258-1326",
+        "C. 1250-1318",
+        "D. 1260-1332"
+      ],
+      "answer": "A",
+      "explanation": "赵孟頫生卒年为 1254-1322 年。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-mas-060",
+      "category": "masters",
+      "type": "choice",
+      "question": "赵孟頫字？",
+      "options": [
+        "A. 子昂",
+        "B. 子瞻",
+        "C. 子敬",
+        "D. 子美"
+      ],
+      "answer": "A",
+      "explanation": "赵孟頫字子昂。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-mas-061",
+      "category": "masters",
+      "type": "fill_blank",
+      "question": "赵孟頫号______。",
+      "answer": "松雪道人",
+      "explanation": "赵孟頫号松雪道人。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-mas-062",
+      "category": "masters",
+      "type": "choice",
+      "question": "赵孟頫是哪个朝代的宗室？",
+      "options": [
+        "A. 唐",
+        "B. 宋",
+        "C. 元",
+        "D. 明"
+      ],
+      "answer": "B",
+      "explanation": "赵孟頫是宋太祖赵匡胤十一世孙。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-mas-063",
+      "category": "masters",
+      "type": "choice",
+      "question": "文徵明的生卒年是？",
+      "options": [
+        "A. 1470-1559",
+        "B. 1475-1564",
+        "C. 1465-1554",
+        "D. 1480-1569"
+      ],
+      "answer": "A",
+      "explanation": "文徵明生卒年为 1470-1559 年。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-mas-064",
+      "category": "masters",
+      "type": "fill_blank",
+      "question": "文徵明初名______。",
+      "answer": "壁",
+      "explanation": "文徵明初名壁。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-mas-065",
+      "category": "masters",
+      "type": "choice",
+      "question": "祝允明的生卒年是？",
+      "options": [
+        "A. 1460-1526",
+        "B. 1465-1531",
+        "C. 1455-1521",
+        "D. 1470-1536"
+      ],
+      "answer": "A",
+      "explanation": "祝允明生卒年为 1460-1526 年。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-mas-066",
+      "category": "masters",
+      "type": "fill_blank",
+      "question": "祝允明号______。",
+      "answer": "枝山",
+      "explanation": "祝允明号枝山。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-mas-067",
+      "category": "masters",
+      "type": "choice",
+      "question": "董其昌的生卒年是？",
+      "options": [
+        "A. 1555-1636",
+        "B. 1560-1641",
+        "C. 1550-1631",
+        "D. 1565-1646"
+      ],
+      "answer": "A",
+      "explanation": "董其昌生卒年为 1555-1636 年。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-mas-068",
+      "category": "masters",
+      "type": "choice",
+      "question": "董其昌字？",
+      "options": [
+        "A. 玄宰",
+        "B. 子瞻",
+        "C. 子昂",
+        "D. 元章"
+      ],
+      "answer": "A",
+      "explanation": "董其昌字玄宰。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-mas-069",
+      "category": "masters",
+      "type": "fill_blank",
+      "question": "邓石如是______代书法家。",
+      "answer": "清",
+      "explanation": "邓石如是清代书法家。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-mas-070",
+      "category": "masters",
+      "type": "choice",
+      "question": "邓石如的生卒年是？",
+      "options": [
+        "A. 1743-1805",
+        "B. 1750-1812",
+        "C. 1740-1802",
+        "D. 1755-1817"
+      ],
+      "answer": "A",
+      "explanation": "邓石如生卒年为 1743-1805 年。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-tool-001",
+      "category": "tools",
+      "type": "choice",
+      "question": "文房四宝是指？",
+      "options": [
+        "A. 笔墨纸砚",
+        "B. 琴棋书画",
+        "C. 诗书礼乐",
+        "D. 梅兰竹菊"
+      ],
+      "answer": "A",
+      "explanation": "文房四宝指笔墨纸砚。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-tool-002",
+      "category": "tools",
+      "type": "fill_blank",
+      "question": "宣纸产于安徽省______县。",
+      "answer": "泾",
+      "explanation": "宣纸产于安徽泾县。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-tool-003",
+      "category": "tools",
+      "type": "choice",
+      "question": "湖笔产于哪个省？",
+      "options": [
+        "A. 江苏",
+        "B. 浙江",
+        "C. 安徽",
+        "D. 江西"
+      ],
+      "answer": "B",
+      "explanation": "湖笔产于浙江湖州。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-tool-004",
+      "category": "tools",
+      "type": "choice",
+      "question": "端砚产于哪个省？",
+      "options": [
+        "A. 安徽",
+        "B. 广东",
+        "C. 江西",
+        "D. 福建"
+      ],
+      "answer": "B",
+      "explanation": "端砚产于广东肇庆（古称端州）。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-tool-005",
+      "category": "tools",
+      "type": "fill_blank",
+      "question": "徽墨产于安徽省______。",
+      "answer": "徽州",
+      "explanation": "徽墨产于安徽徽州。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-tool-006",
+      "category": "tools",
+      "type": "choice",
+      "question": "宣纸分为哪几种？",
+      "options": [
+        "A. 生宣、熟宣",
+        "B. 厚宣、薄宣",
+        "C. 白宣、黄宣",
+        "D. 大宣、小宣"
+      ],
+      "answer": "A",
+      "explanation": "宣纸分为生宣、熟宣和半生熟宣。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-tool-007",
+      "category": "tools",
+      "type": "choice",
+      "question": "生宣适合写哪种书体？",
+      "options": [
+        "A. 篆书",
+        "B. 隶书",
+        "C. 行草书",
+        "D. 楷书"
+      ],
+      "answer": "C",
+      "explanation": "生宣吸水性强，适合行草书。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-tool-008",
+      "category": "tools",
+      "type": "fill_blank",
+      "question": "熟宣适合写______。",
+      "answer": "楷书",
+      "explanation": "熟宣吸水性弱，适合楷书、工笔画。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-tool-009",
+      "category": "tools",
+      "type": "choice",
+      "question": "毛笔按毫性分为？",
+      "options": [
+        "A. 硬毫、软毫、兼毫",
+        "B. 长毫、短毫",
+        "C. 粗毫、细毫",
+        "D. 大毫、小毫"
+      ],
+      "answer": "A",
+      "explanation": "毛笔按毫性分为硬毫、软毫、兼毫。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-tool-010",
+      "category": "tools",
+      "type": "choice",
+      "question": "狼毫属于哪种毫？",
+      "options": [
+        "A. 硬毫",
+        "B. 软毫",
+        "C. 兼毫",
+        "D. 混合毫"
+      ],
+      "answer": "A",
+      "explanation": "狼毫属于硬毫。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-tool-011",
+      "category": "tools",
+      "type": "fill_blank",
+      "question": "羊毫属于______毫。",
+      "answer": "软",
+      "explanation": "羊毫属于软毫。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-tool-012",
+      "category": "tools",
+      "type": "choice",
+      "question": "兼毫是由什么制成？",
+      "options": [
+        "A. 两种以上毫毛混合",
+        "B. 单一毫毛",
+        "C. 人造纤维",
+        "D. 动物鬃毛"
+      ],
+      "answer": "A",
+      "explanation": "兼毫由两种以上毫毛混合制成。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-tool-013",
+      "category": "tools",
+      "type": "choice",
+      "question": "四大名砚不包括？",
+      "options": [
+        "A. 端砚",
+        "B. 歙砚",
+        "C. 洮砚",
+        "D. 玉砚"
+      ],
+      "answer": "D",
+      "explanation": "四大名砚为端砚、歙砚、洮砚、澄泥砚。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-tool-014",
+      "category": "tools",
+      "type": "fill_blank",
+      "question": "歙砚产于安徽省______县。",
+      "answer": "歙",
+      "explanation": "歙砚产于安徽歙县。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-tool-015",
+      "category": "tools",
+      "type": "choice",
+      "question": "洮砚产于哪个省？",
+      "options": [
+        "A. 甘肃",
+        "B. 青海",
+        "C. 宁夏",
+        "D. 新疆"
+      ],
+      "answer": "A",
+      "explanation": "洮砚产于甘肃洮州。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-tool-016",
+      "category": "tools",
+      "type": "choice",
+      "question": "澄泥砚是什么材质？",
+      "options": [
+        "A. 石头",
+        "B. 泥土",
+        "C. 玉石",
+        "D. 金属"
+      ],
+      "answer": "B",
+      "explanation": "澄泥砚用特殊泥土烧制而成。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-tool-017",
+      "category": "tools",
+      "type": "fill_blank",
+      "question": "制墨的主要原料是______。",
+      "answer": "烟灰",
+      "explanation": "制墨主要原料是烟灰（松烟、油烟）。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-tool-018",
+      "category": "tools",
+      "type": "choice",
+      "question": "松烟墨的特点是？",
+      "options": [
+        "A. 黑亮",
+        "B. 乌黑无光",
+        "C. 发红",
+        "D. 发蓝"
+      ],
+      "answer": "B",
+      "explanation": "松烟墨色乌黑无光。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-tool-019",
+      "category": "tools",
+      "type": "choice",
+      "question": "油烟墨的特点是？",
+      "options": [
+        "A. 乌黑无光",
+        "B. 黑亮有光",
+        "C. 发红",
+        "D. 发白"
+      ],
+      "answer": "B",
+      "explanation": "油烟墨黑亮有光。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-tool-020",
+      "category": "tools",
+      "type": "fill_blank",
+      "question": "毛笔的'四德'是尖、______、圆、健。",
+      "answer": "齐",
+      "explanation": "毛笔四德为尖、齐、圆、健。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-tool-021",
+      "category": "tools",
+      "type": "choice",
+      "question": "'尖'是指毛笔的？",
+      "options": [
+        "A. 笔锋尖锐",
+        "B. 笔毛整齐",
+        "C. 笔肚圆润",
+        "D. 笔杆挺直"
+      ],
+      "answer": "A",
+      "explanation": "'尖'指笔锋尖锐。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-tool-022",
+      "category": "tools",
+      "type": "choice",
+      "question": "'齐'是指毛笔的？",
+      "options": [
+        "A. 笔锋尖锐",
+        "B. 笔毛整齐",
+        "C. 笔肚圆润",
+        "D. 笔杆挺直"
+      ],
+      "answer": "B",
+      "explanation": "'齐'指笔毛整齐。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-tool-023",
+      "category": "tools",
+      "type": "fill_blank",
+      "question": "'圆'是指毛笔的______圆润。",
+      "answer": "笔肚",
+      "explanation": "'圆'指笔肚圆润。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-tool-024",
+      "category": "tools",
+      "type": "choice",
+      "question": "'健'是指毛笔的？",
+      "options": [
+        "A. 笔锋尖锐",
+        "B. 笔毛整齐",
+        "C. 笔肚圆润",
+        "D. 笔毫有弹性"
+      ],
+      "answer": "D",
+      "explanation": "'健'指笔毫有弹性。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-tool-025",
+      "category": "tools",
+      "type": "choice",
+      "question": "宣纸的原料主要是？",
+      "options": [
+        "A. 竹纤维",
+        "B. 青檀皮",
+        "C. 麻纤维",
+        "D. 棉纤维"
+      ],
+      "answer": "B",
+      "explanation": "宣纸主要原料是青檀皮。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-tool-026",
+      "category": "tools",
+      "type": "fill_blank",
+      "question": "宣纸的制作工艺包括______道工序。",
+      "answer": "108",
+      "explanation": "宣纸制作有 108 道工序。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-tool-027",
+      "category": "tools",
+      "type": "choice",
+      "question": "砚台使用时需要？",
+      "options": [
+        "A. 加水研磨",
+        "B. 干磨",
+        "C. 加热",
+        "D. 冷冻"
+      ],
+      "answer": "A",
+      "explanation": "砚台使用时需加水研磨墨锭。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-tool-028",
+      "category": "tools",
+      "type": "choice",
+      "question": "磨墨时应？",
+      "options": [
+        "A. 重按快磨",
+        "B. 轻按慢磨",
+        "C. 重按慢磨",
+        "D. 轻按快磨"
+      ],
+      "answer": "B",
+      "explanation": "磨墨应轻按慢磨。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-tool-029",
+      "category": "tools",
+      "type": "fill_blank",
+      "question": "新买的毛笔需要用______浸泡开笔。",
+      "answer": "温水",
+      "explanation": "新毛笔需用温水浸泡开笔。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-tool-030",
+      "category": "tools",
+      "type": "choice",
+      "question": "书法创作时，墨汁的浓稠度应？",
+      "options": [
+        "A. 越浓越好",
+        "B. 越稀越好",
+        "C. 适中",
+        "D. 无所谓"
+      ],
+      "answer": "C",
+      "explanation": "墨汁浓稠度应适中。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-aes-001",
+      "category": "aesthetics",
+      "type": "choice",
+      "question": "书法美学中，'气韵生动'是谁提出的？",
+      "options": [
+        "A. 谢赫",
+        "B. 王羲之",
+        "C. 孙过庭",
+        "D. 张怀瓘"
+      ],
+      "answer": "A",
+      "explanation": "'气韵生动'是谢赫在《古画品录》中提出的。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-aes-002",
+      "category": "aesthetics",
+      "type": "fill_blank",
+      "question": "书法创作中，'意在笔______'。",
+      "answer": "先",
+      "explanation": "'意在笔先'指动笔前要先构思。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-aes-003",
+      "category": "aesthetics",
+      "type": "choice",
+      "question": "'书为心画'是谁提出的？",
+      "options": [
+        "A. 扬雄",
+        "B. 王羲之",
+        "C. 孙过庭",
+        "D. 苏轼"
+      ],
+      "answer": "A",
+      "explanation": "'书为心画'是扬雄提出的。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-aes-004",
+      "category": "aesthetics",
+      "type": "choice",
+      "question": "书法章法中的'留白'是指？",
+      "options": [
+        "A. 空白空间的处理",
+        "B. 用墨的浓淡",
+        "C. 笔画的粗细",
+        "D. 字的大小"
+      ],
+      "answer": "A",
+      "explanation": "'留白'指空白空间的艺术处理。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-aes-005",
+      "category": "aesthetics",
+      "type": "fill_blank",
+      "question": "书法美学中，'虚实______生'。",
+      "answer": "相",
+      "explanation": "'虚实相生'是书法美学重要原则。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-aes-006",
+      "category": "aesthetics",
+      "type": "choice",
+      "question": "'中和之美'是哪种书体的美学追求？",
+      "options": [
+        "A. 篆书",
+        "B. 隶书",
+        "C. 楷书",
+        "D. 草书"
+      ],
+      "answer": "C",
+      "explanation": "楷书追求'中和之美'。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-aes-007",
+      "category": "aesthetics",
+      "type": "choice",
+      "question": "'狂放不羁'是哪种书体的美学特征？",
+      "options": [
+        "A. 楷书",
+        "B. 行书",
+        "C. 草书",
+        "D. 篆书"
+      ],
+      "answer": "C",
+      "explanation": "草书追求'狂放不羁'。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-aes-008",
+      "category": "aesthetics",
+      "type": "fill_blank",
+      "question": "书法用笔讲究'______锋'。",
+      "answer": "中",
+      "explanation": "书法用笔讲究中锋。",
+      "difficulty": "easy",
+      "score": 2
+    },
+    {
+      "id": "adv-aes-009",
+      "category": "aesthetics",
+      "type": "choice",
+      "question": "'屋漏痕'比喻的是？",
+      "options": [
+        "A. 笔画自然",
+        "B. 墨色浓淡",
+        "C. 章法布局",
+        "D. 字形结构"
+      ],
+      "answer": "A",
+      "explanation": "'屋漏痕'比喻笔画自然流畅。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-aes-010",
+      "category": "aesthetics",
+      "type": "choice",
+      "question": "'锥画沙'比喻的是？",
+      "options": [
+        "A. 笔画有力",
+        "B. 墨色均匀",
+        "C. 章法整齐",
+        "D. 字形端正"
+      ],
+      "answer": "A",
+      "explanation": "'锥画沙'比喻笔画有力。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-aes-011",
+      "category": "aesthetics",
+      "type": "fill_blank",
+      "question": "'折钗股'比喻笔画______。",
+      "answer": "圆润",
+      "explanation": "'折钗股'比喻笔画圆润有力。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-aes-012",
+      "category": "aesthetics",
+      "type": "choice",
+      "question": "'印印泥'比喻的是？",
+      "options": [
+        "A. 笔画沉稳",
+        "B. 墨色浓重",
+        "C. 章法紧密",
+        "D. 字形方正"
+      ],
+      "answer": "A",
+      "explanation": "'印印泥'比喻笔画沉稳。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-aes-013",
+      "category": "aesthetics",
+      "type": "choice",
+      "question": "书法的'骨力'是指？",
+      "options": [
+        "A. 笔画的力度",
+        "B. 墨色的浓淡",
+        "C. 章法的疏密",
+        "D. 字形的大小"
+      ],
+      "answer": "A",
+      "explanation": "'骨力'指笔画的力度感。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-aes-014",
+      "category": "aesthetics",
+      "type": "fill_blank",
+      "question": "书法的'神采'是指作品的______。",
+      "answer": "精神气质",
+      "explanation": "'神采'指作品的精神气质。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-aes-015",
+      "category": "aesthetics",
+      "type": "choice",
+      "question": "'形神兼备'是指？",
+      "options": [
+        "A. 形似和神似统一",
+        "B. 形大神的",
+        "C. 形小神大",
+        "D. 形神分离"
+      ],
+      "answer": "A",
+      "explanation": "'形神兼备'指形似和神似统一。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-aes-016",
+      "category": "aesthetics",
+      "type": "choice",
+      "question": "书法欣赏的层次不包括？",
+      "options": [
+        "A. 技法层",
+        "B. 形式层",
+        "C. 意境层",
+        "D. 价格层"
+      ],
+      "answer": "D",
+      "explanation": "书法欣赏包括技法、形式、意境层次。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-aes-017",
+      "category": "aesthetics",
+      "type": "fill_blank",
+      "question": "书法创作讲究'心手______应'。",
+      "answer": "相",
+      "explanation": "'心手相应'指心与手的协调。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-aes-018",
+      "category": "aesthetics",
+      "type": "choice",
+      "question": "'书如其人'是指？",
+      "options": [
+        "A. 书法反映人的品格",
+        "B. 书法像人的外貌",
+        "C. 书法模仿他人",
+        "D. 书法与人无关"
+      ],
+      "answer": "A",
+      "explanation": "'书如其人'指书法反映人的品格。",
+      "difficulty": "medium",
+      "score": 3
+    },
+    {
+      "id": "adv-aes-019",
+      "category": "aesthetics",
+      "type": "choice",
+      "question": "书法美学中，'古质今妍'是指？",
+      "options": [
+        "A. 古今风格不同",
+        "B. 古代好现代差",
+        "C. 现代好古代差",
+        "D. 古今一样"
+      ],
+      "answer": "A",
+      "explanation": "'古质今妍'指古今风格不同。",
+      "difficulty": "hard",
+      "score": 4
+    },
+    {
+      "id": "adv-aes-020",
+      "category": "aesthetics",
+      "type": "fill_blank",
+      "question": "书法的最高境界是______。",
+      "answer": "自然",
+      "explanation": "书法最高境界是自然。",
+      "difficulty": "hard",
+      "score": 4
+    }
+  ]
+}

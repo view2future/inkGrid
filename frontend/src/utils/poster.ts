@@ -20,6 +20,25 @@ function loadBrandLogo() {
   return BRAND_LOGO_PROMISE;
 }
 
+let LANTERN_1_PROMISE: Promise<HTMLImageElement> | null = null;
+let LANTERN_2_PROMISE: Promise<HTMLImageElement> | null = null;
+let LANTERN_3_PROMISE: Promise<HTMLImageElement> | null = null;
+
+function loadLantern1() {
+  if (!LANTERN_1_PROMISE) LANTERN_1_PROMISE = loadImage('/images/lantern-1.png');
+  return LANTERN_1_PROMISE;
+}
+
+function loadLantern2() {
+  if (!LANTERN_2_PROMISE) LANTERN_2_PROMISE = loadImage('/images/lantern-2.png');
+  return LANTERN_2_PROMISE;
+}
+
+function loadLantern3() {
+  if (!LANTERN_3_PROMISE) LANTERN_3_PROMISE = loadImage('/images/lantern-3.png');
+  return LANTERN_3_PROMISE;
+}
+
 type PosterChar = {
   simplified?: string;
   pinyin?: string;
@@ -368,11 +387,356 @@ async function drawSceneNY06_Travel(env: SceneEnv) {
   await drawStandardHeader(env, '#3E3E3E'); if (glyphImg) { drawFloatingInkGlyph(ctx, glyphImg, 80, 280, 750); drawRedSeal(ctx, input.glyph.simplified || '', 80 + 750 - 60, 280 + 750 - 120, 100); }
   drawStandardFooter(env, 1250, '#3E3E3E'); await drawFooterQR(env, CANVAS_W - 192, CANVAS_H - 180, '#8B0000');
 }
+
+async function drawSceneNY06_TravelFestive(env: SceneEnv) {
+  const { ctx, noiseImg, glyphImg, input } = env;
+  drawTextureBackground(ctx, '#B80000', noiseImg, 0.14);
+  drawGoldSprinkle(ctx);
+  const glow = ctx.createRadialGradient(CANVAS_W / 2, 650, 80, CANVAS_W / 2, 650, 960);
+  glow.addColorStop(0, 'rgba(255, 220, 170, 0.22)');
+  glow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+  await drawStandardHeader(env, '#FDF6E3');
+
+  // A light paper panel to make the glyph more legible.
+  const pW = 820;
+  const pH = 980;
+  const pX = (CANVAS_W - pW) / 2;
+  const pY = 320;
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,0,0,0.35)';
+  ctx.shadowBlur = 50;
+  ctx.shadowOffsetY = 26;
+  ctx.fillStyle = 'rgba(253, 246, 227, 0.92)';
+  roundRect(ctx, pX, pY, pW, pH, 56);
+  ctx.fill();
+  ctx.restore();
+
+  if (glyphImg) {
+    drawFloatingInkGlyph(ctx, glyphImg, pX + 110, pY + 140, 600);
+    drawRedSeal(ctx, input.glyph.simplified || '', pX + pW - 160, pY + 160, 110, '#C02C38');
+  }
+
+  // Move the source label down to avoid overlapping the glyph panel.
+  drawStandardFooter(env, 1400, '#FDF6E3');
+  await drawFooterQR(env, CANVAS_W - 192, CANVAS_H - 180, '#FDF6E3');
+}
 async function drawSceneNY07_Human(env: SceneEnv) {
   const { ctx, noiseImg, glyphImg, input } = env; drawTextureBackground(ctx, '#F7F9F5', noiseImg, 0.1);
   ctx.save(); ctx.fillStyle = 'rgba(50, 80, 50, 0.04)'; ctx.beginPath(); ctx.moveTo(CANVAS_W, 100); ctx.lineTo(CANVAS_W - 300, 400); ctx.lineTo(CANVAS_W, 700); ctx.fill(); ctx.restore();
   await drawStandardHeader(env, '#555'); if (glyphImg) { ctx.save(); ctx.strokeStyle = 'rgba(0,0,0,0.08)'; ctx.beginPath(); ctx.arc(CANVAS_W/2, 650, 450, 0, Math.PI*2); ctx.stroke(); ctx.restore(); drawFloatingInkGlyph(ctx, glyphImg, (CANVAS_W-650)/2, 325, 650); drawRedSeal(ctx, input.glyph.simplified || '', CANVAS_W/2 + 220, 850, 90, '#C02C38'); }
   drawStandardFooter(env, 1320, '#333'); await drawFooterQR(env, CANVAS_W - 192, CANVAS_H - 180, '#333');
+}
+
+async function drawSceneNY07_HumanFestive(env: SceneEnv) {
+  const { ctx, noiseImg, glyphImg, input } = env;
+  drawTextureBackground(ctx, '#C02C38', noiseImg, 0.12);
+  drawGoldSprinkle(ctx);
+
+  // Lantern ring
+  ctx.save();
+  const cx = CANVAS_W / 2;
+  const cy = 720;
+  const ring = ctx.createRadialGradient(cx, cy, 100, cx, cy, 520);
+  ring.addColorStop(0, 'rgba(255, 245, 230, 0.95)');
+  ring.addColorStop(1, 'rgba(255, 245, 230, 0.0)');
+  ctx.fillStyle = ring;
+  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+  ctx.restore();
+
+  await drawStandardHeader(env, '#FDF6E3');
+
+  // A round "paper cut" window.
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,0,0,0.35)';
+  ctx.shadowBlur = 60;
+  ctx.shadowOffsetY = 28;
+  ctx.fillStyle = 'rgba(253, 246, 227, 0.94)';
+  ctx.beginPath();
+  ctx.arc(CANVAS_W / 2, 700, 420, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  if (glyphImg) {
+    drawFloatingInkGlyph(ctx, glyphImg, (CANVAS_W - 620) / 2, 390, 620);
+    drawRedSeal(ctx, input.glyph.simplified || '', CANVAS_W / 2 + 250, 920, 95, '#8B0000');
+  }
+
+  drawStandardFooter(env, 1320, '#FDF6E3');
+  await drawFooterQR(env, CANVAS_W - 192, CANVAS_H - 180, '#FDF6E3');
+}
+
+async function drawSceneNY11_Earth(env: SceneEnv) {
+  const { ctx, noiseImg, glyphImg, input } = env;
+  // Deep red + earth tone, with a bold red frame.
+  drawTextureBackground(ctx, '#8B0000', noiseImg, 0.13);
+  ctx.save();
+  const grad = ctx.createLinearGradient(0, 0, 0, CANVAS_H);
+  grad.addColorStop(0, 'rgba(0,0,0,0.25)');
+  grad.addColorStop(1, 'rgba(0,0,0,0.02)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+  ctx.restore();
+
+  await drawStandardHeader(env, '#FDF6E3');
+
+  const cardW = 860;
+  const cardH = 1040;
+  const cardX = (CANVAS_W - cardW) / 2;
+  const cardY = 300;
+
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,0,0,0.55)';
+  ctx.shadowBlur = 70;
+  ctx.shadowOffsetY = 34;
+  ctx.fillStyle = 'rgba(253, 246, 227, 0.92)';
+  roundRect(ctx, cardX, cardY, cardW, cardH, 70);
+  ctx.fill();
+  ctx.restore();
+
+  ctx.save();
+  ctx.strokeStyle = 'rgba(192, 44, 56, 0.55)';
+  ctx.lineWidth = 6;
+  roundRect(ctx, cardX + 28, cardY + 28, cardW - 56, cardH - 56, 56);
+  ctx.stroke();
+  ctx.restore();
+
+  if (glyphImg) {
+    drawFloatingInkGlyph(ctx, glyphImg, cardX + 150, cardY + 220, 560);
+    drawRedSeal(ctx, input.glyph.simplified || '', cardX + cardW - 170, cardY + 170, 115, '#C02C38');
+  }
+
+  drawGoldSprinkle(ctx);
+  drawStandardFooter(env, 1430, '#FDF6E3');
+  await drawFooterQR(env, CANVAS_W - 192, CANVAS_H - 180, '#FDF6E3');
+}
+
+async function drawSceneNY12_Kin(env: SceneEnv) {
+  const { ctx, noiseImg, glyphImg, input } = env;
+  // Red grid letter paper.
+  drawTextureBackground(ctx, '#D2B48C', noiseImg, 0.18);
+  await drawStandardHeader(env, '#3E2A1C');
+
+  ctx.save();
+  ctx.translate(CANVAS_W / 2, 820);
+  ctx.rotate(-0.02);
+  ctx.shadowColor = 'rgba(0,0,0,0.22)';
+  ctx.shadowBlur = 55;
+  ctx.shadowOffsetY = 26;
+  ctx.fillStyle = '#FFF0E6';
+  ctx.fillRect(-420, -560, 840, 1120);
+  ctx.strokeStyle = 'rgba(192, 44, 56, 0.18)';
+  ctx.lineWidth = 2;
+  for (let x = -380; x <= 380; x += 80) {
+    ctx.beginPath();
+    ctx.moveTo(x, -520);
+    ctx.lineTo(x, 520);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // A red ribbon accent.
+  ctx.save();
+  ctx.globalAlpha = 0.9;
+  ctx.fillStyle = '#C02C38';
+  roundRect(ctx, 110, 360, 26, 980, 18);
+  ctx.fill();
+  ctx.restore();
+
+  if (glyphImg) {
+    drawFloatingInkGlyph(ctx, glyphImg, (CANVAS_W - 700) / 2, 420, 700);
+    drawRedSeal(ctx, input.glyph.simplified || '', (CANVAS_W / 2) + 290, 410, 110, '#8B0000');
+  }
+
+  // Move down to avoid overlapping the glyph frame on day 11.
+  drawStandardFooter(env, 1410, '#3E2A1C');
+  await drawFooterQR(env, CANVAS_W - 192, CANVAS_H - 180, '#C02C38');
+}
+
+async function drawSceneNY13_LanternPrep(env: SceneEnv) {
+  const { ctx, noiseImg, glyphImg, input } = env;
+  const lantern3 = await loadLantern3().catch(() => null);
+  // Bright festive red with lantern silhouettes.
+  drawTextureBackground(ctx, '#C02C38', noiseImg, 0.12);
+  drawGoldSprinkle(ctx);
+
+  // Replace the simple lantern shapes with the curated lantern asset.
+  if (lantern3) {
+    ctx.save();
+    ctx.globalAlpha = 0.58;
+    for (let i = 0; i < 4; i += 1) {
+      const x = 120 + i * 240;
+      const y = 170 + (i % 2) * 18;
+      const w = 150;
+      const h = 220;
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate((i - 1.5) * 0.05);
+      drawContainImage(ctx, lantern3, -w / 2, -h / 2, w, h);
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+
+  await drawStandardHeader(env, '#FDF6E3');
+
+  const winW = 820;
+  const winH = 980;
+  const winX = (CANVAS_W - winW) / 2;
+  const winY = 340;
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,0,0,0.45)';
+  ctx.shadowBlur = 70;
+  ctx.shadowOffsetY = 34;
+  ctx.fillStyle = 'rgba(253, 246, 227, 0.92)';
+  roundRect(ctx, winX, winY, winW, winH, 72);
+  ctx.fill();
+  ctx.restore();
+
+  if (glyphImg) {
+    drawFloatingInkGlyph(ctx, glyphImg, winX + 120, winY + 190, 620);
+    drawRedSeal(ctx, input.glyph.simplified || '', winX + winW - 170, winY + 170, 115, '#8B0000');
+  }
+
+  drawStandardFooter(env, 1390, '#FDF6E3');
+  await drawFooterQR(env, CANVAS_W - 192, CANVAS_H - 180, '#FDF6E3');
+}
+
+async function drawSceneNY14_TestLantern(env: SceneEnv) {
+  const { ctx, noiseImg, glyphImg, input } = env;
+  // Dark red night + lantern glow.
+  drawTextureBackground(ctx, '#300000', noiseImg, 0.18);
+  const glow = ctx.createRadialGradient(CANVAS_W / 2, 640, 80, CANVAS_W / 2, 640, 980);
+  glow.addColorStop(0, 'rgba(255, 220, 170, 0.26)');
+  glow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+  await drawStandardHeader(env, '#FDF6E3');
+
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,0,0,0.55)';
+  ctx.shadowBlur = 80;
+  ctx.shadowOffsetY = 36;
+  ctx.fillStyle = 'rgba(253, 246, 227, 0.94)';
+  ctx.beginPath();
+  ctx.arc(CANVAS_W / 2, 720, 440, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  ctx.save();
+  ctx.strokeStyle = 'rgba(192, 44, 56, 0.55)';
+  ctx.lineWidth = 6;
+  ctx.beginPath();
+  ctx.arc(CANVAS_W / 2, 720, 420, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+
+  if (glyphImg) {
+    drawFloatingInkGlyph(ctx, glyphImg, (CANVAS_W - 620) / 2, 410, 620);
+    drawRedSeal(ctx, input.glyph.simplified || '', CANVAS_W / 2 + 250, 960, 95, '#C02C38');
+  }
+
+  drawStandardFooter(env, 1320, '#FDF6E3');
+  await drawFooterQR(env, CANVAS_W - 192, CANVAS_H - 180, '#FDF6E3');
+}
+
+async function drawSceneNY15_SendLantern(env: SceneEnv) {
+  const { ctx, noiseImg, glyphImg, input } = env;
+  const lantern1 = await loadLantern1().catch(() => null);
+  const lantern2 = await loadLantern2().catch(() => null);
+  // Travel scene but with a strong red lantern string.
+  drawTextureBackground(ctx, '#F3EFE6', noiseImg, 0.12);
+
+  ctx.save();
+  const r = ctx.createLinearGradient(0, 0, CANVAS_W, 0);
+  r.addColorStop(0, 'rgba(192,44,56,0.22)');
+  r.addColorStop(0.45, 'rgba(192,44,56,0.0)');
+  r.addColorStop(0.55, 'rgba(192,44,56,0.0)');
+  r.addColorStop(1, 'rgba(192,44,56,0.18)');
+  ctx.fillStyle = r;
+  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+  ctx.restore();
+
+  // Lantern string (use lantern images).
+  ctx.save();
+  ctx.globalAlpha = 0.9;
+  ctx.strokeStyle = 'rgba(139,0,0,0.55)';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(60, 210);
+  ctx.quadraticCurveTo(CANVAS_W / 2, 120, CANVAS_W - 60, 220);
+  ctx.stroke();
+  ctx.restore();
+
+  const lanterns = [lantern1, lantern2, lantern1, lantern2, lantern1].filter(Boolean) as HTMLImageElement[];
+  if (lanterns.length) {
+    ctx.save();
+    ctx.globalAlpha = 0.82;
+    for (let i = 0; i < 5; i += 1) {
+      const x = 140 + i * 200;
+      const y = 242 + (i % 2) * 10;
+      const img = lanterns[i % lanterns.length];
+      const w = 110;
+      const h = 160;
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate((i - 2) * 0.03);
+      drawContainImage(ctx, img, -w / 2, -h / 2, w, h);
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+
+  await drawStandardHeader(env, '#3E3E3E');
+  if (glyphImg) {
+    drawFloatingInkGlyph(ctx, glyphImg, 80, 320, 750);
+    drawRedSeal(ctx, input.glyph.simplified || '', 80 + 750 - 60, 320 + 750 - 120, 100);
+  }
+
+  drawStandardFooter(env, 1260, '#3E3E3E');
+  await drawFooterQR(env, CANVAS_W - 192, CANVAS_H - 180, '#8B0000');
+}
+
+async function drawSceneNY15_LanternFestival(env: SceneEnv) {
+  const { ctx, noiseImg, glyphImg, input } = env;
+  drawTextureBackground(ctx, '#8B0000', noiseImg, 0.12);
+  drawGoldSprinkle(ctx);
+  const grad = ctx.createRadialGradient(CANVAS_W / 2, 680, 120, CANVAS_W / 2, 680, 980);
+  grad.addColorStop(0, 'rgba(255, 210, 140, 0.22)');
+  grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+  await drawStandardHeader(env, '#FDF6E3');
+
+  // Center lantern window
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,0,0,0.45)';
+  ctx.shadowBlur = 70;
+  ctx.shadowOffsetY = 30;
+  ctx.fillStyle = 'rgba(253, 246, 227, 0.94)';
+  roundRect(ctx, (CANVAS_W - 820) / 2, 310, 820, 1040, 72);
+  ctx.fill();
+  ctx.restore();
+
+  // Gold frame lines
+  ctx.save();
+  ctx.strokeStyle = 'rgba(184, 134, 11, 0.65)';
+  ctx.lineWidth = 3;
+  roundRect(ctx, (CANVAS_W - 820) / 2 + 26, 310 + 26, 820 - 52, 1040 - 52, 60);
+  ctx.stroke();
+  ctx.restore();
+
+  if (glyphImg) {
+    drawFloatingInkGlyph(ctx, glyphImg, (CANVAS_W - 680) / 2, 430, 680);
+    drawRedSeal(ctx, input.glyph.simplified || '', (CANVAS_W / 2) + 250, 1040, 110, '#C02C38');
+  }
+
+  drawStandardFooter(env, 1410, '#FDF6E3');
+  await drawFooterQR(env, CANVAS_W - 192, CANVAS_H - 180, '#FDF6E3');
 }
 
 // --- MAIN ENTRYPOINT & EXPORTS ---
@@ -448,8 +812,24 @@ export async function renderNewYearPosterPng(input: NewYearPosterInput, options:
 
       const env: SceneEnv = { ctx, input, noiseImg, logoImg, glyphImg };
       switch (input.id) {
-        case 'ny_08': await drawSceneNY08_Eve(env); break; case 'ny_01': await drawSceneNY01_Spring(env); break; case 'ny_02': await drawSceneNY02_Home(env); break; case 'ny_03': await drawSceneNY03_Quiet(env); break;
-        case 'ny_04': await drawSceneNY04_Stove(env); break; case 'ny_05': await drawSceneNY05_Wealth(env); break; case 'ny_06': await drawSceneNY06_Travel(env); break; case 'ny_07': await drawSceneNY07_Human(env); break;
+        case 'ny_08': await drawSceneNY08_Eve(env); break;
+        case 'ny_01': await drawSceneNY01_Spring(env); break;
+        case 'ny_02': await drawSceneNY02_Home(env); break;
+        case 'ny_03': await drawSceneNY03_Quiet(env); break;
+        case 'ny_04': await drawSceneNY04_Stove(env); break;
+        case 'ny_05': await drawSceneNY05_Wealth(env); break;
+        case 'ny_06': await drawSceneNY06_Travel(env); break;
+        case 'ny_07': await drawSceneNY07_Human(env); break;
+        case 'ny_06_festive': await drawSceneNY06_TravelFestive(env); break;
+        case 'ny_07_festive': await drawSceneNY07_HumanFestive(env); break;
+        case 'ny_09': await drawSceneNY08_Eve(env); break;
+        case 'ny_10': await drawSceneNY01_Spring(env); break;
+        case 'ny_11': await drawSceneNY11_Earth(env); break;
+        case 'ny_12': await drawSceneNY12_Kin(env); break;
+        case 'ny_13': await drawSceneNY13_LanternPrep(env); break;
+        case 'ny_14': await drawSceneNY14_TestLantern(env); break;
+        case 'ny_15': await drawSceneNY15_SendLantern(env); break;
+        case 'ny_16': await drawSceneNY15_LanternFestival(env); break;
         default: await drawSceneNY01_Spring(env); break;
       }
       const blob = await canvasToBlob(canvas); return { blob, width: CANVAS_W, height: CANVAS_H };
@@ -479,6 +859,17 @@ export async function renderNewYearConceptPng(id: string, options: RenderPosterO
     'ny_05': { title: '金石纳福', text: '初五破五，金玉满堂。模拟汉砖魏碑拓片质感，黑底白字。赭石衬底表现厚重的金石气，寓意财富如碑刻般经久留存。', tone: '#FDF6E3' },
     'ny_06': { title: '行云流水', text: '初六送穷，志在四方。采用仿古绢本材质，对角线灵动构图。墨迹线条如水流动，表现送穷出门、万事顺遂的生机与气韵。', tone: '#FFF0E6' },
     'ny_07': { title: '众生安康', text: '初七人日，万物祥和。竹纸留白，禅意圆框。极简排版表现人人生日、万物平等的清雅气息。窗外竹影摇曳，寓意岁岁平安。', tone: '#F5F5F0' }
+    ,
+    'ny_06_festive': { title: '朱砂喜气', text: '为初六新增一版更喜庆的构图：以正红为底，洒金如星，留一方暖白纸面承托“泽”字。红与金让年味更足，字仍保持墨阵的克制与呼吸。', tone: '#FDF6E3' },
+    'ny_07_festive': { title: '灯影人日', text: '为初七新增喜庆版：红底灯影，圆窗如灯。让“康”字安坐其间，配朱砂印作点睛。喜庆不靠堆色，而靠层次与留白，让祝福更耐看。', tone: '#FFF0E6' },
+    'ny_09': { title: '顺星开卷', text: '初八顺星，讲究一个“开”。沿用夜色与朱砂的对比：深底如夜，红印如星，字像一盏小灯把新年继续点亮。', tone: '#F9F4E8' },
+    'ny_10': { title: '天公赐福', text: '初九天公生，宜敬天祈愿。构图回到正红洒金的“节日正面感”，以朱为礼、以金为庆，让“天”字成为一枚新岁的誓愿。', tone: '#FDF6E3' },
+    'ny_11': { title: '敬土安宅', text: '初十敬土，讲究一个“稳”。以深红作底、暖白作纸，红框如门楣，金粉如香火。让“土”字落定：家宅稳，人心稳，新一年才稳。', tone: '#FDF6E3' },
+    'ny_12': { title: '亲眷家书', text: '正月十一亲眷相聚。红格信纸与朱砂竖带像一条“系住人情”的线，让“亲”字写在纸上，也写在团圆的回声里。', tone: '#FFF0E6' },
+    'ny_13': { title: '作灯起势', text: '正月十二作灯备会。以正红为底，叠加灯影与洒金，留一方纸面承托“作”字：热闹的准备，从一笔一画的工序开始。', tone: '#FDF6E3' },
+    'ny_14': { title: '试灯见明', text: '正月十三试灯。用深红夜色托出灯晕，圆窗像灯。让“明”字在光里出现：不必过亮，亮在恰好；朱砂印一点，喜气就立住了。', tone: '#F5F5F0' },
+    'ny_15': { title: '送灯登门', text: '正月十四送灯。画面挂一串红灯，像把祝福沿路点亮；留白与墨字让喜庆不浮躁。灯走到哪里，热闹就到哪里。', tone: '#FFF0E6' },
+    'ny_16': { title: '元宵大成', text: '正月十五元宵，灯会为高潮。以正红与洒金为主调，中央留一方灯窗，让“泰”字落定：一年从此安泰，大喜而不浮。', tone: '#FDF6E3' }
   };
   
   const info = concepts[id] || concepts['ny_01']; const noiseImg = await loadImage('/noise.png').catch(() => null);
@@ -524,6 +915,16 @@ export async function renderNewYearStoryPng(input: NewYearPosterInput, options: 
     ny_05: '#FDF6E3',
     ny_06: '#FFF0E6',
     ny_07: '#F5F5F0',
+    ny_06_festive: '#FFF0E6',
+    ny_07_festive: '#FDF6E3',
+    ny_09: '#F9F4E8',
+    ny_10: '#FDF6E3',
+    ny_11: '#FFF0E6',
+    ny_12: '#F9F4E8',
+    ny_13: '#F5F5F0',
+    ny_14: '#FFF0E6',
+    ny_15: '#FDF6E3',
+    ny_16: '#FDF6E3',
   };
   const tone = tones[String(input.id || '')] || tones.ny_01;
 

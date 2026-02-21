@@ -1,0 +1,260 @@
+{
+  "level": "4-6",
+  "levelName": "中级",
+  "description": "熟练掌握一种主要书体，能够背临经典碑帖，初步掌握章法布局",
+  "imitation": [
+    {
+      "id": "imit-4-ks-001",
+      "level": 4,
+      "script": "kaishu",
+      "scriptName": "楷书",
+      "title": "颜体《多宝塔碑》选段",
+      "referenceImage": "/steles/1-kaishu/1-duobaotabei/preview.jpg",
+      "content": "皇帝万岁\n臣颜真卿奉\n敕书",
+      "charCount": 10,
+      "requirements": ["字形准确", "笔画到位", "结构方正"],
+      "score": 60,
+      "timeLimit": 45
+    },
+    {
+      "id": "imit-4-ks-002",
+      "level": 4,
+      "script": "kaishu",
+      "scriptName": "楷书",
+      "title": "欧体《九成宫醴泉铭》选段",
+      "referenceImage": "/steles/1-kaishu/2-jiuchenggong/preview.jpg",
+      "content": "维贞观六年孟夏之月\n皇帝避暑乎九成之宫",
+      "charCount": 14,
+      "requirements": ["字形准确", "笔画到位", "结构方正"],
+      "score": 60,
+      "timeLimit": 45
+    },
+    {
+      "id": "imit-5-ks-001",
+      "level": 5,
+      "script": "kaishu",
+      "scriptName": "楷书",
+      "title": "柳体《玄秘塔碑》选段",
+      "referenceImage": "/steles/1-kaishu/3-xuanmita/preview.jpg",
+      "content": "唐故左街僧录内供奉\n三教谈论引驾大德安国寺\n上座赐紫大达法师端甫卒",
+      "charCount": 21,
+      "requirements": ["字形准确", "笔法到位", "结构严谨"],
+      "score": 60,
+      "timeLimit": 50
+    },
+    {
+      "id": "imit-5-ls-001",
+      "level": 5,
+      "script": "lishu",
+      "scriptName": "隶书",
+      "title": "《曹全碑》选段",
+      "referenceImage": "/steles/2-lishu/1-caoquanbei/preview.jpg",
+      "content": "君讳全\n字景完\n敦煌效谷人也",
+      "charCount": 11,
+      "requirements": ["波磔明显", "蚕头燕尾", "结构扁平"],
+      "score": 60,
+      "timeLimit": 50
+    },
+    {
+      "id": "imit-6-ls-001",
+      "level": 6,
+      "script": "lishu",
+      "scriptName": "隶书",
+      "title": "《张迁碑》选段",
+      "referenceImage": "/steles/2-lishu/2-zhangqianbei/preview.jpg",
+      "content": "君讳迁\n字公方\n陈留己吾人也\n君之先出自有周",
+      "charCount": 15,
+      "requirements": ["方笔为主", "古朴厚重", "结构严谨"],
+      "score": 60,
+      "timeLimit": 55
+    },
+    {
+      "id": "imit-6-xs-001",
+      "level": 6,
+      "script": "xingshu",
+      "scriptName": "行书",
+      "title": "王羲之《兰亭序》选段",
+      "referenceImage": "/steles/4-xingshu/1-lantingjixu/preview.jpg",
+      "content": "永和九年岁在癸丑\n暮春之初会于会稽山阴之兰亭\n修禊事也",
+      "charCount": 19,
+      "requirements": ["行气连贯", "笔画流畅", "结构自然"],
+      "score": 60,
+      "timeLimit": 55
+    }
+  ],
+  "creation": [
+    {
+      "id": "crea-4-001",
+      "level": 4,
+      "type": "poem_5char_quatrain",
+      "typeName": "五言绝句",
+      "title": "五言绝句创作",
+      "content": "白日依山尽，黄河入海流。欲穷千里目，更上一层楼。",
+      "author": "王之涣《登鹳雀楼》",
+      "charCount": 20,
+      "format": ["条幅", "横幅"],
+      "requirements": ["章法完整", "落款规范", "字形准确"],
+      "score": 40,
+      "timeLimit": 45
+    },
+    {
+      "id": "crea-4-002",
+      "level": 4,
+      "type": "poem_5char_quatrain",
+      "typeName": "五言绝句",
+      "title": "五言绝句创作",
+      "content": "床前明月光，疑是地上霜。举头望明月，低头思故乡。",
+      "author": "李白《静夜思》",
+      "charCount": 20,
+      "format": ["条幅", "横幅"],
+      "requirements": ["章法完整", "落款规范", "字形准确"],
+      "score": 40,
+      "timeLimit": 45
+    },
+    {
+      "id": "crea-5-001",
+      "level": 5,
+      "type": "poem_7char_quatrain",
+      "typeName": "七言绝句",
+      "title": "七言绝句创作",
+      "content": "两个黄鹂鸣翠柳，一行白鹭上青天。窗含西岭千秋雪，门泊东吴万里船。",
+      "author": "杜甫《绝句》",
+      "charCount": 28,
+      "format": ["条幅", "横幅", "斗方"],
+      "requirements": ["章法完整", "落款规范", "行气连贯"],
+      "score": 40,
+      "timeLimit": 50
+    },
+    {
+      "id": "crea-5-002",
+      "level": 5,
+      "type": "poem_7char_quatrain",
+      "typeName": "七言绝句",
+      "title": "七言绝句创作",
+      "content": "朝辞白帝彩云间，千里江陵一日还。两岸猿声啼不住，轻舟已过万重山。",
+      "author": "李白《早发白帝城》",
+      "charCount": 28,
+      "format": ["条幅", "横幅", "斗方"],
+      "requirements": ["章法完整", "落款规范", "行气连贯"],
+      "score": 40,
+      "timeLimit": 50
+    },
+    {
+      "id": "crea-6-001",
+      "level": 6,
+      "type": "famous_saying",
+      "typeName": "经典名句",
+      "title": "经典名句创作",
+      "content": "天行健，君子以自强不息",
+      "source": "《周易》",
+      "charCount": 10,
+      "format": ["横幅", "斗方", "对联"],
+      "requirements": ["章法完整", "落款规范", "风格统一"],
+      "score": 40,
+      "timeLimit": 50
+    },
+    {
+      "id": "crea-6-002",
+      "level": 6,
+      "type": "famous_saying",
+      "typeName": "经典名句",
+      "title": "经典名句创作",
+      "content": "己所不欲，勿施于人",
+      "source": "《论语》",
+      "charCount": 8,
+      "format": ["横幅", "斗方", "对联"],
+      "requirements": ["章法完整", "落款规范", "风格统一"],
+      "score": 40,
+      "timeLimit": 50
+    }
+  ],
+  "theory": [
+    {
+      "id": "theo-4-001",
+      "level": 4,
+      "type": "choice",
+      "question": "楷书四大家中，唐代书法家不包括以下哪位？",
+      "options": ["A. 欧阳询", "B. 颜真卿", "C. 柳公权", "D. 赵孟頫"],
+      "answer": "D",
+      "explanation": "赵孟頫是元代书法家，其他三位都是唐代书法家。",
+      "score": 2
+    },
+    {
+      "id": "theo-4-002",
+      "level": 4,
+      "type": "choice",
+      "question": "《兰亭序》的作者是谁？",
+      "options": ["A. 王献之", "B. 王羲之", "C. 欧阳询", "D. 颜真卿"],
+      "answer": "B",
+      "explanation": "《兰亭序》是东晋王羲之的代表作，被誉为'天下第一行书'。",
+      "score": 2
+    },
+    {
+      "id": "theo-4-003",
+      "level": 4,
+      "type": "fill_blank",
+      "question": "文房四宝指的是笔、墨、______、砚。",
+      "answer": "纸",
+      "explanation": "文房四宝是中国传统书写工具的统称。",
+      "score": 2
+    },
+    {
+      "id": "theo-5-001",
+      "level": 5,
+      "type": "choice",
+      "question": "隶书的主要特点是？",
+      "options": ["A. 笔画圆润", "B. 蚕头燕尾", "C. 行气连贯", "D. 结构修长"],
+      "answer": "B",
+      "explanation": "蚕头燕尾是隶书最典型的笔画特征。",
+      "score": 2
+    },
+    {
+      "id": "theo-5-002",
+      "level": 5,
+      "type": "fill_blank",
+      "question": "《曹全碑》属于______书体的代表作品。",
+      "answer": "隶",
+      "explanation": "《曹全碑》是东汉隶书的代表作之一。",
+      "score": 2
+    },
+    {
+      "id": "theo-5-003",
+      "level": 5,
+      "type": "choice",
+      "question": "颜真卿的代表作不包括以下哪部？",
+      "options": ["A. 多宝塔碑", "B. 祭侄文稿", "C. 玄秘塔碑", "D. 颜勤礼碑"],
+      "answer": "C",
+      "explanation": "《玄秘塔碑》是柳公权的作品。",
+      "score": 2
+    },
+    {
+      "id": "theo-6-001",
+      "level": 6,
+      "type": "choice",
+      "question": "'颜筋柳骨'中的'柳'指的是哪位书法家？",
+      "options": ["A. 柳宗元", "B. 柳公权", "C. 柳如是", "D. 柳永"],
+      "answer": "B",
+      "explanation": "'颜筋柳骨'指颜真卿和柳公权两位楷书大家的风格特点。",
+      "score": 2
+    },
+    {
+      "id": "theo-6-002",
+      "level": 6,
+      "type": "fill_blank",
+      "question": "篆书分为大篆和______两大类。",
+      "answer": "小篆",
+      "explanation": "小篆是秦始皇统一六国后推行的标准字体。",
+      "score": 2
+    },
+    {
+      "id": "theo-6-003",
+      "level": 6,
+      "type": "choice",
+      "question": "行书介于哪两种书体之间？",
+      "options": ["A. 篆书和隶书", "B. 隶书和楷书", "C. 楷书和草书", "D. 篆书和楷书"],
+      "answer": "C",
+      "explanation": "行书是介于楷书和草书之间的书体，兼具实用性和艺术性。",
+      "score": 2
+    }
+  ]
+}

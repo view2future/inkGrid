@@ -6,6 +6,7 @@ import { TransformComponent, TransformWrapper } from 'react-zoom-pan-pinch';
 import QRCode from 'qrcode';
 
 import { extractGoldLine, getKeywords, highlightText, splitLeadSentence } from '../utils/readingEnhance';
+import { cn } from '../utils/cn';
 import { getShareBaseUrls } from '../utils/shareBase';
 
 const IS_NATIVE_ANDROID = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
@@ -236,6 +237,29 @@ function pickLines(text: string, maxLines: number) {
     .filter(Boolean);
   if (!parts.length) return [t.slice(0, 60)];
   return parts.slice(0, Math.max(1, maxLines));
+}
+
+
+function padTechniqueTips(list: string[], scriptType: string, want = 3) {
+  const base = list.filter((x) => String(x || '').trim());
+  if (base.length >= want) return base.slice(0, want);
+
+  const fallbackByScript: Record<string, string[]> = {
+    zhuan: ['先看圆转之气', '再看线条均匀', '最后看结构对称'],
+    lishu: ['先看蚕头燕尾', '再看波磔分明', '最后看中宫收紧'],
+    kaishu: ['先看起收藏露', '再看提按顿挫', '最后看结体中正'],
+    xingshu: ['先看行气贯通', '再看使转连带', '最后看轻重虚实'],
+    caoshu: ['先看势与节奏', '再看牵丝呼应', '最后看墨色枯润'],
+  };
+
+  const defaults = fallbackByScript[String(scriptType || '').toLowerCase()] || ['先看起收', '再看提按', '最后看结体'];
+  const out = [...base];
+  for (const t of defaults) {
+    if (out.length >= want) break;
+    if (!out.includes(t)) out.push(t);
+  }
+  while (out.length < want) out.push('先看起收，再看提按，最后看结体。');
+  return out.slice(0, want);
 }
 
 function pickQuote(text: string, maxLen = 64) {
@@ -2049,17 +2073,53 @@ export function MobileMasterpieceStudyDeck({
     return out;
   }, [sealHunt, sealsForViewer, toViewerRect]);
 
-  type ConfettiParticle = {
+type ConfettiParticle = {
     id: string;
     left: number;
-    size: number;
+    width: number;
+    height: number;
     delay: number;
     duration: number;
     rotate: number;
     drift: number;
     color: string;
-    shape: 'square' | 'circle' | 'diamond';
-  };
+    shape: 'square' | 'circle' | 'diamond' | 'bar';
+};
+
+type CannonSide = 'left' | 'right';
+
+function CelebrationCannon({ side }: { side: CannonSide }) {
+  const isLeft = side === 'left';
+  const baseRotate = isLeft ? -12 : 12;
+  const src = isLeft ? '/images/lihuapao-1.png' : '/images/lihuapao-2.png';
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10, rotate: baseRotate, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, rotate: baseRotate, scale: 1 }}
+      exit={{ opacity: 0, y: 8, scale: 0.98 }}
+      transition={{ type: 'spring', stiffness: 240, damping: 22 }}
+      className={cn(
+        'absolute top-[56%] -translate-y-1/2 z-[999] pointer-events-none',
+        isLeft ? 'left-4' : 'right-4'
+      )}
+    >
+      <motion.div
+        initial={{ scale: 0.96, y: 6 }}
+        animate={{ scale: [0.96, 1, 0.99, 1], y: [6, 0, 2, 0] }}
+        transition={{ duration: 0.85, ease: 'easeOut', repeat: Infinity, repeatDelay: 0.65 }}
+        className="relative w-[92px] h-[92px]"
+      >
+        <img
+          src={src}
+          alt="lihuapao"
+          className="w-full h-full object-contain drop-shadow-[0_26px_80px_rgba(0,0,0,0.35)]"
+          decoding="async"
+        />
+      </motion.div>
+    </motion.div>
+  );
+}
 
   const [celebration, setCelebration] = useState<null | { key: string; particles: ConfettiParticle[] }>(null);
 
@@ -2069,7 +2129,7 @@ export function MobileMasterpieceStudyDeck({
   const excerptSource = originalText || knowledge?.history || knowledge?.technique || knowledge?.appreciation || '';
   const quote = pickQuote(quoteSource, 70);
   const excerpt = buildExcerpt(excerptSource, 820);
-  const technique = pickLines(knowledge?.technique || '', 3);
+  const technique = padTechniqueTips(pickLines(knowledge?.technique || '', 3), stele.script_type, 3);
   const appreciation = pickLines(knowledge?.appreciation || '', 2);
   const history = knowledge?.history || '';
   const legacy = knowledge?.legacy || '';
@@ -2583,40 +2643,54 @@ export function MobileMasterpieceStudyDeck({
             <div className="mt-auto relative">
               <button
                 onClick={() => {
-                  if (celebration) return;
-                  markCompleted(String(stele.id), list.length);
-                  const now = Date.now();
-                  const colors = ['#C02C38', '#8B0000', '#D4AF37', '#F2E6CE'];
-                  const shapes: Array<'square' | 'circle' | 'diamond'> = ['diamond', 'square', 'circle'];
-                  const particles: ConfettiParticle[] = Array.from({ length: 34 }, (_, i) => {
-                    const left = Math.random() * 100;
-                    const size = 8 + Math.random() * 10;
-                    const delay = Math.random() * 0.2;
-                    const duration = 1.0 + Math.random() * 0.7;
-                    const rotate = (Math.random() - 0.5) * 720;
-                    const drift = (Math.random() - 0.5) * 140;
-                    const color = colors[i % colors.length];
-                    const shape = shapes[i % shapes.length];
-                    return {
-                      id: `${now}_${i}`,
-                      left,
-                      size,
-                      delay,
-                      duration,
-                      rotate,
-                      drift,
-                      color,
-                      shape,
-                    };
-                  });
+                   if (celebration) return;
+                   markCompleted(String(stele.id), list.length);
+                   const now = Date.now();
+                   const colors = [
+                     '#8B0000',
+                     '#C02C38',
+                     '#FF4D4D',
+                     '#FF6B6B',
+                     '#D4AF37',
+                     '#FFD166',
+                     '#FFB703',
+                     '#F2E6CE',
+                     '#06D6A0',
+                     '#118AB2',
+                   ];
+                   const shapes: Array<'square' | 'circle' | 'diamond' | 'bar'> = ['diamond', 'square', 'circle', 'bar'];
+                   const particles: ConfettiParticle[] = Array.from({ length: 78 }, (_, i) => {
+                     const left = Math.random() * 100;
+                     const base = 6 + Math.random() * 14;
+                     const shape = shapes[i % shapes.length];
+                     const width = shape === 'bar' ? Math.max(3, Math.round(base * 0.35)) : Math.round(base);
+                     const height = shape === 'bar' ? Math.round(base * (2.2 + Math.random() * 1.0)) : Math.round(base);
+                     const delay = Math.random() * 0.2;
+                     const duration = 2.1 + Math.random() * 0.9;
+                     const rotate = (Math.random() - 0.5) * 720;
+                     const drift = (Math.random() - 0.5) * 220;
+                     const color = colors[i % colors.length];
+                     return {
+                       id: `${now}_${i}`,
+                       left,
+                       width,
+                       height,
+                       delay,
+                       duration,
+                       rotate,
+                       drift,
+                       color,
+                       shape,
+                     };
+                   });
 
-                  setCelebration({ key: String(now), particles });
-                  if (doneTimerRef.current !== null) window.clearTimeout(doneTimerRef.current);
-                  doneTimerRef.current = window.setTimeout(() => {
-                    if (onDone) onDone();
-                    else setCelebration(null);
-                  }, 1750);
-                }}
+                   setCelebration({ key: String(now), particles });
+                   if (doneTimerRef.current !== null) window.clearTimeout(doneTimerRef.current);
+                   doneTimerRef.current = window.setTimeout(() => {
+                     if (onDone) onDone();
+                     else setCelebration(null);
+                   }, 3000);
+                 }}
                 disabled={!!celebration}
                 className="w-full h-12 rounded-[1.25rem] bg-[#8B0000] border border-[#8B0000]/60 text-[#F2E6CE] font-black tracking-[0.25em] text-[12px] shadow-xl active:scale-95 transition disabled:opacity-60"
               >
@@ -2973,23 +3047,26 @@ export function MobileMasterpieceStudyDeck({
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[420] pointer-events-none overflow-hidden"
           >
+            <CelebrationCannon side="left" />
+            <CelebrationCannon side="right" />
+
             {celebration.particles.map((p) => {
               const baseRotate = p.shape === 'diamond' ? 45 : 0;
-              const radius = p.shape === 'circle' ? 9999 : 6;
+              const radius = p.shape === 'circle' ? 9999 : p.shape === 'bar' ? 9999 : 6;
               return (
                 <motion.span
                   key={p.id}
                   className="absolute top-0"
                   style={{
                     left: `${p.left}%`,
-                    width: `${p.size}px`,
-                    height: `${p.size}px`,
+                    width: `${p.width}px`,
+                    height: `${p.height}px`,
                     backgroundColor: p.color,
                     borderRadius: `${radius}px`,
                     boxShadow: '0 16px 40px rgba(0,0,0,0.10)',
                   }}
                   initial={{ y: -60, x: 0, opacity: 0, rotate: baseRotate }}
-                  animate={{ y: '110%', x: p.drift, opacity: [0, 1, 1, 0], rotate: baseRotate + p.rotate }}
+                  animate={{ y: '72%', x: p.drift, opacity: [0, 1, 1, 0], rotate: baseRotate + p.rotate }}
                   transition={{ delay: p.delay, duration: p.duration, ease: 'easeOut' }}
                 />
               );

@@ -16,6 +16,7 @@ public class MainActivity extends BridgeActivity {
         super.onCreate(savedInstanceState);
         registerPlugin(InkgridNotificationsPlugin.class);
         registerPlugin(InkgridMediaPlugin.class);
+        registerPlugin(InkgridExamIslandPlugin.class);
 
         try {
             Bridge bridge = this.getBridge();

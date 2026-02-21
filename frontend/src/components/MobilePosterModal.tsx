@@ -348,24 +348,25 @@ export default function MobilePosterModal({
   };
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          key="poster-modal"
+    <>
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            key="poster-modal"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-[300] bg-black/90 backdrop-blur-2xl"
           onClick={onClose}
-        >
-          <motion.div
-            initial={{ y: 18, opacity: 0, scale: 0.98 }}
-            animate={{ y: 0, opacity: 1, scale: 1 }}
-            exit={{ y: 18, opacity: 0, scale: 0.98 }}
-            transition={{ type: 'spring', stiffness: 260, damping: 26 }}
-            className="absolute inset-x-0 top-[max(env(safe-area-inset-top),32px)] bottom-[env(safe-area-inset-bottom)] flex flex-col"
-            onClick={(e) => e.stopPropagation()}
           >
+            <motion.div
+              initial={{ y: 18, opacity: 0, scale: 0.98 }}
+              animate={{ y: 0, opacity: 1, scale: 1 }}
+              exit={{ y: 18, opacity: 0, scale: 0.98 }}
+              transition={{ type: 'spring', stiffness: 260, damping: 26 }}
+              className="absolute inset-x-0 top-[max(env(safe-area-inset-top),32px)] bottom-[env(safe-area-inset-bottom)] flex flex-col"
+              onClick={(e) => e.stopPropagation()}
+            >
             <div className="px-5 pt-4 pb-3 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-1.5 h-1.5 bg-[#8B0000] rotate-45" />
@@ -431,7 +432,7 @@ export default function MobilePosterModal({
                     <AnimatePresence mode="wait">
                       {isBusy && loadingNotes[loadingIndex] ? (
                         <motion.div
-                          key={`loading-${loadingIndex}-${Date.now()}`}
+                          key={`loading-${loadingIndex}`}
                           initial={{ opacity: 0, y: 8 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: 8 }}
@@ -492,6 +493,7 @@ export default function MobilePosterModal({
           </motion.div>
         </motion.div>
       )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {toast ? (
@@ -509,6 +511,6 @@ export default function MobilePosterModal({
           </motion.div>
         ) : null}
       </AnimatePresence>
-    </AnimatePresence>
+    </>
   );
 }

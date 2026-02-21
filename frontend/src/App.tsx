@@ -12,6 +12,14 @@ import InkFlow from './components/InkFlow';
 import CharCarousel from './components/CharCarousel';
 import { SteleAnnotator } from './components/SteleAnnotator';
 import { Workbench } from './components/Workbench';
+import GradeHome from './components/grade/GradeHome';
+import QuestionBrowser from './components/grade/QuestionBrowser';
+import ImitationQuestionDetail from './components/grade/ImitationQuestion';
+import CreationQuestionDetail from './components/grade/CreationQuestion';
+import TheoryQuiz from './components/grade/TheoryQuiz';
+import AdvancedTheoryQuiz from './components/grade/AdvancedTheoryQuiz';
+import ExamPaper from './components/grade/ExamPaper';
+import MobileChoiceExam from './components/grade/MobileChoiceExam';
 import { cn } from './utils/cn';
 import { useMediaQuery } from './utils/useMediaQuery';
 import { initWebAnalytics } from './utils/analytics';
@@ -28,11 +36,47 @@ const YISHAN_EXTRACTED_COUNT = 135;
 function App() {
   const isAppActive = useAppActive();
   const urlParams = new URLSearchParams(window.location.search);
-  if (urlParams.get('mode') === 'annotator') {
+  const mode = urlParams.get('mode');
+  const isMobileViewport = typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches;
+
+  // Route to different modes
+  if (mode === 'annotator') {
     return <SteleAnnotator />;
   }
-  if (urlParams.get('mode') === 'workbench') {
+  if (mode === 'workbench') {
     return <Workbench />;
+  }
+
+  // Mobile-first: InkLadder (墨梯) becomes a choice-only exam.
+  // Any legacy grade route on mobile should land here.
+  if (isMobileViewport && mode && mode.startsWith('grade')) {
+    return <MobileChoiceExam />;
+  }
+
+  // Grade routes
+  if (mode === 'grade') {
+    return <GradeHome />;
+  }
+  if (mode === 'grade-intermediate' || mode === 'grade-advanced') {
+    return <QuestionBrowser />;
+  }
+  if (mode === 'grade-question-imitation' || mode === 'grade-question-creation') {
+    const questionId = urlParams.get('questionId');
+    const level = urlParams.get('level') || 'intermediate';
+    if (mode.includes('imitation')) {
+      return <ImitationQuestionDetail />;
+    } else {
+      return <CreationQuestionDetail />;
+    }
+  }
+  if (mode === 'grade-theory') {
+    return <TheoryQuiz />;
+  }
+  if (mode === 'grade-theory-advanced') {
+    return <AdvancedTheoryQuiz />;
+  }
+  if (mode === 'grade-exam' || mode === 'grade-exam-intermediate' || mode === 'grade-exam-advanced') {
+    return <ExamPaper />;
   }
 
   const isMobile = useMediaQuery('(max-width: 768px)');
@@ -55,25 +99,77 @@ function App() {
   const [inkFlowLaunch, setInkFlowLaunch] = useState<InkFlowLaunch | null>(null);
   const isNativeAndroid = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
   const powerSaveEnabled = isPowerSaveEnabled();
+  const ANDROID_RESUME_SPLASH_MS = 1_500;
   const [showAndroidLaunch, setShowAndroidLaunch] = useState(isNativeAndroid);
   const [androidLaunchPhase, setAndroidLaunchPhase] = useState<0 | 1 | 2>(0);
   const [androidLaunchClosing, setAndroidLaunchClosing] = useState(false);
   const [androidLaunchRemaining, setAndroidLaunchRemaining] = useState(isNativeAndroid ? 12 : 0);
   const androidLaunchTimerRef = React.useRef<number | null>(null);
+  const androidLaunchExitTimerRef = React.useRef<number | null>(null);
+  const androidLaunchShownAtRef = React.useRef<number | null>(isNativeAndroid ? Date.now() : null);
+  const [showAndroidResumeSplash, setShowAndroidResumeSplash] = useState(false);
+  const androidResumeSplashTimerRef = React.useRef<number | null>(null);
   const galleryRef = React.useRef<{ isInternalOpen: () => boolean; closeInternal: () => void }>(null);
   const inkFlowRef = React.useRef<{ isInternalOpen: () => boolean; closeInternal: () => void }>(null);
 
   const exitAndroidLaunch = useCallback(() => {
-    setAndroidLaunchClosing(true);
-    setAndroidLaunchRemaining(0);
-    if (androidLaunchTimerRef.current !== null) {
-      window.clearInterval(androidLaunchTimerRef.current);
-      androidLaunchTimerRef.current = null;
+    const MIN_SHOW_MS = 1_000;
+
+    const doExit = () => {
+      setAndroidLaunchClosing(true);
+      setAndroidLaunchRemaining(0);
+      if (androidLaunchTimerRef.current !== null) {
+        window.clearInterval(androidLaunchTimerRef.current);
+        androidLaunchTimerRef.current = null;
+      }
+      if (androidLaunchExitTimerRef.current !== null) {
+        window.clearTimeout(androidLaunchExitTimerRef.current);
+        androidLaunchExitTimerRef.current = null;
+      }
+      window.setTimeout(() => {
+        androidLaunchShownAtRef.current = null;
+        setShowAndroidLaunch(false);
+        setAndroidLaunchClosing(false);
+      }, 420);
+    };
+
+    const shownAt = androidLaunchShownAtRef.current;
+    if (shownAt !== null) {
+      const elapsed = Date.now() - shownAt;
+      const remaining = MIN_SHOW_MS - elapsed;
+      if (remaining > 0) {
+        if (androidLaunchExitTimerRef.current !== null) {
+          window.clearTimeout(androidLaunchExitTimerRef.current);
+        }
+        androidLaunchExitTimerRef.current = window.setTimeout(() => {
+          androidLaunchExitTimerRef.current = null;
+          doExit();
+        }, remaining);
+        return;
+      }
     }
-    window.setTimeout(() => setShowAndroidLaunch(false), 420);
+
+    doExit();
   }, []);
 
-  const launchInkFlowFromUrl = useCallback((url: string) => {
+  const handleNativeUrlOpen = useCallback((url: string) => {
+    let u: URL | null;
+    try {
+      u = new URL(url);
+    } catch {
+      u = null;
+    }
+
+    if (u) {
+      const mode = u.searchParams.get('mode');
+      if (mode && mode.startsWith('grade')) {
+        const params = u.searchParams.toString();
+        const base = `${window.location.origin}/`;
+        window.location.href = params ? `${base}?${params}` : `${base}?mode=grade`;
+        return;
+      }
+    }
+
     const parsed = parseInkgridDeepLink(url);
     if (!parsed) return;
     setInkFlowLaunch({ key: newLaunchKey(), ...parsed });
@@ -90,16 +186,27 @@ function App() {
 
   useEffect(() => {
     // Browser debugging: allow `?inkflow=1`.
-    launchInkFlowFromUrl(window.location.href);
-  }, [launchInkFlowFromUrl]);
+    handleNativeUrlOpen(window.location.href);
+  }, [handleNativeUrlOpen]);
 
   useLayoutEffect(() => {
     if (!isNativeAndroid) {
       setShowAndroidLaunch(false);
+      setShowAndroidResumeSplash(false);
       return;
     }
 
     if (!isAppActive) return;
+
+    if (androidResumeSplashTimerRef.current !== null) {
+      window.clearTimeout(androidResumeSplashTimerRef.current);
+      androidResumeSplashTimerRef.current = null;
+    }
+
+    if (androidLaunchExitTimerRef.current !== null) {
+      window.clearTimeout(androidLaunchExitTimerRef.current);
+      androidLaunchExitTimerRef.current = null;
+    }
 
     const KEY = 'inkgrid_android_launch_showcase_v2';
     let shouldShow = true;
@@ -111,10 +218,18 @@ function App() {
     }
 
     if (!shouldShow) {
-      // Ensure we don't flash the homepage first.
+      // Returning from background: show a 1.5s overlay that matches the
+      // native splash.png style.
       setShowAndroidLaunch(false);
+      setShowAndroidResumeSplash(true);
+      androidResumeSplashTimerRef.current = window.setTimeout(() => {
+        androidResumeSplashTimerRef.current = null;
+        setShowAndroidResumeSplash(false);
+      }, ANDROID_RESUME_SPLASH_MS);
       return;
     }
+
+    setShowAndroidResumeSplash(false);
 
     const TOTAL_MS = 12_000;
     const PHASE_SWITCH_MS_1 = 4_000;
@@ -125,6 +240,7 @@ function App() {
     setAndroidLaunchPhase(0);
     setAndroidLaunchClosing(false);
     setAndroidLaunchRemaining(Math.ceil(TOTAL_MS / 1000));
+    androidLaunchShownAtRef.current = startedAt;
 
     const tick = () => {
       const elapsed = Date.now() - startedAt;
@@ -146,8 +262,16 @@ function App() {
         window.clearInterval(androidLaunchTimerRef.current);
         androidLaunchTimerRef.current = null;
       }
+      if (androidLaunchExitTimerRef.current !== null) {
+        window.clearTimeout(androidLaunchExitTimerRef.current);
+        androidLaunchExitTimerRef.current = null;
+      }
+      if (androidResumeSplashTimerRef.current !== null) {
+        window.clearTimeout(androidResumeSplashTimerRef.current);
+        androidResumeSplashTimerRef.current = null;
+      }
     };
-  }, [exitAndroidLaunch, isNativeAndroid, isAppActive]);
+  }, [exitAndroidLaunch, isNativeAndroid, isAppActive, ANDROID_RESUME_SPLASH_MS]);
 
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
@@ -159,9 +283,9 @@ function App() {
 
     const setup = async () => {
       const launch = await CapacitorApp.getLaunchUrl();
-      if (launch?.url) launchInkFlowFromUrl(launch.url);
+      if (launch?.url) handleNativeUrlOpen(launch.url);
       handle = await CapacitorApp.addListener('appUrlOpen', (event) => {
-        launchInkFlowFromUrl(event.url);
+        handleNativeUrlOpen(event.url);
       });
 
       backHandle = await CapacitorApp.addListener('backButton', () => {
@@ -211,7 +335,7 @@ function App() {
       if (backHandle) void backHandle.remove();
     };
   }, [
-    launchInkFlowFromUrl,
+    handleNativeUrlOpen,
     zoomedImage,
     previewChar,
     showFullStele,
@@ -470,7 +594,8 @@ function App() {
                         </div>
                       </div>
 
-                       <div className="pt-3">
+                       <div className="pt-3 space-y-3">
+                          {/* 入墨入口 */}
                           <motion.button
                             onClick={() => setShowInkFlow(true)}
                             whileTap={{ scale: 0.98 }}
@@ -482,7 +607,7 @@ function App() {
                             </div>
                             <ChevronRight size={22} className="absolute right-6 opacity-80" />
                           </motion.button>
-                          <div className="mt-2 text-center text-[9px] font-mono text-stone-500/70 tracking-[0.12em]">
+                          <div className="text-center text-[9px] font-mono text-stone-500/70 tracking-[0.12em]">
                             built with love ❤️ · e13760@gmail.com
                           </div>
                         </div>
@@ -680,6 +805,16 @@ function App() {
                       <span className="text-2xl font-serif text-stone-200 group-hover:text-[#b8860b] transition-colors tracking-widest">墨廊</span>
                     </div>
                   </button>
+                </motion.div>
+
+                {/* 墨梯入口 - 底部中央 */}
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.2 }} className="absolute bottom-12 left-1/2 -translate-x-1/2 z-40">
+                  <a href="?mode=grade" className="group flex items-center gap-6 bg-[#0a0a0b]/60 backdrop-blur-2xl px-8 py-4 rounded-full border border-emerald-500/20 hover:border-emerald-500/60 transition-all duration-700 shadow-2xl">
+                    <div className="flex flex-col items-center">
+                      <span className="text-[9px] text-emerald-500 tracking-[0.3em] font-black uppercase mb-1 opacity-70">Practice</span>
+                      <span className="text-2xl font-serif text-stone-200 group-hover:text-emerald-500 transition-colors tracking-widest">墨梯</span>
+                    </div>
+                  </a>
                 </motion.div>
 
                  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.1 }} className="absolute bottom-12 right-12 z-40">
@@ -1048,8 +1183,33 @@ function App() {
           />
         ) : null}
       </AnimatePresence>
+
+      <AnimatePresence>
+        {showAndroidResumeSplash ? <AndroidResumeSplash /> : null}
+      </AnimatePresence>
     </div>
     </MotionConfig>
+  );
+}
+
+function AndroidResumeSplash() {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.22, ease: 'easeOut' }}
+      className="fixed inset-0 z-[1001] bg-[#070707]"
+    >
+      <div className="absolute inset-0 flex items-center justify-center">
+        <img
+          src="/splash.png"
+          alt="InkGrid Splash"
+          className="w-full h-full object-contain"
+          decoding="async"
+        />
+      </div>
+    </motion.div>
   );
 }
 
@@ -1151,34 +1311,34 @@ function AndroidLaunchShowcase({
             className="w-full"
             style={{ pointerEvents: effectivePhase === 0 ? 'auto' : 'none' }}
           >
-              <div className="text-center">
-                <div className="text-[10px] font-black tracking-[0.6em] pl-[0.6em] text-stone-300/70">金石一瞬</div>
-                <div className="mt-3 text-3xl font-serif font-black tracking-[0.5em] pl-[0.5em] text-[#F2E6CE]">嶧山刻石</div>
-              </div>
+            <div className="text-center">
+              <div className="text-[10px] font-black tracking-[0.6em] pl-[0.6em] text-stone-300/70">金石一瞬</div>
+              <div className="mt-3 text-3xl font-serif font-black tracking-[0.5em] pl-[0.5em] text-[#F2E6CE]">嶧山刻石</div>
+            </div>
 
-              <div className="mt-10 flex items-center justify-center gap-4">
-                {yishan.map((it, i) => (
-                  <motion.div
-                    key={it.ch}
-                    initial={{ opacity: 0, scale: 0.9, y: 10 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    transition={{ delay: 0.08 * i, duration: 0.5, ease: 'easeOut' }}
-                    className="relative"
-                    style={{ transform: `rotate(${(i - 1.5) * 2.5}deg)` }}
-                  >
-                    <div className="w-20 h-20 rounded-2xl bg-white/5 border border-white/10 shadow-[0_18px_50px_rgba(0,0,0,0.45)] overflow-hidden">
-                      <img src={it.src} alt={it.ch} className="w-full h-full object-contain grayscale brightness-110 contrast-125" />
-                    </div>
-                    <div className="mt-2 text-center text-[10px] font-serif text-stone-300/70 tracking-[0.45em] pl-[0.45em]">{it.ch}</div>
-                  </motion.div>
-                ))}
-              </div>
+            <div className="mt-10 flex items-center justify-center gap-4">
+              {yishan.map((it, i) => (
+                <motion.div
+                  key={it.ch}
+                  initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  transition={{ delay: 0.08 * i, duration: 0.5, ease: 'easeOut' }}
+                  className="relative"
+                  style={{ transform: `rotate(${(i - 1.5) * 2.5}deg)` }}
+                >
+                  <div className="w-20 h-20 rounded-2xl bg-white/5 border border-white/10 shadow-[0_18px_50px_rgba(0,0,0,0.45)] overflow-hidden">
+                    <img src={it.src} alt={it.ch} className="w-full h-full object-contain grayscale brightness-110 contrast-125" />
+                  </div>
+                  <div className="mt-2 text-center text-[10px] font-serif text-stone-300/70 tracking-[0.45em] pl-[0.45em]">{it.ch}</div>
+                </motion.div>
+              ))}
+            </div>
 
-              <div className="mt-10 flex items-center justify-center">
-                <div className="h-px w-40 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-              </div>
+            <div className="mt-10 flex items-center justify-center">
+              <div className="h-px w-40 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+            </div>
 
-              <div className="mt-6 text-center text-[10px] font-serif text-stone-400/70 tracking-[0.32em]">圆劲 · 中和 · 如玉</div>
+            <div className="mt-6 text-center text-[10px] font-serif text-stone-400/70 tracking-[0.32em]">圆劲 · 中和 · 如玉</div>
           </motion.div>
 
           <motion.div
@@ -1188,54 +1348,54 @@ function AndroidLaunchShowcase({
             className="absolute inset-0 w-full"
             style={{ pointerEvents: effectivePhase === 1 ? 'auto' : 'none' }}
           >
-              <div className="text-center">
-                <div className="text-[10px] font-black tracking-[0.6em] pl-[0.6em] text-stone-300/70">碑阳一页</div>
-                <div className="mt-3 text-3xl font-serif font-black tracking-[0.5em] pl-[0.5em] text-[#F2E6CE]">曹全碑</div>
-              </div>
+            <div className="text-center">
+              <div className="text-[10px] font-black tracking-[0.6em] pl-[0.6em] text-stone-300/70">碑阳一页</div>
+              <div className="mt-3 text-3xl font-serif font-black tracking-[0.5em] pl-[0.5em] text-[#F2E6CE]">曹全碑</div>
+            </div>
 
-              <div className="mt-8 rounded-[2rem] overflow-hidden border border-white/10 bg-white/5 shadow-[0_30px_90px_rgba(0,0,0,0.55)]">
-                <div className="relative h-40">
-                  <img
-                    src="/steles/2-lishu/1-caoquanbei/thumbs/caoquanbei-001.jpg"
-                    alt="曹全碑"
-                    className="absolute inset-0 w-full h-full object-cover grayscale contrast-125 brightness-95"
-                    loading="eager"
-                    decoding="async"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/35 to-black/70" />
-                  <div className="absolute inset-0 flex items-end justify-between p-5">
-                    <div>
-                      <div className="text-[10px] font-black tracking-[0.4em] text-stone-200/80">汉 · 隶书</div>
-                      <div className="mt-2 text-[10px] font-serif text-stone-200/70 tracking-[0.24em]">波磔舒展，骨气内敛</div>
-                    </div>
-                    <div className="w-10 h-10 rounded-2xl bg-white/10 border border-white/10" />
+            <div className="mt-8 rounded-[2rem] overflow-hidden border border-white/10 bg-white/5 shadow-[0_30px_90px_rgba(0,0,0,0.55)]">
+              <div className="relative h-40">
+                <img
+                  src="/steles/2-lishu/1-caoquanbei/thumbs/caoquanbei-001.jpg"
+                  alt="曹全碑"
+                  className="absolute inset-0 w-full h-full object-cover grayscale contrast-125 brightness-95"
+                  loading="eager"
+                  decoding="async"
+                />
+                <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/35 to-black/70" />
+                <div className="absolute inset-0 flex items-end justify-between p-5">
+                  <div>
+                    <div className="text-[10px] font-black tracking-[0.4em] text-stone-200/80">汉 · 隶书</div>
+                    <div className="mt-2 text-[10px] font-serif text-stone-200/70 tracking-[0.24em]">波磔舒展，骨气内敛</div>
                   </div>
+                  <div className="w-10 h-10 rounded-2xl bg-white/10 border border-white/10" />
                 </div>
               </div>
+            </div>
 
-              <div className="mt-8 flex items-center justify-center gap-4">
-                {caoquan.map((it, i) => (
-                  <motion.div
-                    key={it.ch}
-                    initial={{ opacity: 0, scale: 0.9, y: 10 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    transition={{ delay: 0.06 * i, duration: 0.5, ease: 'easeOut' }}
-                    className="relative"
-                    style={{ transform: `rotate(${(i - 1) * 2.2}deg)` }}
-                  >
-                    <div className="w-20 h-20 rounded-2xl bg-white/5 border border-white/10 shadow-[0_18px_50px_rgba(0,0,0,0.45)] overflow-hidden">
-                      <img
-                        src={it.src}
-                        alt={it.ch}
-                        className="w-full h-full object-contain grayscale contrast-125 brightness-105"
-                        loading="eager"
-                        decoding="async"
-                      />
-                    </div>
-                    <div className="mt-2 text-center text-[10px] font-serif text-stone-300/70 tracking-[0.45em] pl-[0.45em]">{it.ch}</div>
-                  </motion.div>
-                ))}
-              </div>
+            <div className="mt-8 flex items-center justify-center gap-4">
+              {caoquan.map((it, i) => (
+                <motion.div
+                  key={it.ch}
+                  initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  transition={{ delay: 0.06 * i, duration: 0.5, ease: 'easeOut' }}
+                  className="relative"
+                  style={{ transform: `rotate(${(i - 1) * 2.2}deg)` }}
+                >
+                  <div className="w-20 h-20 rounded-2xl bg-white/5 border border-white/10 shadow-[0_18px_50px_rgba(0,0,0,0.45)] overflow-hidden">
+                    <img
+                      src={it.src}
+                      alt={it.ch}
+                      className="w-full h-full object-contain grayscale contrast-125 brightness-105"
+                      loading="eager"
+                      decoding="async"
+                    />
+                  </div>
+                  <div className="mt-2 text-center text-[10px] font-serif text-stone-300/70 tracking-[0.45em] pl-[0.45em]">{it.ch}</div>
+                </motion.div>
+              ))}
+            </div>
           </motion.div>
 
           <motion.div
@@ -1245,35 +1405,35 @@ function AndroidLaunchShowcase({
             className="absolute inset-0 w-full"
             style={{ pointerEvents: effectivePhase === 2 ? 'auto' : 'none' }}
           >
-              <div className="text-center">
-                <div className="text-[10px] font-black tracking-[0.6em] pl-[0.6em] text-stone-300/70">天下第一行书</div>
-                <div className="mt-3 text-3xl font-serif font-black tracking-[0.5em] pl-[0.5em] text-[#F2E6CE]">兰亭集序</div>
-              </div>
+            <div className="text-center">
+              <div className="text-[10px] font-black tracking-[0.6em] pl-[0.6em] text-stone-300/70">天下第一行书</div>
+              <div className="mt-3 text-3xl font-serif font-black tracking-[0.5em] pl-[0.5em] text-[#F2E6CE]">兰亭集序</div>
+            </div>
 
-              <div className="mt-10 rounded-[2rem] overflow-hidden border border-white/10 bg-white/5 shadow-[0_30px_90px_rgba(0,0,0,0.55)] p-5">
-                <div className="grid grid-cols-6 gap-3">
-                  {lanting.map((it, i) => (
-                    <motion.div
-                      key={`${it.ch}_${i}`}
-                      initial={{ opacity: 0, scale: 0.9, y: 10 }}
-                      animate={{ opacity: 1, scale: 1, y: 0 }}
-                      transition={{ delay: 0.03 * i, duration: 0.5, ease: 'easeOut' }}
-                      className="relative"
-                    >
-                      <div className="w-full aspect-square rounded-2xl bg-white/5 border border-white/10 shadow-[0_18px_50px_rgba(0,0,0,0.45)] overflow-hidden">
-                        <img
-                          src={it.src}
-                          alt={it.ch}
-                          className="w-full h-full object-contain grayscale contrast-125 brightness-110"
-                          loading="eager"
-                          decoding="async"
-                        />
-                      </div>
-                      <div className="mt-2 text-center text-[10px] font-serif text-stone-300/70 tracking-[0.35em] pl-[0.35em]">{it.ch}</div>
-                    </motion.div>
-                  ))}
-                </div>
+            <div className="mt-10 rounded-[2rem] overflow-hidden border border-white/10 bg-white/5 shadow-[0_30px_90px_rgba(0,0,0,0.55)] p-5">
+              <div className="grid grid-cols-6 gap-3">
+                {lanting.map((it, i) => (
+                  <motion.div
+                    key={`${it.ch}_${i}`}
+                    initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    transition={{ delay: 0.03 * i, duration: 0.5, ease: 'easeOut' }}
+                    className="relative"
+                  >
+                    <div className="w-full aspect-square rounded-2xl bg-white/5 border border-white/10 shadow-[0_18px_50px_rgba(0,0,0,0.45)] overflow-hidden">
+                      <img
+                        src={it.src}
+                        alt={it.ch}
+                        className="w-full h-full object-contain grayscale contrast-125 brightness-110"
+                        loading="eager"
+                        decoding="async"
+                      />
+                    </div>
+                    <div className="mt-2 text-center text-[10px] font-serif text-stone-300/70 tracking-[0.35em] pl-[0.35em]">{it.ch}</div>
+                  </motion.div>
+                ))}
               </div>
+            </div>
           </motion.div>
         </div>
 
@@ -1294,9 +1454,7 @@ function AndroidLaunchShowcase({
             退出开屏
           </button>
 
-          <div className="text-[11px] font-mono text-stone-300/70 tracking-widest">
-            倒计时 {Math.max(0, remaining)}s
-          </div>
+          <div className="text-[11px] font-mono text-stone-300/70 tracking-widest">倒计时 {Math.max(0, remaining)}s</div>
         </div>
       </div>
     </motion.div>
